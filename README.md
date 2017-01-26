@@ -1,69 +1,38 @@
-Symfony Standard Edition
-========================
+# CLSP Rewrite
 
-Welcome to the Symfony Standard Edition - a fully-functional Symfony
-application that you can use as the skeleton for your new applications.
+The Georgia Tech Critical Language Song Project (CLSP) is a web based learning managment system designed to immerse students in a language and enrich their learning experiences with music, videos, and other forms of media.
 
-For details on how to download and get started with Symfony, see the
-[Installation][1] chapter of the Symfony Documentation.
+CLSP Rewrite is a rewrite of an older project with the same name, using modern web technologies like Symfony 3.2 and PHP 7.1.
 
-What's inside?
---------------
+## Intallation
+Ensure that you have PHP 7.1, MySQL, and Composer installed. Also check that PHP has the proper extensions enabled for Symfony 3.2. A list of Symfony 3.2's requirements can be found [here.](http://symfony.com/doc/current/reference/requirements.html)
 
-The Symfony Standard Edition is configured with the following defaults:
+Download the project and run `composer install` in the project directory.
 
-  * An AppBundle you can use to start coding;
+## Tech
 
-  * Twig as the only configured template engine;
+CLSP Rewrite utilizes various open source projects
 
-  * Doctrine ORM/DBAL;
+- [PHP 7.1] - Interpreted server side web programming language
+- [Symfony] - PHP framework
+- [Bootstrap] - Front end framework
 
-  * Swiftmailer;
 
-  * Annotations enabled for everything.
 
-It comes pre-configured with the following bundles:
+## Team Members
 
-  * **FrameworkBundle** - The core Symfony framework bundle
+- [jhan24] - Jinsong Han
+- [zak160] - Zakir Makda
+- [kevintasta] - Yuanhan Pan
+- [driazati] - David Riazati
+- [pjztam] - Patrick Tam
 
-  * [**SensioFrameworkExtraBundle**][6] - Adds several enhancements, including
-    template and routing annotation capability
 
-  * [**DoctrineBundle**][7] - Adds support for the Doctrine ORM
-
-  * [**TwigBundle**][8] - Adds support for the Twig templating engine
-
-  * [**SecurityBundle**][9] - Adds security by integrating Symfony's security
-    component
-
-  * [**SwiftmailerBundle**][10] - Adds support for Swiftmailer, a library for
-    sending emails
-
-  * [**MonologBundle**][11] - Adds support for Monolog, a logging library
-
-  * **WebProfilerBundle** (in dev/test env) - Adds profiling functionality and
-    the web debug toolbar
-
-  * **SensioDistributionBundle** (in dev/test env) - Adds functionality for
-    configuring and working with Symfony distributions
-
-  * [**SensioGeneratorBundle**][13] (in dev/test env) - Adds code generation
-    capabilities
-
-  * **DebugBundle** (in dev/test env) - Adds Debug and VarDumper component
-    integration
-
-All libraries and bundles included in the Symfony Standard Edition are
-released under the MIT or BSD license.
-
-Enjoy!
-
-[1]:  https://symfony.com/doc/3.2/setup.html
-[6]:  https://symfony.com/doc/current/bundles/SensioFrameworkExtraBundle/index.html
-[7]:  https://symfony.com/doc/3.2/doctrine.html
-[8]:  https://symfony.com/doc/3.2/templating.html
-[9]:  https://symfony.com/doc/3.2/security.html
-[10]: https://symfony.com/doc/3.2/email.html
-[11]: https://symfony.com/doc/3.2/logging.html
-[12]: https://symfony.com/doc/3.2/assetic/asset_management.html
-[13]: https://symfony.com/doc/current/bundles/SensioGeneratorBundle/index.html
+[PHP 7.1]:<http://php.net/>
+[Symfony]:<https://symfony.com/>
+[Bootstrap]:<http://getbootstrap.com/>
+[pjztam]:<https://github.com/pjztam>
+[driazati]:<https://github.com/driazati>
+[kevintasta]:<https://github.com/kevintasta>
+[zak160]:<https://github.com/zak160>
+[jhan24]:<https://github.com/jhan24>
