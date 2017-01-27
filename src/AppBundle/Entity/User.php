@@ -25,12 +25,6 @@ class User implements UserInterface, \Serializable
     private $username;
 
     /**
-     * @Assert\NotBlank()
-     * @Assert\Length(max=4096)
-     */
-    private $plainPassword;
-
-    /**
      * @ORM\Column(type="string", length=64)
      */
     private $password;
@@ -44,6 +38,46 @@ class User implements UserInterface, \Serializable
      * @ORM\Column(name="is_active", type="boolean")
      */
     private $isActive;
+
+    /**
+     * @ORM\Column(name="date_created", type="integer", length=64)
+     */
+    private $dateCreated;
+
+    /**
+     * @ORM\Column(name="date_deleted", type="integer", length=64, nullable=true)
+     */
+    private $dateDeleted;
+
+    /**
+     * @ORM\Column(name="date_start", type="integer", length=64)
+     */
+    private $dateStart;
+
+    /**
+     * @ORM\Column(name="date_end", type="integer", length=64)
+     */
+    private $dateEnd;
+
+    /**
+     * @ORM\Column(name="is_student", type="boolean")
+     */
+    private $isStudent;
+
+    /**
+     * @ORM\Column(name="is_professor", type="boolean")
+     */
+    private $isProfessor;
+
+    /**
+     * @ORM\Column(name="is_designer", type="boolean")
+     */
+    private $isDesigner;
+
+    /**
+     * @ORM\Column(name="is_administrator", type="boolean")
+     */
+    private $isAdministrator;
 
     public function __construct()
     {
@@ -64,16 +98,6 @@ class User implements UserInterface, \Serializable
         return null;
     }
 
-    public function getPlainPassword()
-    {
-        return $this->plainPassword;
-    }
-
-    public function setPlainPassword($password)
-    {
-        $this->plainPassword = $password;
-    }
-
     public function getPassword()
     {
         return $this->password;
@@ -81,7 +105,20 @@ class User implements UserInterface, \Serializable
 
     public function getRoles()
     {
-        return array('ROLE_USER');
+        $roles = array();
+        if($this->getIsStudent()) {
+            array_push($roles, 'ROLE_STUDENT');
+        }
+        if($this->getIsProfessor()) {
+            array_push($roles, 'ROLE_PROFESSOR');
+        }
+        if($this->getIsDesigner()) {
+            array_push($roles, 'ROLE_DESIGNER');
+        }
+        if($this->getIsAdministrator()) {
+            array_push($roles, 'ROLE_ADMIN');
+        }
+        return $roles;
     }
 
     public function eraseCredentials()
@@ -196,5 +233,197 @@ class User implements UserInterface, \Serializable
     public function getIsActive()
     {
         return $this->isActive;
+    }
+
+    /**
+     * Set dateCreated
+     *
+     * @param integer $dateCreated
+     *
+     * @return User
+     */
+    public function setDateCreated($dateCreated)
+    {
+        $this->dateCreated = $dateCreated;
+
+        return $this;
+    }
+
+    /**
+     * Get dateCreated
+     *
+     * @return integer
+     */
+    public function getDateCreated()
+    {
+        return $this->dateCreated;
+    }
+
+    /**
+     * Set dateDeleted
+     *
+     * @param integer $dateDeleted
+     *
+     * @return User
+     */
+    public function setDateDeleted($dateDeleted)
+    {
+        $this->dateDeleted = $dateDeleted;
+
+        return $this;
+    }
+
+    /**
+     * Get dateDeleted
+     *
+     * @return integer
+     */
+    public function getDateDeleted()
+    {
+        return $this->dateDeleted;
+    }
+
+    /**
+     * Set dateStart
+     *
+     * @param integer $dateStart
+     *
+     * @return User
+     */
+    public function setDateStart($dateStart)
+    {
+        $this->dateStart = $dateStart;
+
+        return $this;
+    }
+
+    /**
+     * Get dateStart
+     *
+     * @return integer
+     */
+    public function getDateStart()
+    {
+        return $this->dateStart;
+    }
+
+    /**
+     * Set dateEnd
+     *
+     * @param integer $dateEnd
+     *
+     * @return User
+     */
+    public function setDateEnd($dateEnd)
+    {
+        $this->dateEnd = $dateEnd;
+
+        return $this;
+    }
+
+    /**
+     * Get dateEnd
+     *
+     * @return integer
+     */
+    public function getDateEnd()
+    {
+        return $this->dateEnd;
+    }
+
+    /**
+     * Set isStudent
+     *
+     * @param boolean $isStudent
+     *
+     * @return User
+     */
+    public function setIsStudent($isStudent)
+    {
+        $this->isStudent = $isStudent;
+
+        return $this;
+    }
+
+    /**
+     * Get isStudent
+     *
+     * @return boolean
+     */
+    public function getIsStudent()
+    {
+        return $this->isStudent;
+    }
+
+    /**
+     * Set isProfessor
+     *
+     * @param boolean $isProfessor
+     *
+     * @return User
+     */
+    public function setIsProfessor($isProfessor)
+    {
+        $this->isProfessor = $isProfessor;
+
+        return $this;
+    }
+
+    /**
+     * Get isProfessor
+     *
+     * @return boolean
+     */
+    public function getIsProfessor()
+    {
+        return $this->isProfessor;
+    }
+
+    /**
+     * Set isDesigner
+     *
+     * @param boolean $isDesigner
+     *
+     * @return User
+     */
+    public function setIsDesigner($isDesigner)
+    {
+        $this->isDesigner = $isDesigner;
+
+        return $this;
+    }
+
+    /**
+     * Get isDesigner
+     *
+     * @return boolean
+     */
+    public function getIsDesigner()
+    {
+        return $this->isDesigner;
+    }
+
+    /**
+     * Set isAdministrator
+     *
+     * @param boolean $isAdministrator
+     *
+     * @return User
+     */
+    public function setIsAdministrator($isAdministrator)
+    {
+        $this->isAdministrator = $isAdministrator;
+
+        return $this;
+    }
+
+    /**
+     * Get isAdministrator
+     *
+     * @return boolean
+     */
+    public function getIsAdministrator()
+    {
+        return $this->isAdministrator;
     }
 }

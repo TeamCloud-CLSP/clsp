@@ -28,6 +28,9 @@ security:
             form_login:
                 login_path: login
                 check_path: login
+            logout:
+                path: /logout
+                target: /
             # activate different ways to authenticate
 
             # http_basic: ~
@@ -35,3 +38,16 @@ security:
 
             # form_login: ~
             # http://symfony.com/doc/current/cookbook/security/form_login_setup.html
+
+    access_control:
+        # require ROLE_STUDENT for /student*
+        - { path: ^/student, roles: ROLE_STUDENT }
+
+        # require ROLE_PROFESSOR for /professor*
+        - { path: ^/professor, roles: ROLE_PROFESSOR}
+
+        # require ROLE_DESIGNER for /designer*
+        - { path: ^/designer, roles: ROLE_DESIGNER }
+
+        # require ROLE_ADMIN for /admin*
+        - { path: ^/admin, roles: ROLE_ADMIN }
