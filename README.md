@@ -9,6 +9,10 @@ Ensure that you have PHP 7.1, MySQL, and Composer installed. Also check that PHP
 
 Download the project and run `composer install` in the project directory.
 
+## Run PHP Server
+
+From the project root, run `php bin/console server:run`
+
 ## Tech
 
 CLSP Rewrite utilizes various open source projects

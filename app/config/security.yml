@@ -4,8 +4,15 @@ security:
 
     # http://symfony.com/doc/current/security.html#b-configuring-how-users-are-loaded
     providers:
-        in_memory:
-            memory: ~
+        clspdb_provider:
+            entity:
+                class: AppBundle:User
+                property: username
+
+    encoders:
+        AppBundle\Entity\User:
+            algorithm: bcrypt
+
 
     firewalls:
         # disables authentication for assets and the profiler, adapt it according to your needs
@@ -14,10 +21,13 @@ security:
             security: false
 
         main:
+            pattern: ^/
+            http_basic: ~
+            provider: clspdb_provider
             anonymous: ~
             form_login:
-                            login_path: login
-                            check_path: login
+                login_path: login
+                check_path: login
             # activate different ways to authenticate
 
             # http_basic: ~
