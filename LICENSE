@@ -1,19 +1,17 @@
-Copyright (c) 2004-2017 Fabien Potencier
+Copyright (c) 2016 - 2017 Jinsong Han, Zakir Makda, Yuanhan Pan, David Riazati, Patrick Tam
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is furnished
-to do so, subject to the following conditions:
+The software is delivered as-is at the end of the semester.  There is no warranty or guarantee provided.
+The students make a best-effort scope the customer requirements within the limitations of available time.
+The students, Georgia Institute of Technology and the University System of Georgia are not responsible for
+software failures or misuse of the delivered system.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+There is no maintenance or service provided after software delivery.  The customer may request the project
+be continued by a new team.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+Intellectual property (IP) regulations are set by Georgia Institute of Technology and are detailed in
+section 5.4 of the faculty handbook. Customers and students can refer to the full policy
+at: http://www.policylibrary.gatech.edu/faculty-handbook/5.4-intellectual-property-policy.
+
+Briefly, the IP for software developed by students remains with the students.  Also, Georgia Institute of
+Technology may use student-developed software royalty-free.  All other IP, such as customer provided code,
+business ideas and processes, remains with the customer.
