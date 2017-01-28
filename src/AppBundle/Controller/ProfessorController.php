@@ -72,6 +72,39 @@ class ProfessorController extends Controller
         ));
     }
 
+    /**
+     * @Route("/professor/registrations/edit/{id}", name="professorRegistrationsMake")
+     */
+    public function showRegistrationEditAction(Request $request, $id)
+    {
+        $registration = $this->getDoctrine()->getRepository('AppBundle:Registration')->findOneById($id);
+        $manager = $this->getDoctrine()->getManager();
+
+        $form = $this->createFormBuilder($registration)
+            ->add('dateStart', IntegerType::class)
+            ->add('dateEnd', IntegerType::class)
+            ->add('save', SubmitType::class, array('label'=> 'Edit Signup'))
+            ->getForm();
+
+        $form->handleRequest($request);
+
+        if($form->isSubmitted() && $form->isValid()) {
+            $registration = $form->getData();
+            $manager->persist($registration);
+            $manager->flush();
+
+            return $this->render('professor/makeRegistrations.2.html.twig', array(
+                'base_dir' => realpath($this->getParameter('kernel.root_dir').'..').DIRECTORY_SEPARATOR,
+                'signup_code' => $registration->getSignupCode()
+            ));
+        }
+
+        return $this->render('professor/makeRegistrations.html.twig', array(
+            'base_dir' => realpath($this->getParameter('kernel.root_dir').'..').DIRECTORY_SEPARATOR,
+            'form' => $form->createView(),
+        ));
+    }
+
     private function generateSignupCode() {
         $randString = "";
         for($i = 0; $i < 16; $i++) {
