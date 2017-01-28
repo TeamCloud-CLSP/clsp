@@ -37,3 +37,8 @@ clear all caches
 ```
 php bin/console cache:clear
 ```
+
+regenerate Entity getters and stters
+```
+php bin/console doctrine:generate:entities AppBundle
+```

@@ -75,6 +75,18 @@ class User implements UserInterface, \Serializable
     private $isDesigner;
 
     /**
+     * @Assert\NotBlank()
+     * @Assert\Length(max=4096)
+     */
+    private $plainPassword;
+
+    /**
+     * @Assert\NotBlank()
+     * @Assert\Length(max=4096)
+     */
+    private $signupCode;
+
+    /**
      * @ORM\Column(name="is_administrator", type="boolean")
      */
     private $isAdministrator;
@@ -528,5 +540,53 @@ class User implements UserInterface, \Serializable
     public function getOwnedRegistrations()
     {
         return $this->owned_registrations;
+    }
+
+    /**
+     * Set plainPassword
+     *
+     * @param string $plainPassword
+     *
+     * @return User
+     */
+    public function setPlainPassword($plainPassword)
+    {
+        $this->plainPassword = $plainPassword;
+
+        return $this;
+    }
+
+    /**
+     * Get plainPassword
+     *
+     * @return string
+     */
+    public function getPlainPassword()
+    {
+        return $this->plainPassword;
+    }
+
+    /**
+     * Set signupCode
+     *
+     * @param string $signupCode
+     *
+     * @return User
+     */
+    public function setSignupCode($signupCode)
+    {
+        $this->signupCode = $signupCode;
+
+        return $this;
+    }
+
+    /**
+     * Get signupCode
+     *
+     * @return string
+     */
+    public function getSignupCode()
+    {
+        return $this->signupCode;
     }
 }
