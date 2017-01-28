@@ -4,6 +4,6 @@ namespace AppBundle\Entity;
 
 use Doctrine\ORM\EntityRepository;
 
-class UserRepository extends EntityRepository
+class RegistrationRepository extends EntityRepository
 {
 }

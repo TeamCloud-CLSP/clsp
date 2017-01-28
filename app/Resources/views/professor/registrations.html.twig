@@ -1,0 +1,40 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    Professor - List Registrations
+
+
+        {% for registration in app.user.getOwnedRegistrations %}
+        {{ registration.getOwner.getUsername }}
+        {{ registration.getDateEnd }}
+        {{ registration.getDateCreated }}
+        {{ registration.getDateDeleted }}
+        {{ registration.getDateStart }}
+        {{ registration.getDateEnd }}
+        {{ registration.getSignupCode }}
+
+            <table>
+                <tr>
+                    <th>Username</th>
+                    <th>Email</th>
+                </tr>
+
+            {% for user in registration.users %}
+            <tr>
+                <td>{{ user.getUsername }}</td>
+                <td>{{ user.getEmail }}</td>
+            </tr>
+
+
+            {% endfor %}
+            </table>
+        {% endfor %}
+
+
+{% endblock %}
+
+{% block stylesheets %}
+    <style>
+
+    </style>
+{% endblock %}

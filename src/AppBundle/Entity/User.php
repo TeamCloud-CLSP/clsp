@@ -79,6 +79,17 @@ class User implements UserInterface, \Serializable
      */
     private $isAdministrator;
 
+    /**
+     * @ORM\ManyToOne(targetEntity="Registration", inversedBy="users")
+     * @ORM\JoinColumn(name="registration_id", referencedColumnName="id", onDelete="set null")
+     */
+    private $registration;
+
+    /**
+     * @ORM\OneToMany(targetEntity="Registration", mappedBy="owner")
+     */
+    private $owned_registrations;
+
     public function __construct()
     {
         $this->isActive = true;
@@ -425,5 +436,97 @@ class User implements UserInterface, \Serializable
     public function getIsAdministrator()
     {
         return $this->isAdministrator;
+    }
+
+    /**
+     * Set registration
+     *
+     * @param \AppBundle\Entity\Registration $registration
+     *
+     * @return User
+     */
+    public function setRegistration(\AppBundle\Entity\Registration $registration = null)
+    {
+        $this->registration = $registration;
+
+        return $this;
+    }
+
+    /**
+     * Get registration
+     *
+     * @return \AppBundle\Entity\Registration
+     */
+    public function getRegistration()
+    {
+        return $this->registration;
+    }
+
+    /**
+     * Add registration
+     *
+     * @param \AppBundle\Entity\Registration $registration
+     *
+     * @return User
+     */
+    public function addRegistration(\AppBundle\Entity\Registration $registration)
+    {
+        $this->registrations[] = $registration;
+
+        return $this;
+    }
+
+    /**
+     * Remove registration
+     *
+     * @param \AppBundle\Entity\Registration $registration
+     */
+    public function removeRegistration(\AppBundle\Entity\Registration $registration)
+    {
+        $this->registrations->removeElement($registration);
+    }
+
+    /**
+     * Get registrations
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getRegistrations()
+    {
+        return $this->registrations;
+    }
+
+    /**
+     * Add ownedRegistration
+     *
+     * @param \AppBundle\Entity\Registration $ownedRegistration
+     *
+     * @return User
+     */
+    public function addOwnedRegistration(\AppBundle\Entity\Registration $ownedRegistration)
+    {
+        $this->owned_registrations[] = $ownedRegistration;
+
+        return $this;
+    }
+
+    /**
+     * Remove ownedRegistration
+     *
+     * @param \AppBundle\Entity\Registration $ownedRegistration
+     */
+    public function removeOwnedRegistration(\AppBundle\Entity\Registration $ownedRegistration)
+    {
+        $this->owned_registrations->removeElement($ownedRegistration);
+    }
+
+    /**
+     * Get ownedRegistrations
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getOwnedRegistrations()
+    {
+        return $this->owned_registrations;
     }
 }

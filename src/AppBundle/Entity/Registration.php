@@ -24,13 +24,6 @@ class Registration
     /**
      * @var int
      *
-     * @ORM\Column(name="user_id", type="integer")
-     */
-    private $userId;
-
-    /**
-     * @var int
-     *
      * @ORM\Column(name="date_created", type="integer")
      */
     private $dateCreated;
@@ -62,6 +55,17 @@ class Registration
      * @ORM\Column(name="signup_code", type="string", length=255)
      */
     private $signupCode;
+
+    /**
+     * @ORM\OneToMany(targetEntity="User", mappedBy="registration")
+     */
+    private $users;
+
+    /**
+     * @ORM\ManyToOne(targetEntity="User", inversedBy="owned_registrations")
+     * @ORM\JoinColumn(name="owner_id", referencedColumnName="id", onDelete="set null")
+     */
+    private $owner;
 
 
     /**
@@ -217,5 +221,93 @@ class Registration
     {
         return $this->signupCode;
     }
-}
+    /**
+     * Constructor
+     */
+    public function __construct()
+    {
+        $this->users = new \Doctrine\Common\Collections\ArrayCollection();
+    }
 
+    /**
+     * Add user
+     *
+     * @param \AppBundle\Entity\Registration $user
+     *
+     * @return Registration
+     */
+    public function addUser(\AppBundle\Entity\Registration $user)
+    {
+        $this->users[] = $user;
+
+        return $this;
+    }
+
+    /**
+     * Remove user
+     *
+     * @param \AppBundle\Entity\Registration $user
+     */
+    public function removeUser(\AppBundle\Entity\Registration $user)
+    {
+        $this->users->removeElement($user);
+    }
+
+    /**
+     * Get users
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getUsers()
+    {
+        return $this->users;
+    }
+
+    /**
+     * Set user
+     *
+     * @param \AppBundle\Entity\User $user
+     *
+     * @return Registration
+     */
+    public function setUser(\AppBundle\Entity\User $user = null)
+    {
+        $this->user = $user;
+
+        return $this;
+    }
+
+    /**
+     * Get user
+     *
+     * @return \AppBundle\Entity\User
+     */
+    public function getUser()
+    {
+        return $this->user;
+    }
+
+    /**
+     * Set owner
+     *
+     * @param \AppBundle\Entity\User $owner
+     *
+     * @return Registration
+     */
+    public function setOwner(\AppBundle\Entity\User $owner = null)
+    {
+        $this->owner = $owner;
+
+        return $this;
+    }
+
+    /**
+     * Get owner
+     *
+     * @return \AppBundle\Entity\User
+     */
+    public function getOwner()
+    {
+        return $this->owner;
+    }
+}

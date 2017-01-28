@@ -19,7 +19,7 @@ php bin/console server:run
 
 run the seeder
 ```
-php app/console doctrine:fixtures:load
+php bin/console doctrine:fixtures:load
 ```
 
 
