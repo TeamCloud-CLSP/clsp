@@ -75,6 +75,16 @@ class User implements UserInterface, \Serializable
     private $isDesigner;
 
     /**
+     * @ORM\Column(name="forgot_password_key", type="string", nullable=true)
+     */
+    private $forgotPasswordKey;
+
+    /**
+     * @ORM\Column(name="forgot_password_expiry", type="integer", nullable=true)
+     */
+    private $forgotPasswordExpiry;
+
+    /**
      * @Assert\NotBlank()
      * @Assert\Length(max=4096)
      */
@@ -588,5 +598,53 @@ class User implements UserInterface, \Serializable
     public function getSignupCode()
     {
         return $this->signupCode;
+    }
+
+    /**
+     * Set forgotPasswordKey
+     *
+     * @param integer $forgotPasswordKey
+     *
+     * @return User
+     */
+    public function setForgotPasswordKey($forgotPasswordKey)
+    {
+        $this->forgotPasswordKey = $forgotPasswordKey;
+
+        return $this;
+    }
+
+    /**
+     * Get forgotPasswordKey
+     *
+     * @return integer
+     */
+    public function getForgotPasswordKey()
+    {
+        return $this->forgotPasswordKey;
+    }
+
+    /**
+     * Set forgotPasswordExpiry
+     *
+     * @param integer $forgotPasswordExpiry
+     *
+     * @return User
+     */
+    public function setForgotPasswordExpiry($forgotPasswordExpiry)
+    {
+        $this->forgotPasswordExpiry = $forgotPasswordExpiry;
+
+        return $this;
+    }
+
+    /**
+     * Get forgotPasswordExpiry
+     *
+     * @return integer
+     */
+    public function getForgotPasswordExpiry()
+    {
+        return $this->forgotPasswordExpiry;
     }
 }
