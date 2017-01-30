@@ -73,7 +73,7 @@ class ProfessorController extends Controller
     }
 
     /**
-     * @Route("/professor/registrations/edit/{id}", name="professorRegistrationsMake")
+     * @Route("/professor/registrations/edit/{id}", name="professorRegistrationsEdit")
      */
     public function showRegistrationEditAction(Request $request, $id)
     {
