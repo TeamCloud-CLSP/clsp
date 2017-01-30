@@ -12,6 +12,8 @@ use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
+use Symfony\Component\Validator\Constraints\Length;
+use Symfony\Component\Validator\Constraints\NotBlank;
 
 class SecurityController extends Controller
 {
@@ -39,23 +41,32 @@ class SecurityController extends Controller
      */
     public function forgotPasswordAction(Request $request)
     {
-        $user = new User();
-        $form = $this->createFormBuilder($user)
-            ->add('username', TextType::class)
-            ->add('email', TextType::class)
-            ->add('plainPassword', PasswordType::class)
-            ->add('signupCode', TextType::class)
+        $forgotPass = array(
+            'username' => null
+        );
+        $form = $this->createFormBuilder($forgotPass)
+            ->add('username', TextType::class, array(
+                'constraints' => array(
+                    new NotBlank(),
+                    new Length(array('min' => 6))
+            )))
             ->add('save', SubmitType::class, array('label' => 'Send Email'))
             ->getForm();
 
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $user = $form->getData();
-            $realUser = $this->getDoctrine()->getRepository('AppBundle:User')->findOneByUsername($user->getUsername());
+            $forgotPass = $form->getData();
+            $realUser = $this->getDoctrine()->getRepository('AppBundle:User')->findOneByUsername($forgotPass['username']);
+            if(is_null($realUser)) {
+                return $this->render('security/forgotPassword.html.twig', array(
+                    'base_dir' => realpath($this->getParameter('kernel.root_dir').'..').DIRECTORY_SEPARATOR,
+                    'status' => $forgotPass['username'] . ' is not a valid user',
+                ));
+            }
             $resetCode = $this->generateSignupCode();
             $realUser->setForgotPasswordKey($resetCode);
-            $realUser->setForgotPasswordExpiry(time());
+            $realUser->setForgotPasswordExpiry(time() + 2 * 60 * 60);
             $manager = $this->getDoctrine()->getManager();
             $manager->persist($realUser);
             $manager->flush();
@@ -78,7 +89,7 @@ class SecurityController extends Controller
 
             return $this->render('security/forgotPassword.html.twig', array(
                 'base_dir' => realpath($this->getParameter('kernel.root_dir').'..').DIRECTORY_SEPARATOR,
-                'status' => 'Sent Password Reset Email',
+                'status' => 'Sent Password Reset Email to ' . $forgotPass['username'],
             ));
         }
         return $this->render('security/forgotPassword.html.twig', array(
@@ -95,18 +106,39 @@ class SecurityController extends Controller
     {
         $forgottenUser = $this->getDoctrine()->getRepository('AppBundle:User')->findOneByForgotPasswordKey($id);
 
-        $form = $this->createFormBuilder($forgottenUser)
-            ->add('username', TextType::class)
-            ->add('email', TextType::class)
-            ->add('plainPassword', PasswordType::class)
-            ->add('signupCode', TextType::class)
+        if( is_null($forgottenUser) ) {
+            return $this->render('security/forgotPassword.html.twig', array(
+                'base_dir' => realpath($this->getParameter('kernel.root_dir').'..').DIRECTORY_SEPARATOR,
+                'status' => 'Invalid Password Reset Link',
+            ));
+        }
+
+        if ( $forgottenUser->getForgotPasswordExpiry() < time() ) {
+            return $this->render('security/forgotPassword.html.twig', array(
+                'base_dir' => realpath($this->getParameter('kernel.root_dir').'..').DIRECTORY_SEPARATOR,
+                'status' => 'Password Reset Link has expired',
+            ));
+        }
+
+        $forgotPass = array(
+            'password' => null,
+        );
+
+
+        $form = $this->createFormBuilder($forgotPass)
+            ->add('password', PasswordType::class, array(
+                'constraints' => array(
+                    new NotBlank(),
+                    new Length(array('min' => 6))
+                )))
             ->add('save', SubmitType::class, array('label' => 'Reset Password'))
             ->getForm();
 
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
+            $forgotPass = $form->getData();
             $password = $this->get('security.password_encoder')
-                ->encodePassword($forgottenUser, $forgottenUser->getPlainPassword());
+                ->encodePassword($forgottenUser, $forgotPass['password']);
             $forgottenUser->setPassword($password);
             $forgottenUser->setForgotPasswordKey(null);
             $forgottenUser->setForgotPasswordExpiry(null);
@@ -121,7 +153,7 @@ class SecurityController extends Controller
         }
 
         return $this->render(
-            'registration/register.html.twig',
+            'security/forgotPassword.html.twig',
             array('form' => $form->createView())
         );
     }
