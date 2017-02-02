@@ -31,6 +31,7 @@ class SecurityController extends Controller
         $lastUsername = $authenticationUtils->getLastUsername();
 
         return $this->render('security/login.html.twig', array(
+            'base_dir' => realpath($this->getParameter('kernel.root_dir').'..').DIRECTORY_SEPARATOR,
             'last_username' => $lastUsername,
             'error'         => $error,
         ));

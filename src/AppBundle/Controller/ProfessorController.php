@@ -10,8 +10,11 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
+use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
+use \DateTime;
+use \DateTimeZone;
 
 class ProfessorController extends Controller
 {
@@ -45,16 +48,22 @@ class ProfessorController extends Controller
         $registrationCode = $this->generateSignupCode();
         $manager = $this->getDoctrine()->getManager();
 
-        $form = $this->createFormBuilder($registration)
-            ->add('dateStart', IntegerType::class)
-            ->add('dateEnd', IntegerType::class)
-            ->add('save', SubmitType::class, array('label'=> 'Create Signup'))
+        $regInfo = array(
+            'dateStart' => new DateTime('@' . time(), new DateTimeZone($this->getUser()->getTimezone())),
+            'dateEnd' => new DateTime('@' . time(), new DateTimeZone($this->getUser()->getTimezone()))
+        );
+        $form = $this->createFormBuilder($regInfo)
+            ->add('dateStart', DateTimeType::class)
+            ->add('dateEnd', DateTimeType::class)
+            ->add('save', SubmitType::class, array('label' => 'Edit Registration'))
             ->getForm();
 
         $form->handleRequest($request);
 
         if($form->isSubmitted() && $form->isValid()) {
-            $registration = $form->getData();
+            $regInfo = $form->getData();
+            $registration->setDateStart($regInfo['dateStart']->getTimestamp());
+            $registration->setDateEnd($regInfo['dateEnd']->getTimestamp());
             $registration->setDateCreated(time());
             $registration->setSignupCode($registrationCode);
             $registration->setOwner($this->getUser());
@@ -81,16 +90,22 @@ class ProfessorController extends Controller
         $registration = $this->getDoctrine()->getRepository('AppBundle:Registration')->findOneById($id);
         $manager = $this->getDoctrine()->getManager();
 
-        $form = $this->createFormBuilder($registration)
-            ->add('dateStart', IntegerType::class)
-            ->add('dateEnd', IntegerType::class)
-            ->add('save', SubmitType::class, array('label'=> 'Edit Signup'))
+        $regInfo = array(
+            'dateStart' => new DateTime('@' . $registration->getDateStart(), new DateTimeZone($this->getUser()->getTimezone())),
+            'dateEnd' => new DateTime('@' . $registration->getDateEnd(), new DateTimeZone($this->getUser()->getTimezone()))
+        );
+        $form = $this->createFormBuilder($regInfo)
+            ->add('dateStart', DateTimeType::class)
+            ->add('dateEnd', DateTimeType::class)
+            ->add('save', SubmitType::class, array('label' => 'Edit Registration'))
             ->getForm();
 
         $form->handleRequest($request);
 
         if($form->isSubmitted() && $form->isValid()) {
-            $registration = $form->getData();
+            $regInfo = $form->getData();
+            $registration->setDateStart($regInfo['dateStart']->getTimestamp());
+            $registration->setDateEnd($regInfo['dateEnd']->getTimestamp());
             $users = $registration->getUsers();
             foreach($users as $user) {
                 $user->setDateStart($registration->getDateStart());
@@ -99,10 +114,7 @@ class ProfessorController extends Controller
             $manager->persist($registration);
             $manager->flush();
 
-            return $this->render('professor/makeRegistrations.2.html.twig', array(
-                'base_dir' => realpath($this->getParameter('kernel.root_dir').'..').DIRECTORY_SEPARATOR,
-                'signup_code' => $registration->getSignupCode()
-            ));
+            return $this->redirectToRoute('professorRegistrations');
         }
 
         return $this->render('professor/makeRegistrations.html.twig', array(
@@ -114,11 +126,11 @@ class ProfessorController extends Controller
     private function generateSignupCode() {
         $randString = "";
         for($i = 0; $i < 16; $i++) {
-            $randVal = rand(0,36);
-            if($randVal < 10) {
-                $randString .= $randVal;
+            $randVal = rand(0,35);
+            if($randVal > 25) {
+                $randString .= $randVal - 26;
             } else {
-                $randString .= chr($randVal - 10 + 97);
+                $randString .= chr($randVal + 97);
             }
         }
         return $randString;

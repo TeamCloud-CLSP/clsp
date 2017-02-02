@@ -4,14 +4,21 @@ namespace AppBundle\Controller;
 
 use AppBundle\Form\UserType;
 use AppBundle\Entity\User;
+use AppBundle\Validator\Constraints\ValidSignupCode;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\Form\Extension\Core\Type\TimezoneType;
+use Symfony\Component\Form\Tests\Extension\Core\Type\TimezoneTypeTest;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
+use Symfony\Component\Validator\Constraints\Email;
+use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\Length;
 
 class RegistrationController extends Controller
 {
@@ -22,12 +29,36 @@ class RegistrationController extends Controller
     {
         // 1) build the form
         $user = new User();
-
+        $user->setTimezone('America/New_York');
         $form = $this->createFormBuilder($user)
-            ->add('username', TextType::class)
-            ->add('email', TextType::class)
-            ->add('plainPassword', PasswordType::class)
-            ->add('signupCode', TextType::class)
+            ->add('username', TextType::class, array(
+                "constraints" => array(
+                    new NotBlank(),
+  //                  new UniqueEntity(array('fields' => 'username', 'em' => 'default')),
+                    new Length(array('min' => 6))
+                )
+            ))
+            ->add('email', TextType::class, array(
+                "constraints" => array(
+                    new NotBlank(),
+       //             new UniqueEntity(array('fields' => 'email', 'em' => 'default')),
+                    new Email()
+                )
+            ))
+            ->add('plainPassword', PasswordType::class, array(
+                "constraints" => array(
+                    new NotBlank(),
+                    new Length(array('min' => 6))
+                )
+            ))
+            ->add('timezone', TimezoneType::class)
+            ->add('signupCode', TextType::class, array(
+                "constraints" => array(
+                    new NotBlank(),
+                    new Length(array('min' => 16)),
+       //             new ValidSignupCode(),
+                )
+            ))
             ->add('save', SubmitType::class, array('label' => 'Register'))
             ->getForm();
 

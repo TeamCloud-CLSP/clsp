@@ -1,7 +1,16 @@
 {% extends 'base.html.twig' %}
 
 {% block body %}
-    Professor
+    <div class="row">
+        <div class="col">
+            <h1>Professor Dashboard</h1>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <p><a href="{{ path('professorRegistrations') }}">Registrations</a></p>
+        </div>
+    </div>
 {% endblock %}
 
 {% block stylesheets %}

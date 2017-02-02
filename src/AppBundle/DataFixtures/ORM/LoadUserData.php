@@ -88,6 +88,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
         $newUser->setDateDeleted        ($userInfo['dateDeleted']);
         $newUser->setDateStart          ($userInfo['dateStart']);
         $newUser->setDateEnd            ($userInfo['dateEnd']);
+        $newUser->setTimezone           ($userInfo['timezone']);
         $newUser->setIsStudent          ($userInfo['isStudent']);
         $newUser->setIsProfessor        ($userInfo['isProfessor']);
         $newUser->setIsDesigner         ($userInfo['isDesigner']);
@@ -115,6 +116,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
             "dateDeleted"       => null,
             "dateStart"         => 0,
             "dateEnd"           => time() + 365*24*60*60,
+            "timezone"          => "America/New_York",
             "isStudent"         => false,
             "isProfessor"       => false,
             "isDesigner"        => false,
@@ -133,6 +135,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
             "dateDeleted"       => null,
             "dateStart"         => 0,
             "dateEnd"           => time() + 365*24*60*60,
+            "timezone"          => "America/New_York",
             "isStudent"         => false,
             "isProfessor"       => false,
             "isDesigner"        => true,
@@ -151,6 +154,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
             "dateDeleted"       => null,
             "dateStart"         => 0,
             "dateEnd"           => time() + 365*24*60*60,
+            "timezone"          => "America/New_York",
             "isStudent"         => false,
             "isProfessor"       => true,
             "isDesigner"        => false,
@@ -169,6 +173,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
             "dateDeleted"       => null,
             "dateStart"         => 0,
             "dateEnd"           => time() + 365*24*60*60,
+            "timezone"          => "America/New_York",
             "isStudent"         => true,
             "isProfessor"       => false,
             "isDesigner"        => false,
@@ -187,6 +192,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
             "dateDeleted"       => null,
             "dateStart"         => 0,
             "dateEnd"           => time() + 365*24*60*60,
+            "timezone"          => "America/New_York",
             "isStudent"         => true,
             "isProfessor"       => false,
             "isDesigner"        => false,
@@ -205,6 +211,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
             "dateDeleted"       => null,
             "dateStart"         => 0,
             "dateEnd"           => time() + 365*24*60*60,
+            "timezone"          => "America/New_York",
             "isStudent"         => true,
             "isProfessor"       => false,
             "isDesigner"        => false,
@@ -223,6 +230,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
             "dateDeleted"       => null,
             "dateStart"         => 0,
             "dateEnd"           => time() + 365*24*60*60,
+            "timezone"          => "America/New_York",
             "isStudent"         => true,
             "isProfessor"       => false,
             "isDesigner"        => false,
@@ -241,6 +249,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
             "dateDeleted"       => null,
             "dateStart"         => 0,
             "dateEnd"           => time() + 365*24*60*60,
+            "timezone"          => "America/New_York",
             "isStudent"         => true,
             "isProfessor"       => false,
             "isDesigner"        => false,
@@ -259,6 +268,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
             "dateDeleted"       => null,
             "dateStart"         => 0,
             "dateEnd"           => time() + 365*24*60*60,
+            "timezone"          => "America/New_York",
             "isStudent"         => true,
             "isProfessor"       => false,
             "isDesigner"        => false,
@@ -277,6 +287,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
             "dateDeleted"       => null,
             "dateStart"         => 0,
             "dateEnd"           => time() + 365*24*60*60,
+            "timezone"          => "America/New_York",
             "isStudent"         => true,
             "isProfessor"       => false,
             "isDesigner"        => false,
@@ -295,6 +306,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
             "dateDeleted"       => null,
             "dateStart"         => 0,
             "dateEnd"           => time() + 365*24*60*60,
+            "timezone"          => "America/New_York",
             "isStudent"         => true,
             "isProfessor"       => false,
             "isDesigner"        => false,
@@ -313,6 +325,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
             "dateDeleted"       => null,
             "dateStart"         => 0,
             "dateEnd"           => time() + 365*24*60*60,
+            "timezone"          => "America/New_York",
             "isStudent"         => true,
             "isProfessor"       => false,
             "isDesigner"        => false,

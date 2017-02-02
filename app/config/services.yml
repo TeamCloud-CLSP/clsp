@@ -7,3 +7,7 @@ services:
 #    service_name:
 #        class: AppBundle\Directory\ClassName
 #        arguments: ["@another_service_name", "plain_value", "%parameter_name%"]
+    app.valid_signup_code_validator:
+            class: AppBundle\Validator\Constraints\ValidSignupCodeValidator
+            tags:
+                - { name: validator.constraint_validator }

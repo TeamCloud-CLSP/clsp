@@ -60,6 +60,11 @@ class User implements UserInterface, \Serializable
     private $dateEnd;
 
     /**
+     * @ORM\Column(type="string", length=30)
+     */
+    private $timezone;
+
+    /**
      * @ORM\Column(name="is_student", type="boolean")
      */
     private $isStudent;
@@ -646,5 +651,29 @@ class User implements UserInterface, \Serializable
     public function getForgotPasswordExpiry()
     {
         return $this->forgotPasswordExpiry;
+    }
+
+    /**
+     * Set timezone
+     *
+     * @param string $timezone
+     *
+     * @return User
+     */
+    public function setTimezone($timezone)
+    {
+        $this->timezone = $timezone;
+
+        return $this;
+    }
+
+    /**
+     * Get timezone
+     *
+     * @return string
+     */
+    public function getTimezone()
+    {
+        return $this->timezone;
     }
 }

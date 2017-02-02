@@ -1,44 +1,81 @@
 {% extends 'base.html.twig' %}
 
 {% block body %}
-    Professor - List Registrations
-
-
+    <div class="row">
+        <div class="col">
+            <h1>Professor - List of Registrations</h1>
+        </div>
+    </div>
+        <div class="row">
+            <div class="col">
+                <a href="{{ path('professorRegistrationsMake') }}">Make Signup Code</a>
+            </div>
+        </div>
         {% for registration in app.user.getOwnedRegistrations %}
-        {{ registration.getOwner.getUsername }}
-        {{ registration.getDateEnd }}
-        {{ registration.getDateCreated }}
-        {{ registration.getDateDeleted }}
-        {{ registration.getDateStart }}
-        {{ registration.getDateEnd }}
-        {{ registration.getSignupCode }}
-        <a href="/professor/registrations/edit/{{ registration.getId }}">edit</a>
-            <table>
-                <tr>
-                    <th>Username</th>
-                    <th>Email</th>
-                    <th>Start</th>
-                    <th>End</th>
-                </tr>
+            <div class="row">
+                <div class="col">
+                    <div class="card mb-3">
+                        <div class="card-block">
+                            <h4 class="card-title">Registration - {{ loop.index }} <a class="btn btn-outline-primary float-right btn-sm" href="/professor/registrations/edit/{{ registration.getId }}">edit</a></h4>
+                            <table class="table">
+                                <thead class="thead-default">
+                                    <tr>
+                                        <th>Created</th>
+                                        <th>Start Date</th>
+                                        <th>End Date</th>
+                                        <th>Signup Code</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>{{ registration.getDateCreated | date('Y-m-d g:ia', app.user.getTimezone) }}</td>
+                                        <td>{{ registration.getDateStart | date('Y-m-d g:ia', app.user.getTimezone) }}</td>
+                                        <td>{{ registration.getDateEnd | date('Y-m-d g:ia', app.user.getTimezone) }}</td>
+                                        <td>{{ registration.getSignupCode }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <table class="table">
+                                <thead class="thead-default">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Start</th>
+                                    <th>End</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for user in registration.users %}
+                                    <tr>
+                                        <th scope="row">{{ loop.index }}</th>
+                                        <td>{{ user.getUsername }}</td>
+                                        <td>{{ user.getEmail }}</td>
+                                        <td>{{ user.getDateStart | date('Y-m-d g:ia', app.user.getTimezone) }}</td>
+                                        <td>{{ user.getDateEnd | date('Y-m-d g:ia', app.user.getTimezone) }}</td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-            {% for user in registration.users %}
-            <tr>
-                <td>{{ user.getUsername }}</td>
-                <td>{{ user.getEmail }}</td>
-                <td>{{ user.getDateStart }}</td>
-                <td>{{ user.getDateEnd }}</td>
-            </tr>
 
 
-            {% endfor %}
-            </table>
         {% endfor %}
+    </div>
+
+
+
+
+
+
+
+
+
 
 
 {% endblock %}
 
-{% block stylesheets %}
-    <style>
-
-    </style>
-{% endblock %}
