@@ -1,0 +1,14 @@
+{
+  "name": "clsp",
+  "homepage": "https://github.com/TeamCloud-CLSP/clsp",
+  "authors": [
+    "Patrick Tam <pjztam@gmail.com>"
+  ],
+  "description": "",
+  "main": "",
+  "license": "Proprietary",
+  "private": true,
+  "dependencies": {
+    "bootstrap": "4"
+  }
+}
