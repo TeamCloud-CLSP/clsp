@@ -17,12 +17,16 @@
                 <tr>
                     <th>Username</th>
                     <th>Email</th>
+                    <th>Start</th>
+                    <th>End</th>
                 </tr>
 
             {% for user in registration.users %}
             <tr>
                 <td>{{ user.getUsername }}</td>
                 <td>{{ user.getEmail }}</td>
+                <td>{{ user.getDateStart }}</td>
+                <td>{{ user.getDateEnd }}</td>
             </tr>
 
 

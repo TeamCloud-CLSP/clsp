@@ -3,6 +3,7 @@
 namespace AppBundle\Controller;
 
 use AppBundle\Entity\Registration;
+use AppBundle\Entity\User;
 use AppBundle\Tests\Controller\ProfessorControllerTest;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
@@ -90,6 +91,11 @@ class ProfessorController extends Controller
 
         if($form->isSubmitted() && $form->isValid()) {
             $registration = $form->getData();
+            $users = $registration->getUsers();
+            foreach($users as $user) {
+                $user->setDateStart($registration->getDateStart());
+                $user->setDateEnd($registration->getDateEnd());
+            }
             $manager->persist($registration);
             $manager->flush();
 

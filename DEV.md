@@ -42,3 +42,13 @@ regenerate Entity getters and stters
 ```
 php bin/console doctrine:generate:entities AppBundle
 ```
+
+create an entity
+```
+php bin/console doctrine:generate:entity
+```
+
+create new controller
+```
+php app/console generate:controller
+```
