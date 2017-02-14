@@ -12,9 +12,9 @@ run built in PHP 7.1 development web server
 php bin/console server:run
 ```
 
-set up database schema
+create databse
 ```
-php bin/console server:run
+php bin/console doctrine:database:create
 ```
 
 run the seeder
