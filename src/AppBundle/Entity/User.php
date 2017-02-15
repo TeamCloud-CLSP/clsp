@@ -108,10 +108,9 @@ class User implements UserInterface, \Serializable
     private $isAdministrator;
 
     /**
-     * @ORM\ManyToOne(targetEntity="Registration", inversedBy="users")
-     * @ORM\JoinColumn(name="registration_id", referencedColumnName="id", onDelete="set null")
+     * @ORM\OneToMany(targetEntity="Registration", mappedBy="professor")
      */
-    private $registration;
+    private $prof_registrations;
 
     /**
      * @ORM\OneToMany(targetEntity="Registration", mappedBy="owner")
@@ -141,6 +140,7 @@ class User implements UserInterface, \Serializable
         // $this->salt = md5(uniqid(null, true));
         $this->courses = new ArrayCollection();
         $this->student_registrations = new ArrayCollection();
+        $this->prof_registrations = new ArrayCollection();
     }
 
     public function getUsername()
@@ -484,63 +484,63 @@ class User implements UserInterface, \Serializable
         return $this->isAdministrator;
     }
 
-    /**
-     * Set registration
-     *
-     * @param \AppBundle\Entity\Registration $registration
-     *
-     * @return User
-     */
-    public function setRegistration(\AppBundle\Entity\Registration $registration = null)
-    {
-        $this->registration = $registration;
-
-        return $this;
-    }
-
-    /**
-     * Get registration
-     *
-     * @return \AppBundle\Entity\Registration
-     */
-    public function getRegistration()
-    {
-        return $this->registration;
-    }
-
-    /**
-     * Add registration
-     *
-     * @param \AppBundle\Entity\Registration $registration
-     *
-     * @return User
-     */
-    public function addRegistration(\AppBundle\Entity\Registration $registration)
-    {
-        $this->registrations[] = $registration;
-
-        return $this;
-    }
-
-    /**
-     * Remove registration
-     *
-     * @param \AppBundle\Entity\Registration $registration
-     */
-    public function removeRegistration(\AppBundle\Entity\Registration $registration)
-    {
-        $this->registrations->removeElement($registration);
-    }
-
-    /**
-     * Get registrations
-     *
-     * @return \Doctrine\Common\Collections\Collection
-     */
-    public function getRegistrations()
-    {
-        return $this->registrations;
-    }
+//    /**
+//     * Set registration
+//     *
+//     * @param \AppBundle\Entity\Registration $registration
+//     *
+//     * @return User
+//     */
+//    public function setRegistration(\AppBundle\Entity\Registration $registration = null)
+//    {
+//        $this->registration = $registration;
+//
+//        return $this;
+//    }
+//
+//    /**
+//     * Get registration
+//     *
+//     * @return \AppBundle\Entity\Registration
+//     */
+//    public function getRegistration()
+//    {
+//        return $this->registration;
+//    }
+//
+//    /**
+//     * Add registration
+//     *
+//     * @param \AppBundle\Entity\Registration $registration
+//     *
+//     * @return User
+//     */
+//    public function addRegistration(\AppBundle\Entity\Registration $registration)
+//    {
+//        $this->registrations[] = $registration;
+//
+//        return $this;
+//    }
+//
+//    /**
+//     * Remove registration
+//     *
+//     * @param \AppBundle\Entity\Registration $registration
+//     */
+//    public function removeRegistration(\AppBundle\Entity\Registration $registration)
+//    {
+//        $this->registrations->removeElement($registration);
+//    }
+//
+//    /**
+//     * Get registrations
+//     *
+//     * @return \Doctrine\Common\Collections\Collection
+//     */
+//    public function getRegistrations()
+//    {
+//        return $this->registrations;
+//    }
 
     /**
      * Add ownedRegistration

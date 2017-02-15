@@ -58,9 +58,10 @@ class Registration
     private $signupCode;
 
     /**
-     * @ORM\OneToMany(targetEntity="User", mappedBy="registration")
+     * @ORM\ManyToOne(targetEntity="User", inversedBy="prof_registrations")
+     * @ORM\JoinColumn(name = "professor_id", referencedColumnName = "id", onDelete = "set null")
      */
-    private $users;
+    private $professor;
 
     /**
      * @ORM\ManyToOne(targetEntity="User", inversedBy="owned_registrations")
@@ -243,7 +244,6 @@ class Registration
      */
     public function __construct()
     {
-        $this->users = new \Doctrine\Common\Collections\ArrayCollection();
         $this->classes = new ArrayCollection();
         $this->student_registrations = new ArrayCollection();
     }
