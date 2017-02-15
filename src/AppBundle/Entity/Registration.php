@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * Registration
  *
- * @ORM\Table(name="app_registrations")
+ * @ORM\Table(name="professor_registrations")
  * @ORM\Entity(repositoryClass="AppBundle\Repository\RegistrationRepository")
  */
 class Registration
@@ -78,6 +78,11 @@ class Registration
      * @ORM\OneToMany(targetEntity = "CLSPClass", mappedBy = "professor_registration")
      */
     private $classes;
+
+    /**
+     * @ORM\OneToMany(targetEntity = "StudentRegistration", mappedBy = "professor_registration")
+     */
+    private $student_registrations;
 
 
     /**
@@ -240,6 +245,7 @@ class Registration
     {
         $this->users = new \Doctrine\Common\Collections\ArrayCollection();
         $this->classes = new ArrayCollection();
+        $this->student_registrations = new ArrayCollection();
     }
 
     /**

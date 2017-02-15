@@ -82,6 +82,12 @@ class StudentRegistration
      */
     private $registeredClass;
 
+    /**
+     * @ORM\ManyToOne(targetEntity = "Registration", inversedBy = "student_registrations")
+     * @ORM\JoinColumn(name = "prof_registration_id", referencedColumnName = "id")
+     */
+    private $professor_registration;
+
     public function  __construct()
     {
         $this->students = new ArrayCollection();
