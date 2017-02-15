@@ -2,6 +2,7 @@
 
 namespace AppBundle\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -66,6 +67,17 @@ class Registration
      * @ORM\JoinColumn(name="owner_id", referencedColumnName="id", onDelete="set null")
      */
     private $owner;
+
+    /**
+     * @ORM\ManyToOne(targetEntity="Course", inversedBy="registrations")
+     * @ORM\JoinColumn(name = "course_id", referencedColumnName = "id", onDelete="set null")
+     */
+    private $course;
+
+    /**
+     * @ORM\OneToMany(targetEntity = "CLSPClass", mappedBy = "professor_registration")
+     */
+    private $classes;
 
 
     /**
@@ -227,6 +239,7 @@ class Registration
     public function __construct()
     {
         $this->users = new \Doctrine\Common\Collections\ArrayCollection();
+        $this->classes = new ArrayCollection();
     }
 
     /**

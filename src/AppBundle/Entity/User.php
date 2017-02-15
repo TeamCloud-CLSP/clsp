@@ -1,6 +1,7 @@
 <?php
 namespace AppBundle\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -117,11 +118,29 @@ class User implements UserInterface, \Serializable
      */
     private $owned_registrations;
 
+    /**
+     * @ORM\OneToMany(targetEntity = "Course", mappedBy = "user")
+     */
+    private $courses;
+
+    /**
+     * @ORM\OneToMany(targetEntity="StudentRegistration", mappedBy = "designer")
+     */
+    private $student_registrations;
+
+    /**
+     * @ORM\ManyToOne(targetEntity = "StudentRegistration", inversedBy = "students")
+     * @ORM\JoinColumn(name = "student_registration_id", referencedColumnName = "id")
+     */
+    private $registered_class;
+
     public function __construct()
     {
         $this->isActive = true;
         // may not be needed, see section on salt below
         // $this->salt = md5(uniqid(null, true));
+        $this->courses = new ArrayCollection();
+        $this->student_registrations = new ArrayCollection();
     }
 
     public function getUsername()
