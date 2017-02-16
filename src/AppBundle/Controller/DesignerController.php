@@ -156,8 +156,9 @@ class DesignerController extends Controller
                     )
                 )
                 ->setParameter(0, $name)->setParameter(1, $user_id)->execute();
+            $id = $conn->lastInsertId();
 
-            return new Response();
+            return $this->getCourse($request, $id);
 
         } else {
             $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
@@ -210,7 +211,7 @@ class DesignerController extends Controller
                 ->where('courses.id = ?')
                 ->setParameter(0, $name)->setParameter(1, $course_id)->execute();
 
-            return new Response();
+            return $this->getCourse($request, $course_id);
 
         } else {
             $jsr = new JsonResponse(array('error' => 'No modified fields were specified.'));
@@ -440,7 +441,7 @@ class DesignerController extends Controller
             $queryBuilder->set('date_end', '?')->where('id = ?')
                 ->setParameter(0, $date_start)->setParameter(1, $date_end)->setParameter(2, $pr_id)->execute();
 
-            return new Response();
+            return $this->getProfessorRegistration($request, $pr_id);
         } else {
             $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
             $jsr->setStatusCode(503);
@@ -538,7 +539,9 @@ class DesignerController extends Controller
                 ->setParameter(0, $date_start)->setParameter(1, $date_end)->setParameter(2, $course_id)->setParameter(3, $user_id)->setParameter(4, $professor_id)
                 ->setParameter(5, time())->setParameter(6, md5(mt_rand()))->execute();
 
-            return new Response();
+            $pr_id = $conn->lastInsertId();
+
+            return $this->getProfessorRegistration($request, $pr_id);
 
         } else {
             $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));

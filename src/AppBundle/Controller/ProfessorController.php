@@ -277,7 +277,9 @@ class ProfessorController extends Controller
                 ->setParameter(0, $date_start)->setParameter(1, $date_end)->setParameter(2, $class_id)->setParameter(3, $designer_id)->setParameter(4, $prof_reg_id)
                 ->setParameter(5, time())->setParameter(6, md5(mt_rand()))->setParameter(7, $name)->execute();
 
-            return new Response();
+            $sr_id = $conn->lastInsertId();
+
+            return $this->getStudentRegistration($request, $sr_id);
 
         } else {
             $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
@@ -345,7 +347,7 @@ class ProfessorController extends Controller
                 ->set('date_end', '?')->set('name', '?')->where('id = ?')
                 ->setParameter(0, $date_start)->setParameter(1, $date_end)->setParameter(2, $name)->setParameter(3, $sr_id)->execute();
 
-            return new Response();
+            return $this->getStudentRegistration($request, $sr_id);
         } else {
             $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
             $jsr->setStatusCode(503);
@@ -530,7 +532,9 @@ class ProfessorController extends Controller
                 )
                 ->setParameter(0, $name)->setParameter(1, $prof_reg_id)->setParameter(2, $course_id)->execute();
 
-            return new Response();
+            $class_id = $conn->lastInsertId();
+
+            return $this->getClass($request, $class_id);
 
         } else {
             $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
@@ -588,7 +592,7 @@ class ProfessorController extends Controller
             $queryBuilder->update('classes')->set('classes.name', '?')->where('classes.id = ?')
                 ->setParameter(0, $name)->setParameter(1, $class_id)->execute();
 
-            return new Response();
+            return $this->getClass($request, $class_id);
 
         } else {
             $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
