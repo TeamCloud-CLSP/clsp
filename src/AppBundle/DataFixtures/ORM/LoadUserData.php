@@ -10,7 +10,10 @@ use Doctrine\Common\Persistence\ObjectManager;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use AppBundle\Entity\User;
-use AppBundle\Entity\Registration;
+use AppBundle\Entity\ProfessorRegistration;
+use AppBundle\Entity\StudentRegistration;
+use AppBundle\Entity\Course;
+use AppBundle\Entity\CLSPClass;
 
 class LoadUserData implements FixtureInterface, ContainerAwareInterface
 {
@@ -27,11 +30,15 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
     public function load(ObjectManager $manager)
     {
         $testAdmin      = $this->createUser($this->getTestAdminInfo());
-        $testProfessor  = $this->createUser($this->getTestProfessorInfo());
-        $testDesigner   = $this->createUser($this->getTestDesignerInfo());
+        $testProfessor1  = $this->createUser($this->getTestProfessor1Info());
+        $testProfessor2  = $this->createUser($this->getTestProfessor2Info());
+        $testProfessor3  = $this->createUser($this->getTestProfessor3Info());
+        $testDesigner1   = $this->createUser($this->getTestDesigner1Info());
+        $testDesigner2   = $this->createUser($this->getTestDesigner2Info());
         $testReg1        = $this->createRegistration($this->getReg1Info());
         $testReg2        = $this->createRegistration($this->getReg2Info());
         $testReg3        = $this->createRegistration($this->getReg3Info());
+        $testReg4        = $this->createRegistration($this->getReg4Info());
         $testStudent1    = $this->createUser($this->getTestStudentInfo1());
         $testStudent2    = $this->createUser($this->getTestStudentInfo2());
         $testStudent3    = $this->createUser($this->getTestStudentInfo3());
@@ -41,27 +48,140 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
         $testStudent7    = $this->createUser($this->getTestStudentInfo7());
         $testStudent8    = $this->createUser($this->getTestStudentInfo8());
         $testStudent9    = $this->createUser($this->getTestStudentInfo9());
+        $testStudent10    = $this->createUser($this->getTestStudentInfo10());
+        $testStudentReg1 = $this->createStudentRegistration($this->getStudentReg1Info());
+        $testStudentReg2 = $this->createStudentRegistration($this->getStudentReg2Info());
+        $testStudentReg3 = $this->createStudentRegistration($this->getStudentReg3Info());
+        $testStudentReg4 = $this->createStudentRegistration($this->getStudentReg4Info());
+        $testStudentReg5 = $this->createStudentRegistration($this->getStudentReg5Info());
+        $testStudentReg6 = $this->createStudentRegistration($this->getStudentReg6Info());
+        $testCourse1 = $this->createCourse($this->getCourse1Info());
+        $testCourse2 = $this->createCourse($this->getCourse2Info());
+        $testCourse3 = $this->createCourse($this->getCourse3Info());
+        $testClass1 = $this->createCLSPClass($this->getClass1Info());
+        $testClass2 = $this->createCLSPClass($this->getClass2Info());
+        $testClass3 = $this->createCLSPClass($this->getClass3Info());
+        $testClass4 = $this->createCLSPClass($this->getClass4Info());
+        $testClass5 = $this->createCLSPClass($this->getClass5Info());
+        $testClass6 = $this->createCLSPClass($this->getClass6Info());
 
-        $testReg1->setOwner($testProfessor);
-        $testReg2->setOwner($testProfessor);
-        $testReg3->setOwner($testProfessor);
-        $testStudent1->setRegistration($testReg1);
-        $testStudent2->setRegistration($testReg1);
-        $testStudent3->setRegistration($testReg1);
-        $testStudent4->setRegistration($testReg2);
-        $testStudent5->setRegistration($testReg2);
-        $testStudent6->setRegistration($testReg2);
-        $testStudent7->setRegistration($testReg3);
-        $testStudent8->setRegistration($testReg3);
-        $testStudent9->setRegistration($testReg3);
+        // specifies the designer that made the course
+        $testCourse1->setDesigner($testDesigner1);
+        $testCourse2->setDesigner($testDesigner2);
+        $testCourse3->setDesigner($testDesigner2);
 
+        // specifies owner who made prof registration, and the course the registration is being given to
+        $testReg1->setOwner($testDesigner1);
+        $testReg1->setCourse($testCourse1);
+        $testReg2->setOwner($testDesigner1);
+        $testReg2->setCourse($testCourse1);
+        $testReg3->setOwner($testDesigner2);
+        $testReg3->setCourse($testCourse2);
+        $testReg4->setOwner($testDesigner2);
+        $testReg4->setCourse($testCourse3);
+
+//        $testDesigner1->addProfRegistration($testReg1);
+//        $testDesigner1->addProfRegistration($testReg2);
+//        $testDesigner2->addProfRegistration($testReg3);
+//        $testDesigner2->addProfRegistration($testReg4);
+
+        // links professor registrations with the professor
+        $testReg1->setProfessor($testProfessor1);
+        $testReg2->setProfessor($testProfessor2);
+        $testReg3->setProfessor($testProfessor3);
+        $testReg4->setProfessor($testProfessor3);
+        
+        $testProfessor1->addProfRegistration($testReg1);
+        
+
+        // links the classes to the courses
+        $testClass1->setCourse($testCourse1);
+        $testClass2->setCourse($testCourse1);
+        $testClass3->setCourse($testCourse1);
+        $testClass4->setCourse($testCourse2);
+        $testClass5->setCourse($testCourse2);
+        $testClass6->setCourse($testCourse3);
+
+        // links the student registration codes to classes
+        $testStudentReg1->setRegisteredClass($testClass1);
+        $testStudentReg2->setRegisteredClass($testClass2);
+        $testStudentReg3->setRegisteredClass($testClass3);
+        $testStudentReg4->setRegisteredClass($testClass4);
+        $testStudentReg5->setRegisteredClass($testClass5);
+        $testStudentReg6->setRegisteredClass($testClass6);
+        $testClass1->setStudentRegistration($testStudentReg1);
+        $testClass2->setStudentRegistration($testStudentReg2);
+        $testClass3->setStudentRegistration($testStudentReg3);
+        $testClass4->setStudentRegistration($testStudentReg4);
+        $testClass5->setStudentRegistration($testStudentReg5);
+        $testClass6->setStudentRegistration($testStudentReg6);
+        $testClass1->setProfessorRegistration($testReg1);
+        $testClass2->setProfessorRegistration($testReg1);
+        $testClass3->setProfessorRegistration($testReg2);
+        $testClass4->setProfessorRegistration($testReg3);
+        $testClass5->setProfessorRegistration($testReg3);
+        $testClass6->setProfessorRegistration($testReg4);
+
+        // links the original designer who gave the professor a registration code to the student registration code
+        $testStudentReg1->setDesigner($testDesigner1);
+        $testStudentReg2->setDesigner($testDesigner1);
+        $testStudentReg3->setDesigner($testDesigner1);
+        $testStudentReg4->setDesigner($testDesigner2);
+        $testStudentReg5->setDesigner($testDesigner2);
+        $testStudentReg6->setDesigner($testDesigner2);
+
+        // the professor registration that the student registration belongs to is linked
+        $testStudentReg1->setProfessorRegistration($testReg1);
+        $testStudentReg2->setProfessorRegistration($testReg1);
+        $testStudentReg3->setProfessorRegistration($testReg2);
+        $testStudentReg4->setProfessorRegistration($testReg3);
+        $testStudentReg5->setProfessorRegistration($testReg3);
+        $testStudentReg6->setProfessorRegistration($testReg4);
+
+        // most likely not necessary?
+//        $testDesigner1->addStudentRegistration($testStudentReg1);
+//        $testDesigner1->addStudentRegistration($testStudentReg2);
+//        $testDesigner1->addStudentRegistration($testStudentReg3);
+//        $testDesigner2->addStudentRegistration($testStudentReg4);
+//        $testDesigner2->addStudentRegistration($testStudentReg5);
+
+        // links students that registered to their registration code
+        $testStudent1->setRegisteredClass($testStudentReg1);
+        $testStudent2->setRegisteredClass($testStudentReg1);
+        $testStudent3->setRegisteredClass($testStudentReg1);
+        $testStudent4->setRegisteredClass($testStudentReg2);
+        $testStudent5->setRegisteredClass($testStudentReg2);
+        $testStudent6->setRegisteredClass($testStudentReg3);
+        $testStudent7->setRegisteredClass($testStudentReg3);
+        $testStudent8->setRegisteredClass($testStudentReg4);
+        $testStudent9->setRegisteredClass($testStudentReg5);
+        $testStudent10->setRegisteredClass($testStudentReg6);
 
         $manager->persist($testAdmin);
-        $manager->persist($testProfessor);
-        $manager->persist($testDesigner);
+        $manager->persist($testProfessor1);
+        $manager->persist($testProfessor2);
+        $manager->persist($testProfessor3);
+        $manager->persist($testDesigner1);
+        $manager->persist($testDesigner2);
+        $manager->persist($testCourse1);
+        $manager->persist($testCourse2);
+        $manager->persist($testCourse3);
+        $manager->persist($testClass1);
+        $manager->persist($testClass2);
+        $manager->persist($testClass3);
+        $manager->persist($testClass4);
+        $manager->persist($testClass5);
+        $manager->persist($testClass6);
         $manager->persist($testReg1);
         $manager->persist($testReg2);
         $manager->persist($testReg3);
+        $manager->persist($testReg4);
+        $manager->persist($testStudentReg1);
+        $manager->persist($testStudentReg2);
+        $manager->persist($testStudentReg3);
+        $manager->persist($testStudentReg4);
+        $manager->persist($testStudentReg5);
+        $manager->persist($testStudentReg6);
         $manager->persist($testStudent1);
         $manager->persist($testStudent2);
         $manager->persist($testStudent3);
@@ -71,6 +191,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
         $manager->persist($testStudent7);
         $manager->persist($testStudent8);
         $manager->persist($testStudent9);
+        $manager->persist($testStudent10);
 
         $manager->flush();
 
@@ -97,13 +218,36 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
     }
 
     private function createRegistration($registrationInfo) {
-        $newRegistration = new Registration();
+        $newRegistration = new ProfessorRegistration();
         $newRegistration->setDateCreated        ($registrationInfo['dateCreated']);
         $newRegistration->setDateDeleted        ($registrationInfo['dateDeleted']);
         $newRegistration->setDateStart          ($registrationInfo['dateStart']);
         $newRegistration->setDateEnd            ($registrationInfo['dateEnd']);
         $newRegistration->setSignupCode         ($registrationInfo['signupCode']);
         return $newRegistration;
+    }
+
+    private function createStudentRegistration($registrationInfo) {
+        $newStudentRegistration = new StudentRegistration();
+        $newStudentRegistration->setDateCreated        ($registrationInfo['dateCreated']);
+        $newStudentRegistration->setDateDeleted        ($registrationInfo['dateDeleted']);
+        $newStudentRegistration->setDateStart          ($registrationInfo['dateStart']);
+        $newStudentRegistration->setDateEnd            ($registrationInfo['dateEnd']);
+        $newStudentRegistration->setSignupCode         ($registrationInfo['signupCode']);
+        $newStudentRegistration->setName               ($registrationInfo['name']);
+        return $newStudentRegistration;
+    }
+
+    private function createCourse($registrationInfo) {
+        $newCourse = new Course();
+        $newCourse->setName        ($registrationInfo['name']);
+        return $newCourse;
+    }
+
+    private function createCLSPClass($registrationInfo) {
+        $newCLSPClass = new CLSPClass();
+        $newCLSPClass->setName        ($registrationInfo['name']);
+        return $newCLSPClass;
     }
 
     private function getTestAdminInfo() {
@@ -125,11 +269,11 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
         return $testAdmin;
     }
 
-    private function getTestDesignerInfo() {
+    private function getTestDesigner1Info() {
         $testDesigner = array(
-            "username"          => "testDesigner",
-            "password"          => "testDesigner",
-            "email"             => "testDesigner@test.com",
+            "username"          => "testDesignerChinese",
+            "password"          => "testDesignerC",
+            "email"             => "testDesignerChinese@test.com",
             "isActive"          => true,
             "dateCreated"       => time(),
             "dateDeleted"       => null,
@@ -144,11 +288,68 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
         return $testDesigner;
     }
 
-    private function getTestProfessorInfo() {
+    private function getTestDesigner2Info() {
+        $testDesigner = array(
+            "username"          => "testDesignerJapanese",
+            "password"          => "testDesignerJ",
+            "email"             => "testDesignerJapanese@test.com",
+            "isActive"          => true,
+            "dateCreated"       => time(),
+            "dateDeleted"       => null,
+            "dateStart"         => 0,
+            "dateEnd"           => time() + 365*24*60*60,
+            "timezone"          => "America/New_York",
+            "isStudent"         => false,
+            "isProfessor"       => false,
+            "isDesigner"        => true,
+            "isAdministrator"   => false,
+        );
+        return $testDesigner;
+    }
+
+    private function getTestProfessor1Info() {
         $testProfessor = array(
-            "username"          => "testProfessor",
-            "password"          => "testProfessor",
-            "email"             => "testProfessor@test.com",
+            "username"          => "testProfessor1C",
+            "password"          => "testProfessor1C",
+            "email"             => "testProfessor1C@test.com",
+            "isActive"          => true,
+            "dateCreated"       => time(),
+            "dateDeleted"       => null,
+            "dateStart"         => 0,
+            "dateEnd"           => time() + 365*24*60*60,
+            "timezone"          => "America/New_York",
+            "isStudent"         => false,
+            "isProfessor"       => true,
+            "isDesigner"        => false,
+            "isAdministrator"   => false,
+        );
+        return $testProfessor;
+    }
+
+    private function getTestProfessor2Info() {
+        $testProfessor = array(
+            "username"          => "testProfessor2C",
+            "password"          => "testProfessor2C",
+            "email"             => "testProfessor2C@test.com",
+            "isActive"          => true,
+            "dateCreated"       => time(),
+            "dateDeleted"       => null,
+            "dateStart"         => 0,
+            "dateEnd"           => time() + 365*24*60*60,
+            "timezone"          => "America/New_York",
+            "isStudent"         => false,
+            "isProfessor"       => true,
+            "isDesigner"        => false,
+            "isAdministrator"   => false,
+        );
+        return $testProfessor;
+    }
+
+    private function getTestProfessor3Info() {
+        $testProfessor = array(
+            "username"          => "testProfessor3J",
+            "password"          => "testProfessor3J",
+            "email"             => "testProfessor3J@test.com",
             "isActive"          => true,
             "dateCreated"       => time(),
             "dateDeleted"       => null,
@@ -334,6 +535,25 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
         return $testStudentInfo;
     }
 
+    private function getTestStudentInfo10() {
+        $testStudentInfo = array(
+            "username"          => "testStudent10",
+            "password"          => "testStudent10",
+            "email"             => "testStudent10@test.com",
+            "isActive"          => true,
+            "dateCreated"       => time(),
+            "dateDeleted"       => null,
+            "dateStart"         => 0,
+            "dateEnd"           => time() + 365*24*60*60,
+            "timezone"          => "America/New_York",
+            "isStudent"         => true,
+            "isProfessor"       => false,
+            "isDesigner"        => false,
+            "isAdministrator"   => false,
+        );
+        return $testStudentInfo;
+    }
+
 
     private function getReg1Info() {
         $regInfo = array(
@@ -341,7 +561,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
             "dateDeleted"       => null,
             "dateStart"         => 0,
             "dateEnd"           => time() + 365*24*60*60,
-            "signupCode"        => "1111116789abcdef",
+            "signupCode"        => "professorregistration1-58339",
         );
         return $regInfo;
     }
@@ -352,7 +572,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
             "dateDeleted"       => null,
             "dateStart"         => 0,
             "dateEnd"           => time() + 365*24*60*60,
-            "signupCode"        => "2222226789abcdef",
+            "signupCode"        => "professorregistration2-928AB",
         );
         return $regInfo;
     }
@@ -363,8 +583,155 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
             "dateDeleted"       => null,
             "dateStart"         => 0,
             "dateEnd"           => time() + 365*24*60*60,
-            "signupCode"        => "3333336789abcdef",
+            "signupCode"        => "professorregistration3-CA87D",
         );
         return $regInfo;
     }
+
+    private function getReg4Info() {
+        $regInfo = array(
+            "dateCreated"       => time(),
+            "dateDeleted"       => null,
+            "dateStart"         => 0,
+            "dateEnd"           => time() + 365*24*60*60,
+            "signupCode"        => "professorregistration4-38581",
+        );
+        return $regInfo;
+    }
+
+    private function getStudentReg1Info() {
+        $regInfo = array(
+            "dateCreated"       => time(),
+            "dateDeleted"       => null,
+            "dateStart"         => 0,
+            "dateEnd"           => time() + 100*24*60*60,
+            "signupCode"        => "studentregistration1-XK783",
+            "name"              => "CHIN 3002 A"
+        );
+        return $regInfo;
+    }
+
+    private function getStudentReg2Info() {
+        $regInfo = array(
+            "dateCreated"       => time(),
+            "dateDeleted"       => null,
+            "dateStart"         => 0,
+            "dateEnd"           => time() + 100*24*60*60,
+            "signupCode"        => "studentregistration2-9UIO3",
+            "name"              => "CHIN 3002 B"
+        );
+        return $regInfo;
+    }
+
+    private function getStudentReg3Info() {
+        $regInfo = array(
+            "dateCreated"       => time(),
+            "dateDeleted"       => null,
+            "dateStart"         => 0,
+            "dateEnd"           => time() + 100*24*60*60,
+            "signupCode"        => "studentregistration3-AKFIU",
+            "name"              => "CHIN 3002 C"
+        );
+        return $regInfo;
+    }
+
+    private function getStudentReg4Info() {
+        $regInfo = array(
+            "dateCreated"       => time(),
+            "dateDeleted"       => null,
+            "dateStart"         => 0,
+            "dateEnd"           => time() + 100*24*60*60,
+            "signupCode"        => "studentregistration4-A143U",
+            "name"              => "JAPN 3001 A"
+        );
+        return $regInfo;
+    }
+
+    private function getStudentReg5Info() {
+        $regInfo = array(
+            "dateCreated"       => time(),
+            "dateDeleted"       => null,
+            "dateStart"         => 0,
+            "dateEnd"           => time() + 100*24*60*60,
+            "signupCode"        => "studentregistration5-93FSD",
+            "name"              => "JAPN 3001 B"
+        );
+        return $regInfo;
+    }
+
+    private function getStudentReg6Info() {
+        $regInfo = array(
+            "dateCreated"       => time(),
+            "dateDeleted"       => null,
+            "dateStart"         => 0,
+            "dateEnd"           => time() + 100*24*60*60,
+            "signupCode"        => "studentregistration5-93FSD",
+            "name"              => "JAPN 4361 A"
+        );
+        return $regInfo;
+    }
+
+    private function getCourse1Info() {
+        $regInfo = array(
+            "name"       => "CHIN 3002"
+        );
+        return $regInfo;
+    }
+
+    private function getCourse2Info() {
+        $regInfo = array(
+            "name"       => "JAPN 3001"
+        );
+        return $regInfo;
+    }
+
+    private function getCourse3Info() {
+        $regInfo = array(
+            "name"       => "JAPN 4361"
+        );
+        return $regInfo;
+    }
+
+    private function getClass1Info() {
+        $regInfo = array(
+            "name"       => "CHIN 3002 A"
+        );
+        return $regInfo;
+    }
+
+    private function getClass2Info() {
+        $regInfo = array(
+            "name"       => "CHIN 3002 B"
+        );
+        return $regInfo;
+    }
+
+    private function getClass3Info() {
+        $regInfo = array(
+            "name"       => "CHIN 3002 C"
+        );
+        return $regInfo;
+    }
+
+    private function getClass4Info() {
+        $regInfo = array(
+            "name"       => "JAPN 3001 A"
+        );
+        return $regInfo;
+    }
+
+    private function getClass5Info() {
+        $regInfo = array(
+            "name"       => "JAPN 3001 B"
+        );
+        return $regInfo;
+    }
+
+    private function getClass6Info() {
+        $regInfo = array(
+            "name"       => "JAPN 4361 A"
+        );
+        return $regInfo;
+    }
+
 }

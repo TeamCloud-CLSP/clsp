@@ -33,12 +33,12 @@ class Course
      * @ORM\ManyToOne(targetEntity = "User", inversedBy = "courses")
      * @ORM\JoinColumn(name = "user_id", referencedColumnName = "id", onDelete = "set null")
      */
-    private $user;
+    private $designer;
 
     /**
-     * @ORM\OneToMany(targetEntity = "Registration", mappedBy = "course")
+     * @ORM\OneToMany(targetEntity = "ProfessorRegistration", mappedBy = "course")
      */
-    private $registrations;
+    private $professorRegistrations;
 
     /**
      * @ORM\OneToMany(targetEntity = "CLSPClass", mappedBy = "course")
@@ -48,17 +48,134 @@ class Course
 
     public function __construct()
     {
-        $this->registrations = new ArrayCollection();
+        $this->professorRegistrations = new ArrayCollection();
         $this->classes = new ArrayCollection();
     }
 
-    public function getCourseId()
+    /**
+     * Get id
+     *
+     * @return integer
+     */
+    public function getId()
     {
         return $this->id;
     }
 
+
+    /**
+     * Set name
+     *
+     * @param string $name
+     *
+     * @return Course
+     */
+    public function setName($name)
+    {
+        $this->name = $name;
+
+        return $this;
+    }
+
+    /**
+     * Get name
+     *
+     * @return string
+     */
     public function getName()
     {
         return $this->name;
+    }
+
+    /**
+     * Set designer
+     *
+     * @param \AppBundle\Entity\User $designer
+     *
+     * @return Course
+     */
+    public function setDesigner(\AppBundle\Entity\User $designer = null)
+    {
+        $this->designer = $designer;
+
+        return $this;
+    }
+
+    /**
+     * Get designer
+     *
+     * @return \AppBundle\Entity\User
+     */
+    public function getDesigner()
+    {
+        return $this->designer;
+    }
+
+    /**
+     * Add professorRegistration
+     *
+     * @param \AppBundle\Entity\ProfessorRegistration $professorRegistration
+     *
+     * @return Course
+     */
+    public function addProfessorRegistration(\AppBundle\Entity\ProfessorRegistration $professorRegistration)
+    {
+        $this->professorRegistrations[] = $professorRegistration;
+
+        return $this;
+    }
+
+    /**
+     * Remove professorRegistration
+     *
+     * @param \AppBundle\Entity\ProfessorRegistration $professorRegistration
+     */
+    public function removeProfessorRegistration(\AppBundle\Entity\ProfessorRegistration $professorRegistration)
+    {
+        $this->professorRegistrations->removeElement($professorRegistration);
+    }
+
+    /**
+     * Get professorRegistrations
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getProfessorRegistrations()
+    {
+        return $this->professorRegistrations;
+    }
+
+    /**
+     * Add class
+     *
+     * @param \AppBundle\Entity\CLSPClass $class
+     *
+     * @return Course
+     */
+    public function addClass(\AppBundle\Entity\CLSPClass $class)
+    {
+        $this->classes[] = $class;
+
+        return $this;
+    }
+
+    /**
+     * Remove class
+     *
+     * @param \AppBundle\Entity\CLSPClass $class
+     */
+    public function removeClass(\AppBundle\Entity\CLSPClass $class)
+    {
+        $this->classes->removeElement($class);
+    }
+
+    /**
+     * Get classes
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getClasses()
+    {
+        return $this->classes;
     }
 }

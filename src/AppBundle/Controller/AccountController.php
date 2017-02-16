@@ -4,18 +4,41 @@ namespace AppBundle\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
 use Symfony\Component\HttpFoundation\Request;
-
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Doctrine\ORM\EntityManager;
+use Doctrine\DBAL\Connection;
+use AppBundle\Database;
 
 class AccountController extends Controller
 {
     /**
-     * @Route("/account/", name="accountIndex")
+     * Returns basic account information of the logged in user.
+     * @Route("/api/account/", name="getAccountInformation")
+     * @Method({"GET"})
      */
-    public function indexAction(Request $request)
+    public function getAccountInformation(Request $request)
     {
-        return $this->render('account/index.html.twig', [
-            'base_dir' => realpath($this->getParameter('kernel.root_dir').'..').DIRECTORY_SEPARATOR,
-        ]);
+        // check if valid user is logged in
+        if (!$this->get('security.authorization_checker')->isGranted('IS_AUTHENTICATED_FULLY')) {
+            $jsr = new JsonResponse(array("error" => "User is not authenticated."));
+            $jsr->setStatusCode(503);
+            return $jsr;
+        }
+
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        $conn = Database::getInstance();
+        $queryBuilder = $conn->createQueryBuilder();
+        $c = Helper::getAppUsersColumns();
+        $result = $queryBuilder->select($c['id'], $c['username'], $c['email'], $c['is_active'], $c['date_created'], $c['date_deleted'], $c['date_start'], $c['date_end'],
+            $c['timezone'], $c['is_student'], $c['is_professor'], $c['is_designer'], $c['is_administrator'])
+            ->from('app_users')->where('id = ?')->setParameter(0, $user_id)->execute()->fetch();
+
+        $jsr = new JsonResponse($result);
+        $jsr->setStatusCode(200);
+        return $jsr;
     }
 }

@@ -108,17 +108,17 @@ class User implements UserInterface, \Serializable
     private $isAdministrator;
 
     /**
-     * @ORM\OneToMany(targetEntity="Registration", mappedBy="professor")
-     */
-    private $prof_registrations;
-
-    /**
-     * @ORM\OneToMany(targetEntity="Registration", mappedBy="owner")
+     * @ORM\OneToMany(targetEntity="ProfessorRegistration", mappedBy="owner")
      */
     private $owned_registrations;
 
     /**
-     * @ORM\OneToMany(targetEntity = "Course", mappedBy = "user")
+     * @ORM\OneToMany(targetEntity="ProfessorRegistration", mappedBy="professor")
+     */
+    private $prof_registrations;
+
+    /**
+     * @ORM\OneToMany(targetEntity = "Course", mappedBy = "designer")
      */
     private $courses;
 
@@ -140,6 +140,7 @@ class User implements UserInterface, \Serializable
         // $this->salt = md5(uniqid(null, true));
         $this->courses = new ArrayCollection();
         $this->student_registrations = new ArrayCollection();
+        $this->owned_registrations = new ArrayCollection();
         $this->prof_registrations = new ArrayCollection();
     }
 
@@ -205,6 +206,30 @@ class User implements UserInterface, \Serializable
             // $this->salt
             ) = unserialize($serialized);
     }
+    
+    public function getUserInfo()
+    {
+        $fields = array(
+            "username",
+            "email",
+            "isActive",
+            "dateCreated",
+            "dateDeleted",
+            "dateStart",
+            "dateEnd",
+            "timezone",
+            "isStudent",
+            "isProfessor",
+            "isDesigner",
+            "isAdministrator"
+        );
+        $userArray = array();
+        foreach ($fields as $f) {
+            $userArray[$f] = $this->{$f};
+        }
+        return $userArray;
+    }
+
 
     /**
      * Get id
@@ -389,6 +414,30 @@ class User implements UserInterface, \Serializable
     }
 
     /**
+     * Set timezone
+     *
+     * @param string $timezone
+     *
+     * @return User
+     */
+    public function setTimezone($timezone)
+    {
+        $this->timezone = $timezone;
+
+        return $this;
+    }
+
+    /**
+     * Get timezone
+     *
+     * @return string
+     */
+    public function getTimezone()
+    {
+        return $this->timezone;
+    }
+
+    /**
      * Set isStudent
      *
      * @param boolean $isStudent
@@ -461,173 +510,9 @@ class User implements UserInterface, \Serializable
     }
 
     /**
-     * Set isAdministrator
-     *
-     * @param boolean $isAdministrator
-     *
-     * @return User
-     */
-    public function setIsAdministrator($isAdministrator)
-    {
-        $this->isAdministrator = $isAdministrator;
-
-        return $this;
-    }
-
-    /**
-     * Get isAdministrator
-     *
-     * @return boolean
-     */
-    public function getIsAdministrator()
-    {
-        return $this->isAdministrator;
-    }
-
-//    /**
-//     * Set registration
-//     *
-//     * @param \AppBundle\Entity\Registration $registration
-//     *
-//     * @return User
-//     */
-//    public function setRegistration(\AppBundle\Entity\Registration $registration = null)
-//    {
-//        $this->registration = $registration;
-//
-//        return $this;
-//    }
-//
-//    /**
-//     * Get registration
-//     *
-//     * @return \AppBundle\Entity\Registration
-//     */
-//    public function getRegistration()
-//    {
-//        return $this->registration;
-//    }
-//
-//    /**
-//     * Add registration
-//     *
-//     * @param \AppBundle\Entity\Registration $registration
-//     *
-//     * @return User
-//     */
-//    public function addRegistration(\AppBundle\Entity\Registration $registration)
-//    {
-//        $this->registrations[] = $registration;
-//
-//        return $this;
-//    }
-//
-//    /**
-//     * Remove registration
-//     *
-//     * @param \AppBundle\Entity\Registration $registration
-//     */
-//    public function removeRegistration(\AppBundle\Entity\Registration $registration)
-//    {
-//        $this->registrations->removeElement($registration);
-//    }
-//
-//    /**
-//     * Get registrations
-//     *
-//     * @return \Doctrine\Common\Collections\Collection
-//     */
-//    public function getRegistrations()
-//    {
-//        return $this->registrations;
-//    }
-
-    /**
-     * Add ownedRegistration
-     *
-     * @param \AppBundle\Entity\Registration $ownedRegistration
-     *
-     * @return User
-     */
-    public function addOwnedRegistration(\AppBundle\Entity\Registration $ownedRegistration)
-    {
-        $this->owned_registrations[] = $ownedRegistration;
-
-        return $this;
-    }
-
-    /**
-     * Remove ownedRegistration
-     *
-     * @param \AppBundle\Entity\Registration $ownedRegistration
-     */
-    public function removeOwnedRegistration(\AppBundle\Entity\Registration $ownedRegistration)
-    {
-        $this->owned_registrations->removeElement($ownedRegistration);
-    }
-
-    /**
-     * Get ownedRegistrations
-     *
-     * @return \Doctrine\Common\Collections\Collection
-     */
-    public function getOwnedRegistrations()
-    {
-        return $this->owned_registrations;
-    }
-
-    /**
-     * Set plainPassword
-     *
-     * @param string $plainPassword
-     *
-     * @return User
-     */
-    public function setPlainPassword($plainPassword)
-    {
-        $this->plainPassword = $plainPassword;
-
-        return $this;
-    }
-
-    /**
-     * Get plainPassword
-     *
-     * @return string
-     */
-    public function getPlainPassword()
-    {
-        return $this->plainPassword;
-    }
-
-    /**
-     * Set signupCode
-     *
-     * @param string $signupCode
-     *
-     * @return User
-     */
-    public function setSignupCode($signupCode)
-    {
-        $this->signupCode = $signupCode;
-
-        return $this;
-    }
-
-    /**
-     * Get signupCode
-     *
-     * @return string
-     */
-    public function getSignupCode()
-    {
-        return $this->signupCode;
-    }
-
-    /**
      * Set forgotPasswordKey
      *
-     * @param integer $forgotPasswordKey
+     * @param string $forgotPasswordKey
      *
      * @return User
      */
@@ -641,7 +526,7 @@ class User implements UserInterface, \Serializable
     /**
      * Get forgotPasswordKey
      *
-     * @return integer
+     * @return string
      */
     public function getForgotPasswordKey()
     {
@@ -673,26 +558,186 @@ class User implements UserInterface, \Serializable
     }
 
     /**
-     * Set timezone
+     * Set isAdministrator
      *
-     * @param string $timezone
+     * @param boolean $isAdministrator
      *
      * @return User
      */
-    public function setTimezone($timezone)
+    public function setIsAdministrator($isAdministrator)
     {
-        $this->timezone = $timezone;
+        $this->isAdministrator = $isAdministrator;
 
         return $this;
     }
 
     /**
-     * Get timezone
+     * Get isAdministrator
      *
-     * @return string
+     * @return boolean
      */
-    public function getTimezone()
+    public function getIsAdministrator()
     {
-        return $this->timezone;
+        return $this->isAdministrator;
+    }
+
+    /**
+     * Add ownedRegistration
+     *
+     * @param \AppBundle\Entity\ProfessorRegistration $ownedRegistration
+     *
+     * @return User
+     */
+    public function addOwnedRegistration(\AppBundle\Entity\ProfessorRegistration $ownedRegistration)
+    {
+        $this->owned_registrations[] = $ownedRegistration;
+
+        return $this;
+    }
+
+    /**
+     * Remove ownedRegistration
+     *
+     * @param \AppBundle\Entity\ProfessorRegistration $ownedRegistration
+     */
+    public function removeOwnedRegistration(\AppBundle\Entity\ProfessorRegistration $ownedRegistration)
+    {
+        $this->owned_registrations->removeElement($ownedRegistration);
+    }
+
+    /**
+     * Get ownedRegistrations
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getOwnedRegistrations()
+    {
+        return $this->owned_registrations;
+    }
+
+    /**
+     * Add profRegistration
+     *
+     * @param \AppBundle\Entity\ProfessorRegistration $profRegistration
+     *
+     * @return User
+     */
+    public function addProfRegistration(\AppBundle\Entity\ProfessorRegistration $profRegistration)
+    {
+        $this->prof_registrations[] = $profRegistration;
+
+        return $this;
+    }
+
+    /**
+     * Remove profRegistration
+     *
+     * @param \AppBundle\Entity\ProfessorRegistration $profRegistration
+     */
+    public function removeProfRegistration(\AppBundle\Entity\ProfessorRegistration $profRegistration)
+    {
+        $this->prof_registrations->removeElement($profRegistration);
+    }
+
+    /**
+     * Get profRegistrations
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getProfRegistrations()
+    {
+        return $this->prof_registrations;
+    }
+
+    /**
+     * Add course
+     *
+     * @param \AppBundle\Entity\Course $course
+     *
+     * @return User
+     */
+    public function addCourse(\AppBundle\Entity\Course $course)
+    {
+        $this->courses[] = $course;
+
+        return $this;
+    }
+
+    /**
+     * Remove course
+     *
+     * @param \AppBundle\Entity\Course $course
+     */
+    public function removeCourse(\AppBundle\Entity\Course $course)
+    {
+        $this->courses->removeElement($course);
+    }
+
+    /**
+     * Get courses
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getCourses()
+    {
+        return $this->courses;
+    }
+
+    /**
+     * Add studentRegistration
+     *
+     * @param \AppBundle\Entity\StudentRegistration $studentRegistration
+     *
+     * @return User
+     */
+    public function addStudentRegistration(\AppBundle\Entity\StudentRegistration $studentRegistration)
+    {
+        $this->student_registrations[] = $studentRegistration;
+
+        return $this;
+    }
+
+    /**
+     * Remove studentRegistration
+     *
+     * @param \AppBundle\Entity\StudentRegistration $studentRegistration
+     */
+    public function removeStudentRegistration(\AppBundle\Entity\StudentRegistration $studentRegistration)
+    {
+        $this->student_registrations->removeElement($studentRegistration);
+    }
+
+    /**
+     * Get studentRegistrations
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getStudentRegistrations()
+    {
+        return $this->student_registrations;
+    }
+
+    /**
+     * Set registeredClass
+     *
+     * @param \AppBundle\Entity\StudentRegistration $registeredClass
+     *
+     * @return User
+     */
+    public function setRegisteredClass(\AppBundle\Entity\StudentRegistration $registeredClass = null)
+    {
+        $this->registered_class = $registeredClass;
+
+        return $this;
+    }
+
+    /**
+     * Get registeredClass
+     *
+     * @return \AppBundle\Entity\StudentRegistration
+     */
+    public function getRegisteredClass()
+    {
+        return $this->registered_class;
     }
 }

@@ -38,7 +38,7 @@ class CLSPClass
     private $course;
 
     /**
-     * @ORM\ManyToOne(targetEntity = "Registration", inversedBy = "classes")
+     * @ORM\ManyToOne(targetEntity = "ProfessorRegistration", inversedBy = "classes")
      * @ORM\JoinColumn(name = "registration_id", referencedColumnName = "id")
      */
     private $professor_registration;
@@ -47,4 +47,110 @@ class CLSPClass
      * @ORM\OneToOne(targetEntity = "StudentRegistration", mappedBy = "registeredClass")
      */
     private $student_registration;
+
+    /**
+     * Get id
+     *
+     * @return integer
+     */
+    public function getId()
+    {
+        return $this->id;
+    }
+
+    /**
+     * Set name
+     *
+     * @param string $name
+     *
+     * @return CLSPClass
+     */
+    public function setName($name)
+    {
+        $this->name = $name;
+
+        return $this;
+    }
+
+    /**
+     * Get name
+     *
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /**
+     * Set course
+     *
+     * @param \AppBundle\Entity\Course $course
+     *
+     * @return CLSPClass
+     */
+    public function setCourse(\AppBundle\Entity\Course $course = null)
+    {
+        $this->course = $course;
+
+        return $this;
+    }
+
+    /**
+     * Get course
+     *
+     * @return \AppBundle\Entity\Course
+     */
+    public function getCourse()
+    {
+        return $this->course;
+    }
+
+    /**
+     * Set professorRegistration
+     *
+     * @param \AppBundle\Entity\ProfessorRegistration $professorRegistration
+     *
+     * @return CLSPClass
+     */
+    public function setProfessorRegistration(\AppBundle\Entity\ProfessorRegistration $professorRegistration = null)
+    {
+        $this->professor_registration = $professorRegistration;
+
+        return $this;
+    }
+
+    /**
+     * Get professorRegistration
+     *
+     * @return \AppBundle\Entity\ProfessorRegistration
+     */
+    public function getProfessorRegistration()
+    {
+        return $this->professor_registration;
+    }
+
+    /**
+     * Set studentRegistration
+     *
+     * @param \AppBundle\Entity\StudentRegistration $studentRegistration
+     *
+     * @return CLSPClass
+     */
+    public function setStudentRegistration(\AppBundle\Entity\StudentRegistration $studentRegistration = null)
+    {
+        $this->student_registration = $studentRegistration;
+
+        return $this;
+    }
+
+    /**
+     * Get studentRegistration
+     *
+     * @return \AppBundle\Entity\StudentRegistration
+     */
+    public function getStudentRegistration()
+    {
+        return $this->student_registration;
+    }
 }

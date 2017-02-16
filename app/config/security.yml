@@ -42,13 +42,13 @@ security:
 
     access_control:
         # require ROLE_STUDENT for /student*
-        - { path: ^/student, roles: ROLE_STUDENT }
+        - { path: ^/api/student, roles: ROLE_STUDENT }
 
         # require ROLE_PROFESSOR for /professor*
-        - { path: ^/professor, roles: ROLE_PROFESSOR}
+        - { path: ^/api/professor, roles: ROLE_PROFESSOR}
 
         # require ROLE_DESIGNER for /designer*
-        - { path: ^/designer, roles: ROLE_DESIGNER }
+        - { path: ^/api/designer, roles: ROLE_DESIGNER }
 
         # require ROLE_ADMIN for /admin*
-        - { path: ^/admin, roles: ROLE_ADMIN }
+        - { path: ^/api/admin, roles: ROLE_ADMIN }
