@@ -11,3 +11,7 @@ services:
             class: AppBundle\Validator\Constraints\ValidSignupCodeValidator
             tags:
                 - { name: validator.constraint_validator }
+    cors_listener:
+        class: AppBundle\Listener\CORSListener
+        tags:
+            - { name: kernel.event_listener, event: kernel.response, method: onKernelResponse }
