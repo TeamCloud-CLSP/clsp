@@ -15,3 +15,7 @@ services:
         class: AppBundle\Listener\CORSListener
         tags:
             - { name: kernel.event_listener, event: kernel.response, method: onKernelResponse }
+    json_listener:
+            class: AppBundle\Listener\JsonRequestTransformerListener
+            tags:
+                - { name: kernel.event_listener, event: kernel.request, method: onKernelRequest }
