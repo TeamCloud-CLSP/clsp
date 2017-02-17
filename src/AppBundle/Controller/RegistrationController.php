@@ -152,7 +152,7 @@ class RegistrationController extends Controller
                     )
                     ->setParameter(0, $username)->setParameter(1, $encoder->encodePassword($user, $password))->setParameter(2, $email)->setParameter(3, 1)->setParameter(4, time())
                     ->setParameter(5, time())->setParameter(6, $date_end)->setParameter(7, date_default_timezone_get())
-                    ->setParameter(8, 0)->setParameter(9, 1)->setParameter(10, 0)->setParameter(11, 0)->setParameter(12, $sr_id)->execute();
+                    ->setParameter(8, 1)->setParameter(9, 0)->setParameter(10, 0)->setParameter(11, 0)->setParameter(12, $sr_id)->execute();
 
                 $student_id = $conn->lastInsertId();
 
@@ -177,24 +177,6 @@ class RegistrationController extends Controller
             $jsr->setStatusCode(400);
             return $jsr;
         }
-
-        // runs query to get the class specified
-        $conn = Database::getInstance();
-        $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('classes.id', 'classes.name')
-            ->from('app_users', 'students')->innerJoin('students', 'student_registrations', 'sr', 'students.student_registration_id = sr.id')
-            ->innerJoin('sr', 'classes', 'classes', 'sr.class_id = classes.id')
-            ->where('students.id = ?')->andWhere('sr.date_start < ?')->andWhere('sr.date_end > ?')
-            ->setParameter(0, $user_id)->setParameter(1, time())->setParameter(2, time())->execute()->fetchAll();
-
-        // if nothing was returned, give error. if multiple results, also give error (each key should be unique)
-        if (count($results) < 1) {
-            $jsr = new JsonResponse(array('error' => 'Class does not exist, or has expired.'));
-            $jsr->setStatusCode(503);
-            return $jsr;
-        }
-
-        return new JsonResponse($results[0]);
     }
 
 
