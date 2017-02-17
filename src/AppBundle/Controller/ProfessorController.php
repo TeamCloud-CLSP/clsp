@@ -48,7 +48,7 @@ class ProfessorController extends Controller
      * Can filter by name
      *
      * @Route("/api/professor/courses", name="getCoursesAsProfessor")
-     * @Method({"GET"})
+     * @Method({"GET", "OPTIONS"})
      */
     public function getCourses(Request $request) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
@@ -76,7 +76,7 @@ class ProfessorController extends Controller
      * Gets all registrations that the professor has
      *
      * @Route("/api/professor/registrations/professor", name="getProfRegistrationsAsProfessor")
-     * @Method({"GET"})
+     * @Method({"GET", "OPTIONS"})
      */
     public function getRegistrations(Request $request) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
@@ -108,7 +108,7 @@ class ProfessorController extends Controller
      *
      *
      * @Route("/api/professor/main", name="getMainStructureProfessor")
-     * @Method({"GET"})
+     * @Method({"GET", "OPTIONS"})
      */
     public function getMainPageStructure(Request $request) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
@@ -149,7 +149,7 @@ class ProfessorController extends Controller
      * Gets detailed information on a student registrations that the professor has
      *
      * @Route("/api/professor/registrations/student/{id}", name="getStudentRegistrationSingleAsProfessor")
-     * @Method({"GET"})
+     * @Method({"GET", "OPTIONS"})
      */
     public function getStudentRegistration(Request $request, $id) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
@@ -183,7 +183,7 @@ class ProfessorController extends Controller
      * Gets student registrations that the professor has
      *
      * @Route("/api/professor/registrations/student", name="getStudentRegistrationAsProfessor")
-     * @Method({"GET"})
+     * @Method({"GET", "OPTIONS"})
      */
     public function getStudentRegistrations(Request $request) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
@@ -211,7 +211,7 @@ class ProfessorController extends Controller
      * Takes in: date_start, date_end, class_id, name
      *
      * @Route("/api/professor/registrations/student", name="createStudentRegistrationAsProfessor")
-     * @Method({"POST"})
+     * @Method({"POST", "OPTIONS"})
      */
     public function createStudentRegistration(Request $request) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
@@ -298,7 +298,7 @@ class ProfessorController extends Controller
      *      "name" - name of class
      *
      * @Route("/api/professor/registrations/student/{id}", name="editStudentRegistrationAsProfessor")
-     * @Method({"POST"})
+     * @Method({"POST", "OPTIONS"})
      */
     public function editStudentRegistration(Request $request, $id)
     {
@@ -360,7 +360,7 @@ class ProfessorController extends Controller
      * Deletes a student registrations that the professor has
      *
      * @Route("/api/professor/registrations/student/{id}", name="deleteStudentRegistrationSingleAsProfessor")
-     * @Method({"DELETE"})
+     * @Method({"DELETE", "OPTIONS"})
      */
     public function deleteStudentRegistration(Request $request, $id) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
@@ -404,7 +404,7 @@ class ProfessorController extends Controller
      * Can filter by name
      *
      * @Route("/api/professor/classes", name="getClassesAsProfessor")
-     * @Method({"GET"})
+     * @Method({"GET", "OPTIONS"})
      */
     public function getClasses(Request $request) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
@@ -433,7 +433,7 @@ class ProfessorController extends Controller
      * Gets information on a specific class that the professor owns
      *
      * @Route("/api/professor/classes/{id}", name="getClassAsProfessor")
-     * @Method({"GET"})
+     * @Method({"GET", "OPTIONS"})
      */
     public function getClass(Request $request, $id) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
@@ -478,7 +478,7 @@ class ProfessorController extends Controller
      *      course_id - id of the course
      *
      * @Route("/api/professor/classes", name="createClass")
-     * @Method({"POST"})
+     * @Method({"POST", "OPTIONS"})
      */
     public function createClass(Request $request) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
@@ -552,7 +552,7 @@ class ProfessorController extends Controller
      *      course_id - id of the course
      *
      * @Route("/api/professor/classes/{id}", name="editClass")
-     * @Method({"POST"})
+     * @Method({"POST", "OPTIONS"})
      */
     public function editClass(Request $request, $id) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
@@ -606,7 +606,7 @@ class ProfessorController extends Controller
      * Deletes a specific class that the professor owns
      *
      * @Route("/api/professor/classes/{id}", name="deleteClass")
-     * @Method({"DELETE"})
+     * @Method({"DELETE", "OPTIONS"})
      */
     public function deleteClass(Request $request, $id) {
         $user = $this->get('security.token_storage')->getToken()->getUser();

@@ -33,6 +33,14 @@ class JsonRequestTransformerListener
             $response = Response::create('Unable to parse request.', 400);
             $event->setResponse($response);
         }
+
+        $method  = $request->getRealMethod();
+
+        if ('OPTIONS' == $method) {
+            $response = new Response();
+            $event->setResponse($response);
+        }
+
     }
     private function isJsonRequest(Request $request)
     {

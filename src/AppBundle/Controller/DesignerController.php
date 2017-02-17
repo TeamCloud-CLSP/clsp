@@ -36,7 +36,7 @@ class DesignerController extends Controller
     /**
      * Gets all student registrations associated with a professor registration (that the designer owns!)
      * @Route("/api/designer/registrations/professor/{id}/student", name="getStudentRegistrationsByProfessorRegistrationAsDesigner")
-     * @Method({"GET"})
+     * @Method({"GET", "OPTIONS"})
      */
     public function getStudentRegistrations(Request $request, $id) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
@@ -70,7 +70,7 @@ class DesignerController extends Controller
      * Can filter by name
      *
      * @Route("/api/designer/courses", name="getCoursesAsDesigner")
-     * @Method({"GET"})
+     * @Method({"GET", "OPTIONS"})
      */
     public function getCourses(Request $request) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
@@ -95,7 +95,7 @@ class DesignerController extends Controller
      * Gets specific information on a specific course that belongs to the designer
      *
      * @Route("/api/designer/course/{id}", name="getCourseInformation")
-     * @Method({"GET"})
+     * @Method({"GET", "OPTIONS"})
      */
     public function getCourse(Request $request, $id) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
@@ -135,7 +135,7 @@ class DesignerController extends Controller
      *      "name" - Name of course
      *
      * @Route("/api/designer/course", name="createCourse")
-     * @Method({"POST"})
+     * @Method({"POST", "OPTIONS"})
      */
     public function createCourse(Request $request) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
@@ -174,7 +174,7 @@ class DesignerController extends Controller
      *      "name" - Name of course
      *
      * @Route("/api/designer/course/{id}", name="editCourse")
-     * @Method({"POST"})
+     * @Method({"POST", "OPTIONS"})
      */
     public function editCourse(Request $request, $id) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
@@ -224,7 +224,7 @@ class DesignerController extends Controller
      * Deletes a course that belongs to the designer
      *
      * @Route("/api/designer/course/{id}", name="deleteCourse")
-     * @Method({"DELETE"})
+     * @Method({"DELETE", "OPTIONS"})
      */
     public function deleteCourse(Request $request, $id) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
@@ -262,7 +262,7 @@ class DesignerController extends Controller
      * Can filter by username
      *
      * @Route("/api/designer/professors", name="getProfessors")
-     * @Method({"GET"})
+     * @Method({"GET", "OPTIONS"})
      */
     public function getProfessors(Request $request) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
@@ -286,7 +286,7 @@ class DesignerController extends Controller
     /**
      * Gets all professor registrations that the designer owns
      * @Route("/api/designer/registrations/professor", name="getProfessorRegistrationsAsDesigner")
-     * @Method({"GET"})
+     * @Method({"GET", "OPTIONS"})
      */
     public function getProfessorRegistrations(Request $request) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
@@ -311,7 +311,7 @@ class DesignerController extends Controller
     /**
      * Gets all professor registrations that the designer owns by course
      * @Route("/api/designer/course/{id}/registrations/professor", name="getProfessorRegistrationsByCourseAsDesigner")
-     * @Method({"GET"})
+     * @Method({"GET", "OPTIONS"})
      */
     public function getProfessorRegistrationsbyCourse(Request $request, $id) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
@@ -347,7 +347,7 @@ class DesignerController extends Controller
      * Gets specific information on a specific professor registration that belongs to the designer
      *
      * @Route("/api/designer/registrations/professor/{id}", name="getProfRegistrationInformation")
-     * @Method({"GET"})
+     * @Method({"GET", "OPTIONS"})
      */
     public function getProfessorRegistration(Request $request, $id) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
@@ -393,7 +393,7 @@ class DesignerController extends Controller
      *      "date_end" - end date of activation
      *
      * @Route("/api/designer/registrations/professor/{id}", name="editProfRegistration")
-     * @Method({"POST"})
+     * @Method({"POST", "OPTIONS"})
      */
     public function editProfessorRegistration(Request $request, $id)
     {
@@ -464,7 +464,7 @@ class DesignerController extends Controller
      *
      *
      * @Route("/api/designer/registrations/professor", name="createProfessorRegistration")
-     * @Method({"POST"})
+     * @Method({"POST", "OPTIONS"})
      */
     public function createProfessorRegistration(Request $request) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
@@ -554,7 +554,7 @@ class DesignerController extends Controller
      * Deletes a specific professor registration that belongs to the designer
      *
      * @Route("/api/designer/registrations/professor/{id}", name="deleteProfessorRegistration")
-     * @Method({"DELETE"})
+     * @Method({"DELETE", "OPTIONS"})
      */
     public function deleteProfessorRegistration(Request $request, $id) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
