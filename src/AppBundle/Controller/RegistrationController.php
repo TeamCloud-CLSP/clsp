@@ -19,9 +19,185 @@ use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Validator\Constraints\Email;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\Length;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
+use AppBundle\Database;
 
+/**
+ *
+ * Methods:
+ *
+ * createUser - /api/register - creates a user - takes username, password, email, signupcode.
+ *
+ * Class RegistrationController
+ * @package AppBundle\Controller
+ */
 class RegistrationController extends Controller
 {
+
+    /**
+     * Finds a matching signup code, then registers the corresponding user.
+     *
+     * Takes: username, password, email, signup_code
+     *
+     * Username and Email must be unique in the database.
+     *
+     * @Route("/api/register", name="createRegistration")
+     * @Method({"POST", "OPTIONS"})
+     */
+    public function createUser(Request $request) {
+        $encoder = $this->container->get('security.password_encoder');
+
+        $post_parameters = $request->request->all();
+
+        if (array_key_exists('username', $post_parameters) && array_key_exists('password', $post_parameters) && array_key_exists('email', $post_parameters) && array_key_exists('signup_code', $post_parameters)) {
+            $conn = Database::getInstance();
+            $signup_code = $post_parameters['signup_code'];
+            $username = $post_parameters['username'];
+            $password = $post_parameters['password'];
+            $email = $post_parameters['email'];
+            $user = new User();
+
+            // check to make sure username and email are unique
+            $queryBuilder = $conn->createQueryBuilder();
+            $results = $queryBuilder->select('users.id')->from('app_users', 'users')->where('users.username = ?')
+                ->orWhere('users.email = ?')
+                ->setParameter(0, $username)->setParameter(1, $email)->execute()->fetchAll();
+            if (count($results) > 0) {
+                $jsr = new JsonResponse(array('error' => 'The username or email already exists.'));
+                $jsr->setStatusCode(400);
+                return $jsr;
+            }
+
+            // see if the signup code belongs to a professor registration and is not expired
+            $queryBuilder = $conn->createQueryBuilder();
+            $results = $queryBuilder->select('pr.id', 'pr.date_end')->from('professor_registrations', 'pr')->where('pr.signup_code = ?')
+                ->andWhere('pr.date_start < ?')->andWhere('pr.date_end > ?')->andWhere('pr.professor_id is NULL')
+                ->setParameter(0, $signup_code)->setParameter(1, time())->setParameter(2, time())->execute()->fetchAll();
+            if (count($results) > 0) {
+                // its a professor registration
+                $pr_id = $results[0]['id'];
+                $date_end = $results[0]['date_end'];
+
+                // create the professor account
+                $queryBuilder = $conn->createQueryBuilder();
+                $queryBuilder->insert('app_users')
+                    ->values(
+                        array(
+                            'username' => '?',
+                            'password' => '?',
+                            'email' => '?',
+                            'is_active' => '?',
+                            'date_created' => '?',
+                            'date_start' => '?',
+                            'date_end' => '?',
+                            'timezone' => '?',
+                            'is_student' => '?',
+                            'is_professor' => '?',
+                            'is_designer' => '?',
+                            'is_administrator' => '?'
+                        )
+                    )
+                    ->setParameter(0, $username)->setParameter(1, $encoder->encodePassword($user, $password))->setParameter(2, $email)->setParameter(3, 1)->setParameter(4, time())
+                    ->setParameter(5, time())->setParameter(6, $date_end)->setParameter(7, date_default_timezone_get())
+                    ->setParameter(8, 0)->setParameter(9, 1)->setParameter(10, 0)->setParameter(11, 0)->execute();
+
+                $professor_id = $conn->lastInsertId();
+
+                // updates the professor registration to be linked to the professor
+                $queryBuilder = $conn->createQueryBuilder();
+                $queryBuilder->update('professor_registrations')->set('professor_id', '?')->where('id = ?')->setParameter(0, $professor_id)->setParameter(1, $pr_id)->execute();
+
+                $queryBuilder = $conn->createQueryBuilder();
+                $results = $queryBuilder->select('id', 'username', 'email', 'is_active', 'date_created', 'date_deleted', 'date_start', 'date_end', 'timezone', 'is_student', 'is_professor', 'is_designer', 'is_administrator')
+                    ->from('app_users', 'users')->where('users.id = ?')->setParameter(0, $professor_id)->execute()->fetchAll();
+                if (count($results) < 1) {
+                    $jsr = new JsonResponse(array('error' => 'An error upon account creation has occurred.'));
+                    $jsr->setStatusCode(500);
+                    return $jsr;
+                }
+                return new JsonResponse($results[0]);
+            }
+
+            // otherwise, see if it belongs to a student registration
+            $queryBuilder = $conn->createQueryBuilder();
+            $results = $queryBuilder->select('sr.id', 'sr.date_end')->from('student_registrations', 'sr')->where('sr.signup_code = ?')
+                ->andWhere('sr.date_start < ?')->andWhere('sr.date_end > ?')
+                ->setParameter(0, $signup_code)->setParameter(1, time())->setParameter(2, time())->execute()->fetchAll();
+            if (count($results) > 0) {
+                // its a student registration
+                $sr_id = $results[0]['id'];
+                $date_end = $results[0]['date_end'];
+
+                // create the professor account
+                $queryBuilder = $conn->createQueryBuilder();
+                $queryBuilder->insert('app_users')
+                    ->values(
+                        array(
+                            'username' => '?',
+                            'password' => '?',
+                            'email' => '?',
+                            'is_active' => '?',
+                            'date_created' => '?',
+                            'date_start' => '?',
+                            'date_end' => '?',
+                            'timezone' => '?',
+                            'is_student' => '?',
+                            'is_professor' => '?',
+                            'is_designer' => '?',
+                            'is_administrator' => '?',
+                            'student_registration_id' => '?'
+                        )
+                    )
+                    ->setParameter(0, $username)->setParameter(1, $encoder->encodePassword($user, $password))->setParameter(2, $email)->setParameter(3, 1)->setParameter(4, time())
+                    ->setParameter(5, time())->setParameter(6, $date_end)->setParameter(7, date_default_timezone_get())
+                    ->setParameter(8, 0)->setParameter(9, 1)->setParameter(10, 0)->setParameter(11, 0)->setParameter(12, $sr_id)->execute();
+
+                $student_id = $conn->lastInsertId();
+
+                $queryBuilder = $conn->createQueryBuilder();
+                $results = $queryBuilder->select('id', 'username', 'email', 'is_active', 'date_created', 'date_deleted', 'date_start', 'date_end', 'timezone', 'is_student', 'is_professor', 'is_designer', 'is_administrator')
+                    ->from('app_users', 'users')->where('users.id = ?')->setParameter(0, $student_id)->execute()->fetchAll();
+                if (count($results) < 1) {
+                    $jsr = new JsonResponse(array('error' => 'An error upon account creation has occurred.'));
+                    $jsr->setStatusCode(500);
+                    return $jsr;
+                }
+                return new JsonResponse($results[0]);
+            }
+
+            // no signup code matches, so return invalid signup code
+            $jsr = new JsonResponse(array('error' => 'The signup code is invalid.'));
+            $jsr->setStatusCode(400);
+            return $jsr;
+
+        } else {
+            $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
+            $jsr->setStatusCode(400);
+            return $jsr;
+        }
+
+        // runs query to get the class specified
+        $conn = Database::getInstance();
+        $queryBuilder = $conn->createQueryBuilder();
+        $results = $queryBuilder->select('classes.id', 'classes.name')
+            ->from('app_users', 'students')->innerJoin('students', 'student_registrations', 'sr', 'students.student_registration_id = sr.id')
+            ->innerJoin('sr', 'classes', 'classes', 'sr.class_id = classes.id')
+            ->where('students.id = ?')->andWhere('sr.date_start < ?')->andWhere('sr.date_end > ?')
+            ->setParameter(0, $user_id)->setParameter(1, time())->setParameter(2, time())->execute()->fetchAll();
+
+        // if nothing was returned, give error. if multiple results, also give error (each key should be unique)
+        if (count($results) < 1) {
+            $jsr = new JsonResponse(array('error' => 'Class does not exist, or has expired.'));
+            $jsr->setStatusCode(503);
+            return $jsr;
+        }
+
+        return new JsonResponse($results[0]);
+    }
+
+
     /**
      * @Route("/register", name="user_registration")
      */
