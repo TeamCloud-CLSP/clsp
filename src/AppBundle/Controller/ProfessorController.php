@@ -22,19 +22,23 @@ use AppBundle\Database;
 /**
  * Available functions:
  *
- * getCourses
- * getRegistrations
- * getMainPageStructure (told Yuanhan about this - this should be how he wants to set up the main professor page)
- * getStudentRegistration
- * getStudentRegistrations
- * createStudentRegistration
- * editStudentRegistration
- * deleteStudentRegistration
- * getClasses
- * getClass
- * createClass
- * editClass
- * deleteClass
+ * getCourses - /api/professor/courses
+ * getRegistrations - /api/professor/registrations/professor
+ * getMainPageStructure - /api/professor/main - (told Yuanhan about this - this should be how he wants to set up the main professor page - see the function for more details)
+ * getStudentRegistration - /api/professor/registrations/student/{id}
+ * getStudentRegistrations - /api/professor/registrations/student
+ * createStudentRegistration - /api/professor/registrations/student (POST) - takes in date_start, date_end, class_id, name
+ * editStudentRegistration - /api/professor/registrations/student/{id} (POST) - takes in date_start, date_end, name
+ * deleteStudentRegistration - /api/professor/registrations/student/{id} (DELETE)
+ * getClasses - /api/professor/classes - /api/professor/classes/{id}
+ * getClass - /api/professor/classes/{id}
+ * createClass - /api/professor/classes (POST) - takes in name, course_id
+ * editClass - /api/professor/classes/{id} (POST) - takes in name
+ * deleteClass - /api/professor/classes/{id} (DELETE)
+ * getStudentsByRegistration - /api/professor/registrations/student/{id}/students
+ * deleteStudent - /api/professor/student/{id} - will only delete the student if the student belongs to one of the professor's classes
+ * 
+ * Remember that each student account can only have one class.
  *
  * Class ProfessorController
  * @package AppBundle\Controller
@@ -549,7 +553,6 @@ class ProfessorController extends Controller
      *
      * Takes in:
      *      name - name of the course
-     *      course_id - id of the course
      *
      * @Route("/api/professor/classes/{id}", name="editClass")
      * @Method({"POST", "OPTIONS"})
@@ -643,122 +646,82 @@ class ProfessorController extends Controller
         return new Response();
     }
 
-//    /**
-//     * @Route("/professor/", name="professorIndex")
-//     */
-//    public function indexAction(Request $request)
-//    {
-//        return $this->render('professor/index.html.twig', [
-//            'base_dir' => realpath($this->getParameter('kernel.root_dir').'..').DIRECTORY_SEPARATOR,
-//        ]);
-//    }
-//
-//    /**
-//     * @Route("/professor/registrations", name="professorRegistrations")
-//     */
-//    public function showRegistrationsAction(Request $request)
-//    {
-//        //$owned_registrations = $this->getUser()->getOwnedRegistrations();
-//        return $this->render('professor/registrations.html.twig', array(
-//            'base_dir' => realpath($this->getParameter('kernel.root_dir').'..').DIRECTORY_SEPARATOR,
-//        ));
-//    }
-//
-//    /**
-//     * @Route("/professor/registrations/make", name="professorRegistrationsMake")
-//     */
-//    public function showRegistrationsMakeAction(Request $request)
-//    {
-//        $registration = new Registration();
-//        $registrationCode = $this->generateSignupCode();
-//        $manager = $this->getDoctrine()->getManager();
-//
-//        $regInfo = array(
-//            'dateStart' => new DateTime('@' . time(), new DateTimeZone($this->getUser()->getTimezone())),
-//            'dateEnd' => new DateTime('@' . time(), new DateTimeZone($this->getUser()->getTimezone()))
-//        );
-//        $form = $this->createFormBuilder($regInfo)
-//            ->add('dateStart', DateTimeType::class)
-//            ->add('dateEnd', DateTimeType::class)
-//            ->add('save', SubmitType::class, array('label' => 'Edit Registration'))
-//            ->getForm();
-//
-//        $form->handleRequest($request);
-//
-//        if($form->isSubmitted() && $form->isValid()) {
-//            $regInfo = $form->getData();
-//            $registration->setDateStart($regInfo['dateStart']->getTimestamp());
-//            $registration->setDateEnd($regInfo['dateEnd']->getTimestamp());
-//            $registration->setDateCreated(time());
-//            $registration->setSignupCode($registrationCode);
-//            $registration->setOwner($this->getUser());
-//            $manager->persist($registration);
-//            $manager->flush();
-//
-//            return $this->render('professor/makeRegistrations.2.html.twig', array(
-//                'base_dir' => realpath($this->getParameter('kernel.root_dir').'..').DIRECTORY_SEPARATOR,
-//                'signup_code' => $registrationCode
-//            ));
-//        }
-//
-//        return $this->render('professor/makeRegistrations.html.twig', array(
-//            'base_dir' => realpath($this->getParameter('kernel.root_dir').'..').DIRECTORY_SEPARATOR,
-//            'form' => $form->createView(),
-//        ));
-//    }
-//
-//    /**
-//     * @Route("/professor/registrations/edit/{id}", name="professorRegistrationsEdit")
-//     */
-//    public function showRegistrationEditAction(Request $request, $id)
-//    {
-//        $registration = $this->getDoctrine()->getRepository('AppBundle:Registration')->findOneById($id);
-//        $manager = $this->getDoctrine()->getManager();
-//
-//        $regInfo = array(
-//            'dateStart' => new DateTime('@' . $registration->getDateStart(), new DateTimeZone($this->getUser()->getTimezone())),
-//            'dateEnd' => new DateTime('@' . $registration->getDateEnd(), new DateTimeZone($this->getUser()->getTimezone()))
-//        );
-//        $form = $this->createFormBuilder($regInfo)
-//            ->add('dateStart', DateTimeType::class)
-//            ->add('dateEnd', DateTimeType::class)
-//            ->add('save', SubmitType::class, array('label' => 'Edit Registration'))
-//            ->getForm();
-//
-//        $form->handleRequest($request);
-//
-//        if($form->isSubmitted() && $form->isValid()) {
-//            $regInfo = $form->getData();
-//            $registration->setDateStart($regInfo['dateStart']->getTimestamp());
-//            $registration->setDateEnd($regInfo['dateEnd']->getTimestamp());
-//            $users = $registration->getUsers();
-//            foreach($users as $user) {
-//                $user->setDateStart($registration->getDateStart());
-//                $user->setDateEnd($registration->getDateEnd());
-//            }
-//            $manager->persist($registration);
-//            $manager->flush();
-//
-//            return $this->redirectToRoute('professorRegistrations');
-//        }
-//
-//        return $this->render('professor/makeRegistrations.html.twig', array(
-//            'base_dir' => realpath($this->getParameter('kernel.root_dir').'..').DIRECTORY_SEPARATOR,
-//            'form' => $form->createView(),
-//        ));
-//    }
-//
-//    private function generateSignupCode() {
-//        $randString = "";
-//        for($i = 0; $i < 16; $i++) {
-//            $randVal = rand(0,35);
-//            if($randVal > 25) {
-//                $randString .= $randVal - 26;
-//            } else {
-//                $randString .= chr($randVal + 97);
-//            }
-//        }
-//        return $randString;
-//
-//    }
+    /**
+     * Gets list of students that belong to a student registration a professor has
+     *
+     * @Route("/api/professor/registrations/student/{id}/students", name="getStudentsbyStudentRegistration")
+     * @Method({"GET", "OPTIONS"})
+     */
+    public function getStudentsByRegistration(Request $request, $id) {
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+
+        $sr_id = $id;
+
+        // makes sure that the class id is numeric
+        if (!is_numeric($sr_id)) {
+            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+            $jsr->setStatusCode(400);
+            return $jsr;
+        }
+
+        $conn = Database::getInstance();
+        $queryBuilder = $conn->createQueryBuilder();
+        $results = $queryBuilder->select('students.id', 'students.username')
+            ->from('professor_registrations', 'pr')
+            ->innerJoin('pr', 'classes', 'classes', 'pr.id = classes.registration_id')
+            ->innerJoin('pr', 'app_users', 'professors', 'pr.professor_id = professors.id')
+            ->innerJoin('classes', 'student_registrations', 'sr', 'sr.class_id = classes.id')
+            ->innerJoin('sr', 'app_users', 'students', 'students.student_registration_id = sr.id')
+            ->where('professors.id = ?')->andWhere('sr.id = ?')
+            ->setParameter(0, $user_id)->setParameter(1, $sr_id)->execute()->fetchAll();
+
+        $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));
+        $jsr->setStatusCode(200);
+        return $jsr;
+    }
+
+    /**
+     * Deletes a student given its id (the student must belong to one of the professor's classes to be deleted)
+     *
+     * @Route("/api/professor/student/{id}", name="deleteStudent")
+     * @Method({"DELETE", "OPTIONS"})
+     */
+    public function deleteStudent(Request $request, $id) {
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+
+        $student_id = $id;
+
+        // makes sure that the class id is numeric
+        if (!is_numeric($student_id)) {
+            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+            $jsr->setStatusCode(400);
+            return $jsr;
+        }
+
+        $conn = Database::getInstance();
+        $queryBuilder = $conn->createQueryBuilder();
+        $results = $queryBuilder->select('students.id', 'students.username')
+            ->from('professor_registrations', 'pr')
+            ->innerJoin('pr', 'classes', 'classes', 'pr.id = classes.registration_id')
+            ->innerJoin('pr', 'app_users', 'professors', 'pr.professor_id = professors.id')
+            ->innerJoin('classes', 'student_registrations', 'sr', 'sr.class_id = classes.id')
+            ->innerJoin('sr', 'app_users', 'students', 'students.student_registration_id = sr.id')
+            ->where('professors.id = ?')->andWhere('students.id = ?')
+            ->setParameter(0, $user_id)->setParameter(1, $student_id)->execute()->fetchAll();
+
+        if (count($results) < 1) {
+            $jsr = new JsonResponse(array('error' => "Student does not exist, or does not belong to one of the professor's classes."));
+            $jsr->setStatusCode(503);
+            return $jsr;
+        }
+
+        $queryBuilder = $conn->createQueryBuilder();
+        $results = $queryBuilder->delete('app_users')->where('app_users.id = ?')
+            ->setParameter(0, $student_id)->execute();
+
+        return new Response();
+    }
+
 }

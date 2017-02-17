@@ -13,19 +13,19 @@ use AppBundle\Database;
 /**
  * Available functions:
  * 
- * getStudentRegistrations
- * getCourses
- * getCourse
- * createCourse
- * editCourse
- * deleteCourse
- * getProfessors (list of professors)
- * getProfessorRegistrations
- * getProfessorRegistrationsbyCourse
- * getProfessorRegistration
- * editProfessorRegistration
- * createProfessorRegistration
- * deleteProfessorRegistration
+ * getStudentRegistrations - /api/designer/registrations/professor/{professor_registration_id}/student - gets all student registrations that are tied to a professor registration
+ * getCourses - /api/designer/courses - get courses
+ * getCourse - /api/designer/course/{id} - get a single course by its id
+ * createCourse - /api/designer/course (POST) - create a course - takes in "name" request parameter
+ * editCourse - /api/designer/course/{id} (POST) - edits a course by its id, takes in "name" request parameter
+ * deleteCourse - /api/designer/course/{id} (DELETE) - deletes a course by id
+ * getProfessors - /api/designer/professors - (list of professors)
+ * getProfessorRegistrations - /api/designer/registrations/professor
+ * getProfessorRegistrationsbyCourse - /api/designer/course/{course_id}/registrations/professor
+ * getProfessorRegistration - /api/designer/registrations/professor/{id}
+ * editProfessorRegistration - /api/designer/registrations/professor/{id} (POST) - takes in "date_start" and "date_end"
+ * createProfessorRegistration - /api/designer/registrations/professor (POST) - takes in date_start, date_end, course_id. optional: professor_id
+ * deleteProfessorRegistration - /api/designer/registrations/professor/{id} (DELETE)
  * 
  * Class DesignerController
  * @package AppBundle\Controller
