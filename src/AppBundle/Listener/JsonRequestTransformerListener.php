@@ -23,23 +23,30 @@ class JsonRequestTransformerListener
     {
         $request = $event->getRequest();
         $content = $request->getContent();
+
+        $method  = $request->getRealMethod();
+        if ('OPTIONS' == $method) {
+            $response = new Response();
+            $response->setStatusCode(200);
+            $event->setResponse($response);
+        }
+
+
         if (empty($content)) {
             return;
         }
+
         if (! $this->isJsonRequest($request)) {
             return;
         }
+
+
         if (! $this->transformJsonBody($request)) {
             $response = Response::create('Unable to parse request.', 400);
             $event->setResponse($response);
         }
 
-        $method  = $request->getRealMethod();
 
-        if ('OPTIONS' == $method) {
-            $response = new Response();
-            $event->setResponse($response);
-        }
 
     }
     private function isJsonRequest(Request $request)
