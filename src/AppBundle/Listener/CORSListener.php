@@ -24,6 +24,7 @@ class CORSListener
         $response->headers->set('Access-Control-Allow-Origin', 'http://localhost:3000');
         $response->headers->set('Access-Control-Allow-Credentials', 'true');
         $response->headers->set('Access-Control-Allow-Headers', 'content-type');
+        $response->headers->set('Access-Control-Allow-Methods', 'DELETE');
     }
 
 
