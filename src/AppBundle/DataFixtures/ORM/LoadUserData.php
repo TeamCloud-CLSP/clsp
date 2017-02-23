@@ -253,7 +253,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
     private function getTestAdminInfo() {
         $testAdmin = array(
             "username"          => "testAdmin",
-            "password"          => "testAdmin",
+            "password"          => "p",
             "email"             => "testAdmin@test.com",
             "isActive"          => true,
             "dateCreated"       => time(),
@@ -272,7 +272,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
     private function getTestDesigner1Info() {
         $testDesigner = array(
             "username"          => "testDesignerChinese",
-            "password"          => "testDesignerC",
+            "password"          => "p",
             "email"             => "testDesignerChinese@test.com",
             "isActive"          => true,
             "dateCreated"       => time(),
@@ -291,7 +291,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
     private function getTestDesigner2Info() {
         $testDesigner = array(
             "username"          => "testDesignerJapanese",
-            "password"          => "testDesignerJ",
+            "password"          => "p",
             "email"             => "testDesignerJapanese@test.com",
             "isActive"          => true,
             "dateCreated"       => time(),
@@ -310,7 +310,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
     private function getTestProfessor1Info() {
         $testProfessor = array(
             "username"          => "testProfessor1C",
-            "password"          => "testProfessor1C",
+            "password"          => "p",
             "email"             => "testProfessor1C@test.com",
             "isActive"          => true,
             "dateCreated"       => time(),
@@ -329,7 +329,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
     private function getTestProfessor2Info() {
         $testProfessor = array(
             "username"          => "testProfessor2C",
-            "password"          => "testProfessor2C",
+            "password"          => "p",
             "email"             => "testProfessor2C@test.com",
             "isActive"          => true,
             "dateCreated"       => time(),
@@ -348,7 +348,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
     private function getTestProfessor3Info() {
         $testProfessor = array(
             "username"          => "testProfessor3J",
-            "password"          => "testProfessor3J",
+            "password"          => "p",
             "email"             => "testProfessor3J@test.com",
             "isActive"          => true,
             "dateCreated"       => time(),
@@ -367,7 +367,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
     private function getTestStudentInfo1() {
         $testStudentInfo = array(
             "username"          => "testStudent1",
-            "password"          => "testStudent1",
+            "password"          => "p",
             "email"             => "testStudent1@test.com",
             "isActive"          => true,
             "dateCreated"       => time(),
@@ -386,7 +386,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
     private function getTestStudentInfo2() {
         $testStudentInfo = array(
             "username"          => "testStudent2",
-            "password"          => "testStudent2",
+            "password"          => "p",
             "email"             => "testStudent2@test.com",
             "isActive"          => true,
             "dateCreated"       => time(),
@@ -405,7 +405,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
     private function getTestStudentInfo3() {
         $testStudentInfo = array(
             "username"          => "testStudent3",
-            "password"          => "testStudent3",
+            "password"          => "p",
             "email"             => "testStudent3@test.com",
             "isActive"          => true,
             "dateCreated"       => time(),
@@ -424,7 +424,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
     private function getTestStudentInfo4() {
         $testStudentInfo = array(
             "username"          => "testStudent4",
-            "password"          => "testStudent4",
+            "password"          => "p",
             "email"             => "testStudent4@test.com",
             "isActive"          => true,
             "dateCreated"       => time(),
@@ -443,7 +443,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
     private function getTestStudentInfo5() {
         $testStudentInfo = array(
             "username"          => "testStudent5",
-            "password"          => "testStudent5",
+            "password"          => "p",
             "email"             => "testStudent5@test.com",
             "isActive"          => true,
             "dateCreated"       => time(),
@@ -462,7 +462,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
     private function getTestStudentInfo6() {
         $testStudentInfo = array(
             "username"          => "testStudent6",
-            "password"          => "testStudent6",
+            "password"          => "p",
             "email"             => "testStudent6@test.com",
             "isActive"          => true,
             "dateCreated"       => time(),
@@ -481,7 +481,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
     private function getTestStudentInfo7() {
         $testStudentInfo = array(
             "username"          => "testStudent7",
-            "password"          => "testStudent7",
+            "password"          => "p",
             "email"             => "testStudent7@test.com",
             "isActive"          => true,
             "dateCreated"       => time(),
@@ -500,7 +500,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
     private function getTestStudentInfo8() {
         $testStudentInfo = array(
             "username"          => "testStudent8",
-            "password"          => "testStudent8",
+            "password"          => "p",
             "email"             => "testStudent8@test.com",
             "isActive"          => true,
             "dateCreated"       => time(),
@@ -519,7 +519,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
     private function getTestStudentInfo9() {
         $testStudentInfo = array(
             "username"          => "testStudent9",
-            "password"          => "testStudent9",
+            "password"          => "p",
             "email"             => "testStudent9@test.com",
             "isActive"          => true,
             "dateCreated"       => time(),
@@ -538,7 +538,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
     private function getTestStudentInfo10() {
         $testStudentInfo = array(
             "username"          => "testStudent10",
-            "password"          => "testStudent10",
+            "password"          => "p",
             "email"             => "testStudent10@test.com",
             "isActive"          => true,
             "dateCreated"       => time(),
