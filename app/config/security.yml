@@ -31,7 +31,7 @@ security:
                 default_target_path: dashboardIndex
             logout:
                 path: /logout
-                target: /
+                target: /login
             # activate different ways to authenticate
 
             # http_basic: ~
