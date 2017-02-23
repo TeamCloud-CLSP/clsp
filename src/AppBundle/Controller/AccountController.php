@@ -16,8 +16,8 @@ class AccountController extends Controller
 {
     /**
      * Returns basic account information of the logged in user.
-     * @Route("/api/account/", name="getAccountInformation")
-     * @Method({"GET"})
+     * @Route("/api/account", name="getAccountInformation")
+     * @Method({"GET", "Options"})
      */
     public function getAccountInformation(Request $request)
     {
@@ -36,7 +36,10 @@ class AccountController extends Controller
         $result = $queryBuilder->select($c['id'], $c['username'], $c['email'], $c['is_active'], $c['date_created'], $c['date_deleted'], $c['date_start'], $c['date_end'],
             $c['timezone'], $c['is_student'], $c['is_professor'], $c['is_designer'], $c['is_administrator'])
             ->from('app_users')->where('id = ?')->setParameter(0, $user_id)->execute()->fetch();
-
+        $result['is_student']       = ($result['is_student'] == "0" ? false : true);
+        $result['is_professor']     = ($result['is_professor'] == "0" ? false : true);
+        $result['is_designer']      = ($result['is_designer'] == "0" ? false : true);
+        $result['is_administrator'] = ($result['is_administrator'] == "0" ? false : true);
         $jsr = new JsonResponse($result);
         $jsr->setStatusCode(200);
         return $jsr;
