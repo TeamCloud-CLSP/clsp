@@ -23,7 +23,7 @@ class DashboardController extends Controller
         }
 
         if ($roleChecker->isGranted('ROLE_PROFESSOR')) {
-            return $this->redirectToRoute('professorIndex');
+            return $this->redirect('http://localhost:3000/professor');
         }
 
         if ($roleChecker->isGranted('ROLE_STUDENT')) {
