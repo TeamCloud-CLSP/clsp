@@ -15,11 +15,11 @@ class DashboardController extends Controller
     {
         $roleChecker = $this->get('security.authorization_checker');
         if ($roleChecker->isGranted('ROLE_ADMIN')) {
-            return $this->redirectToRoute('adminIndex');
+            return $this->redirectToRoute('http://localhost:3000/admin');
         }
 
         if ($roleChecker->isGranted('ROLE_DESIGNER')) {
-            return $this->redirectToRoute('designerIndex');
+            return $this->redirect('http://localhost:3000/designer/courses');
         }
 
         if ($roleChecker->isGranted('ROLE_PROFESSOR')) {
