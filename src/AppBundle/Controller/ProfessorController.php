@@ -139,7 +139,7 @@ class ProfessorController extends Controller
                 'sr.id AS student_registration_id', 'sr.date_start AS student_registration_date_start', 'sr.date_end AS student_registration_date_end')
                 ->from('professor_registrations', 'pr')->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
                 ->innerJoin('pr', 'classes', 'classes', 'pr.id = classes.registration_id')
-                ->leftJoin('classes', 'student_registrations', 'sr', 'sr.class_id = classes.id')
+                ->innerJoin('classes', 'student_registrations', 'sr', 'sr.class_id = classes.id')
                 ->where('pr.id = ?')
                 ->setParameter(0, $pr_id)->execute()->fetchAll();
             $professor_registrations[$i]['classes'] = $results;
@@ -175,7 +175,7 @@ class ProfessorController extends Controller
             ->from('professor_registrations', 'pr')->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
             ->innerJoin('pr', 'classes', 'classes', 'pr.id = classes.registration_id')
             ->innerJoin('pr', 'app_users', 'professors', 'pr.professor_id = professors.id')
-            ->leftJoin('classes', 'student_registrations', 'sr', 'sr.class_id = classes.id')
+            ->innerJoin('classes', 'student_registrations', 'sr', 'sr.class_id = classes.id')
             ->where('sr.id = ?')->andWhere('professors.id = ?')
             ->setParameter(0, $stu_id)->setParameter(1, $user_id)->execute()->fetchAll();
 
@@ -218,13 +218,13 @@ class ProfessorController extends Controller
             ->from('professor_registrations', 'pr')->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
             ->innerJoin('pr', 'classes', 'classes', 'pr.id = classes.registration_id')
             ->innerJoin('pr', 'app_users', 'professors', 'pr.professor_id = professors.id')
-            ->leftJoin('classes', 'student_registrations', 'sr', 'sr.class_id = classes.id')
+            ->innerJoin('classes', 'student_registrations', 'sr', 'sr.class_id = classes.id')
             ->where('classes.id = ?')->andWhere('professors.id = ?')
             ->setParameter(0, $class_id)->setParameter(1, $user_id)->execute()->fetchAll();
 
         // if nothing was returned, give error. if multiple results, also give error (each key should be unique)
         if (count($results) < 1) {
-            $jsr = new JsonResponse(array('error' => 'Class does not exist or does not belong to the currently authenticated user.'));
+            $jsr = new JsonResponse(array('error' => 'Student registration does not exist or does not belong to the currently authenticated user.'));
             $jsr->setStatusCode(503);
             return $jsr;
         } else if (count($results) > 1) {
@@ -253,7 +253,7 @@ class ProfessorController extends Controller
             ->from('professor_registrations', 'pr')->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
             ->innerJoin('pr', 'classes', 'classes', 'pr.id = classes.registration_id')
             ->innerJoin('pr', 'app_users', 'professors', 'pr.professor_id = professors.id')
-            ->leftJoin('classes', 'student_registrations', 'sr', 'sr.class_id = classes.id')
+            ->innerJoin('classes', 'student_registrations', 'sr', 'sr.class_id = classes.id')
             ->andWhere('professors.id = ?')
             ->setParameter(0, $user_id)->execute()->fetchAll();
 
@@ -435,12 +435,12 @@ class ProfessorController extends Controller
             ->from('professor_registrations', 'pr')->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
             ->innerJoin('pr', 'classes', 'classes', 'pr.id = classes.registration_id')
             ->innerJoin('pr', 'app_users', 'professors', 'pr.professor_id = professors.id')
-            ->leftJoin('classes', 'student_registrations', 'sr', 'sr.class_id = classes.id')
+            ->innerJoin('classes', 'student_registrations', 'sr', 'sr.class_id = classes.id')
             ->where('sr.id = ?')->andWhere('professors.id = ?')
             ->setParameter(0, $stu_id)->setParameter(1, $user_id)->execute()->fetchAll();
 
         if (count($results) < 1) {
-            $jsr = new JsonResponse(array('error' => 'Registration does not exist or does not belong to the currently authenticated user.'));
+            $jsr = new JsonResponse(array('error' => 'Student registration does not exist or does not belong to the currently authenticated user.'));
             $jsr->setStatusCode(503);
             return $jsr;
         }
