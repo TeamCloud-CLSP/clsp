@@ -26,6 +26,7 @@ use AppBundle\Database;
  * getRegistrations - /api/professor/registrations/professor
  * getMainPageStructure - /api/professor/main - (told Yuanhan about this - this should be how he wants to set up the main professor page - see the function for more details)
  * getStudentRegistration - /api/professor/registrations/student/{id}
+ * getStudentRegistrationByClass - /api/professor/classes/{id}/registrations/student
  * getStudentRegistrations - /api/professor/registrations/student
  * createStudentRegistration - /api/professor/registrations/student (POST) - takes in date_start, date_end, class_id, name
  * editStudentRegistration - /api/professor/registrations/student/{id} (POST) - takes in date_start, date_end, name
@@ -135,7 +136,7 @@ class ProfessorController extends Controller
             $pr_id = $professor_registrations[$i]['id'];
             $queryBuilder = $conn->createQueryBuilder();
             $results = $queryBuilder->select('classes.id AS class_id', 'classes.name AS class_name',
-                'sr.id AS student_Registration_id', 'sr.date_start AS student_registration_date_start', 'sr.date_end AS student_registration_date_end')
+                'sr.id AS student_registration_id', 'sr.date_start AS student_registration_date_start', 'sr.date_end AS student_registration_date_end')
                 ->from('professor_registrations', 'pr')->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
                 ->innerJoin('pr', 'classes', 'classes', 'pr.id = classes.registration_id')
                 ->leftJoin('classes', 'student_registrations', 'sr', 'sr.class_id = classes.id')
@@ -170,7 +171,7 @@ class ProfessorController extends Controller
         $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
         $results = $queryBuilder->select('classes.id AS class_id', 'classes.name AS class_name',
-            'sr.id AS student_Registration_id', 'sr.date_start AS student_registration_date_start', 'sr.date_end AS student_registration_date_end')
+            'sr.id AS student_registration_id', 'sr.date_start AS student_registration_date_start', 'sr.date_end AS student_registration_date_end')
             ->from('professor_registrations', 'pr')->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
             ->innerJoin('pr', 'classes', 'classes', 'pr.id = classes.registration_id')
             ->innerJoin('pr', 'app_users', 'professors', 'pr.professor_id = professors.id')
@@ -178,9 +179,63 @@ class ProfessorController extends Controller
             ->where('sr.id = ?')->andWhere('professors.id = ?')
             ->setParameter(0, $stu_id)->setParameter(1, $user_id)->execute()->fetchAll();
 
-        $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));
-        $jsr->setStatusCode(200);
-        return $jsr;
+        // if nothing was returned, give error. if multiple results, also give error (each key should be unique)
+        if (count($results) < 1) {
+            $jsr = new JsonResponse(array('error' => 'Student registration does not exist or does not belong to the currently authenticated user.'));
+            $jsr->setStatusCode(503);
+            return $jsr;
+        } else if (count($results) > 1) {
+            $jsr = new JsonResponse(array('error' => 'An error has occurred. Check for duplicate keys in the database.'));
+            $jsr->setStatusCode(500);
+            return $jsr;
+        }
+
+        return new JsonResponse($results[0]);
+    }
+
+    /**
+     * Gets detailed information on a student registrations that the professor has given a class id
+     *
+     * @Route("/api/professor/classes/{id}/registrations/student", name="getStudentRegistrationSingleAsProfessorByClass")
+     * @Method({"GET", "OPTIONS"})
+     */
+    public function getStudentRegistrationByClass(Request $request, $id) {
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        $class_id = $id;
+
+        // makes sure that the class id is numeric
+        if (!is_numeric($class_id)) {
+            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+            $jsr->setStatusCode(400);
+            return $jsr;
+        }
+
+        $conn = Database::getInstance();
+        $queryBuilder = $conn->createQueryBuilder();
+        $results = $queryBuilder->select('classes.id AS class_id', 'classes.name AS class_name',
+            'sr.id AS student_registration_id', 'sr.date_start AS student_registration_date_start', 'sr.date_end AS student_registration_date_end')
+            ->from('professor_registrations', 'pr')->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
+            ->innerJoin('pr', 'classes', 'classes', 'pr.id = classes.registration_id')
+            ->innerJoin('pr', 'app_users', 'professors', 'pr.professor_id = professors.id')
+            ->leftJoin('classes', 'student_registrations', 'sr', 'sr.class_id = classes.id')
+            ->where('classes.id = ?')->andWhere('professors.id = ?')
+            ->setParameter(0, $class_id)->setParameter(1, $user_id)->execute()->fetchAll();
+
+        // if nothing was returned, give error. if multiple results, also give error (each key should be unique)
+        if (count($results) < 1) {
+            $jsr = new JsonResponse(array('error' => 'Class does not exist or does not belong to the currently authenticated user.'));
+            $jsr->setStatusCode(503);
+            return $jsr;
+        } else if (count($results) > 1) {
+            $jsr = new JsonResponse(array('error' => 'An error has occurred. Check for duplicate keys in the database.'));
+            $jsr->setStatusCode(500);
+            return $jsr;
+        }
+
+        return new JsonResponse($results[0]);
+
+        return new JsonResponse($results[0]);
     }
 
     /**
@@ -196,7 +251,7 @@ class ProfessorController extends Controller
         $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
         $results = $queryBuilder->select('classes.id AS class_id', 'classes.name AS class_name',
-            'sr.id AS student_Registration_id', 'sr.date_start AS student_registration_date_start', 'sr.date_end AS student_registration_date_end')
+            'sr.id AS student_registration_id', 'sr.date_start AS student_registration_date_start', 'sr.date_end AS student_registration_date_end')
             ->from('professor_registrations', 'pr')->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
             ->innerJoin('pr', 'classes', 'classes', 'pr.id = classes.registration_id')
             ->innerJoin('pr', 'app_users', 'professors', 'pr.professor_id = professors.id')
