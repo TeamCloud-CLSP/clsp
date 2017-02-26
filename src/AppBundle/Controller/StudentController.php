@@ -32,7 +32,7 @@ class StudentController extends Controller
     /**
      * Gets information on the class the student belongs to
      *
-     * @Route("/api/student/class", name="getClassAsProfessor")
+     * @Route("/api/student/class", name="getClassAsStudent")
      * @Method({"GET", "OPTIONS"})
      */
     public function getClass(Request $request) {

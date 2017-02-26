@@ -462,7 +462,7 @@ class ProfessorController extends Controller
 
         // if nothing was returned, give error. if multiple results, also give error (each key should be unique)
         if (count($results) < 1) {
-            $jsr = new JsonResponse(array('error' => 'Course does not exist or does not belong to the currently authenticated user.'));
+            $jsr = new JsonResponse(array('error' => 'Class does not exist or does not belong to the currently authenticated user.'));
             $jsr->setStatusCode(503);
             return $jsr;
         } else if (count($results) > 1) {
