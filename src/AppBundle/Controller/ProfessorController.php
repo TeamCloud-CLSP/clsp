@@ -634,13 +634,13 @@ class ProfessorController extends Controller
 
         // if nothing was returned, give error. if multiple results, also give error (each key should be unique)
         if (count($results) < 1) {
-            $jsr = new JsonResponse(array('error' => 'Course does not exist or does not belong to the currently authenticated user.'));
+            $jsr = new JsonResponse(array('error' => 'Class does not exist or does not belong to the currently authenticated user.'));
             $jsr->setStatusCode(503);
             return $jsr;
         }
 
         $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->delete('student_registrations')->where('student_registrations.id = ?')
+        $results = $queryBuilder->delete('classes')->where('classes.id = ?')
             ->setParameter(0, $class_id)->execute();
 
         return new Response();
