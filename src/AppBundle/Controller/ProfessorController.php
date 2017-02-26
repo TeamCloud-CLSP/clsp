@@ -28,8 +28,8 @@ use AppBundle\Database;
  * getStudentRegistration - /api/professor/registrations/student/{id}
  * getStudentRegistrationByClass - /api/professor/classes/{id}/registrations/student
  * getStudentRegistrations - /api/professor/registrations/student
- * createStudentRegistration - /api/professor/registrations/student (POST) - takes in date_start, date_end, class_id, name
- * editStudentRegistration - /api/professor/registrations/student/{id} (POST) - takes in date_start, date_end, name
+ * createStudentRegistration - /api/professor/registrations/student (POST) - takes in date_start, date_end, class_id
+ * editStudentRegistration - /api/professor/registrations/student/{id} (POST) - takes in date_start, date_end
  * deleteStudentRegistration - /api/professor/registrations/student/{id} (DELETE)
  * getClasses - /api/professor/classes - /api/professor/classes/{id}
  * getClass - /api/professor/classes/{id}
@@ -234,8 +234,6 @@ class ProfessorController extends Controller
         }
 
         return new JsonResponse($results[0]);
-
-        return new JsonResponse($results[0]);
     }
 
     /**
@@ -267,7 +265,7 @@ class ProfessorController extends Controller
     /**
      * Creates a student registration
      * 
-     * Takes in: date_start, date_end, class_id, name
+     * Takes in: date_start, date_end, class_id
      *
      * @Route("/api/professor/registrations/student", name="createStudentRegistrationAsProfessor")
      * @Method({"POST", "OPTIONS"})
@@ -277,11 +275,10 @@ class ProfessorController extends Controller
         $user_id = $user->getId();
         $post_parameters = $request->request->all();
 
-        if (array_key_exists('date_start', $post_parameters) && array_key_exists('date_end', $post_parameters) && array_key_exists('class_id', $post_parameters) && array_key_exists('name', $post_parameters)) {
+        if (array_key_exists('date_start', $post_parameters) && array_key_exists('date_end', $post_parameters) && array_key_exists('class_id', $post_parameters)) {
             $date_start = $post_parameters['date_start'];
             $date_end = $post_parameters['date_end'];
             $class_id = $post_parameters['class_id'];
-            $name = $post_parameters['name'];
             if (!is_numeric($date_start) || !is_numeric($date_end) || !is_numeric($class_id)) {
                 $jsr = new JsonResponse(array('error' => 'Incorrect type for values.'));
                 $jsr->setStatusCode(503);
@@ -334,7 +331,7 @@ class ProfessorController extends Controller
                     )
                 )
                 ->setParameter(0, $date_start)->setParameter(1, $date_end)->setParameter(2, $class_id)->setParameter(3, $designer_id)->setParameter(4, $prof_reg_id)
-                ->setParameter(5, time())->setParameter(6, md5(mt_rand()))->setParameter(7, $name)->execute();
+                ->setParameter(5, time())->setParameter(6, md5(mt_rand()))->setParameter(7, '')->execute();
 
             $sr_id = $conn->lastInsertId();
 
@@ -354,7 +351,6 @@ class ProfessorController extends Controller
      * Takes in:
      *      "date_start" - start date of activation
      *      "date_end" - end date of activation
-     *      "name" - name of class
      *
      * @Route("/api/professor/registrations/student/{id}", name="editStudentRegistrationAsProfessor")
      * @Method({"POST", "OPTIONS"})
@@ -388,10 +384,9 @@ class ProfessorController extends Controller
 
         $queryBuilder = $conn->createQueryBuilder();
         $queryBuilder->update('student_registrations');
-        if (array_key_exists('date_start', $post_parameters) && array_key_exists('date_end', $post_parameters) && array_key_exists('name', $post_parameters)) {
+        if (array_key_exists('date_start', $post_parameters) && array_key_exists('date_end', $post_parameters)) {
             $date_start = $post_parameters['date_start'];
             $date_end = $post_parameters['date_end'];
-            $name = $post_parameters['name'];
             if (!is_numeric($date_start) || !is_numeric($date_end)) {
                 $jsr = new JsonResponse(array('error' => 'Incorrect type for values.'));
                 $jsr->setStatusCode(503);
@@ -403,8 +398,8 @@ class ProfessorController extends Controller
                 return $jsr;
             }
             $queryBuilder->set('date_start', '?')
-                ->set('date_end', '?')->set('name', '?')->where('id = ?')
-                ->setParameter(0, $date_start)->setParameter(1, $date_end)->setParameter(2, $name)->setParameter(3, $sr_id)->execute();
+                ->set('date_end', '?')->where('id = ?')
+                ->setParameter(0, $date_start)->setParameter(1, $date_end)->setParameter(2, $sr_id)->execute();
 
             return $this->getStudentRegistration($request, $sr_id);
         } else {
