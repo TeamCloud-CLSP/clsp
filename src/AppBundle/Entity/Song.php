@@ -120,5 +120,374 @@ class Song
      */
     private $moduleLs;
 
-}
 
+    /**
+     * Get id
+     *
+     * @return integer
+     */
+    public function getId()
+    {
+        return $this->id;
+    }
+
+    /**
+     * Set title
+     *
+     * @param string $title
+     *
+     * @return Song
+     */
+    public function setTitle($title)
+    {
+        $this->title = $title;
+
+        return $this;
+    }
+
+    /**
+     * Get title
+     *
+     * @return string
+     */
+    public function getTitle()
+    {
+        return $this->title;
+    }
+
+    /**
+     * Set album
+     *
+     * @param string $album
+     *
+     * @return Song
+     */
+    public function setAlbum($album)
+    {
+        $this->album = $album;
+
+        return $this;
+    }
+
+    /**
+     * Get album
+     *
+     * @return string
+     */
+    public function getAlbum()
+    {
+        return $this->album;
+    }
+
+    /**
+     * Set artist
+     *
+     * @param string $artist
+     *
+     * @return Song
+     */
+    public function setArtist($artist)
+    {
+        $this->artist = $artist;
+
+        return $this;
+    }
+
+    /**
+     * Get artist
+     *
+     * @return string
+     */
+    public function getArtist()
+    {
+        return $this->artist;
+    }
+
+    /**
+     * Set description
+     *
+     * @param string $description
+     *
+     * @return Song
+     */
+    public function setDescription($description)
+    {
+        $this->description = $description;
+
+        return $this;
+    }
+
+    /**
+     * Get description
+     *
+     * @return string
+     */
+    public function getDescription()
+    {
+        return $this->description;
+    }
+
+    /**
+     * Set lyrics
+     *
+     * @param string $lyrics
+     *
+     * @return Song
+     */
+    public function setLyrics($lyrics)
+    {
+        $this->lyrics = $lyrics;
+
+        return $this;
+    }
+
+    /**
+     * Get lyrics
+     *
+     * @return string
+     */
+    public function getLyrics()
+    {
+        return $this->lyrics;
+    }
+
+    /**
+     * Set fileName
+     *
+     * @param string $fileName
+     *
+     * @return Song
+     */
+    public function setFileName($fileName)
+    {
+        $this->fileName = $fileName;
+
+        return $this;
+    }
+
+    /**
+     * Get fileName
+     *
+     * @return string
+     */
+    public function getFileName()
+    {
+        return $this->fileName;
+    }
+
+    /**
+     * Set fileType
+     *
+     * @param string $fileType
+     *
+     * @return Song
+     */
+    public function setFileType($fileType)
+    {
+        $this->fileType = $fileType;
+
+        return $this;
+    }
+
+    /**
+     * Get fileType
+     *
+     * @return string
+     */
+    public function getFileType()
+    {
+        return $this->fileType;
+    }
+
+    /**
+     * Set embed
+     *
+     * @param string $embed
+     *
+     * @return Song
+     */
+    public function setEmbed($embed)
+    {
+        $this->embed = $embed;
+
+        return $this;
+    }
+
+    /**
+     * Get embed
+     *
+     * @return string
+     */
+    public function getEmbed()
+    {
+        return $this->embed;
+    }
+
+    /**
+     * Set unit
+     *
+     * @param \AppBundle\Entity\Unit $unit
+     *
+     * @return Song
+     */
+    public function setUnit(\AppBundle\Entity\Unit $unit = null)
+    {
+        $this->unit = $unit;
+
+        return $this;
+    }
+
+    /**
+     * Get unit
+     *
+     * @return \AppBundle\Entity\Unit
+     */
+    public function getUnit()
+    {
+        return $this->unit;
+    }
+
+    /**
+     * Set moduleCn
+     *
+     * @param \AppBundle\Entity\ModuleCn $moduleCn
+     *
+     * @return Song
+     */
+    public function setModuleCn(\AppBundle\Entity\ModuleCn $moduleCn = null)
+    {
+        $this->moduleCn = $moduleCn;
+
+        return $this;
+    }
+
+    /**
+     * Get moduleCn
+     *
+     * @return \AppBundle\Entity\ModuleCn
+     */
+    public function getModuleCn()
+    {
+        return $this->moduleCn;
+    }
+
+    /**
+     * Set moduleQu
+     *
+     * @param \AppBundle\Entity\ModuleQu $moduleQu
+     *
+     * @return Song
+     */
+    public function setModuleQu(\AppBundle\Entity\ModuleQu $moduleQu = null)
+    {
+        $this->moduleQu = $moduleQu;
+
+        return $this;
+    }
+
+    /**
+     * Get moduleQu
+     *
+     * @return \AppBundle\Entity\ModuleQu
+     */
+    public function getModuleQu()
+    {
+        return $this->moduleQu;
+    }
+
+    /**
+     * Set moduleLt
+     *
+     * @param \AppBundle\Entity\ModuleLt $moduleLt
+     *
+     * @return Song
+     */
+    public function setModuleLt(\AppBundle\Entity\ModuleLt $moduleLt = null)
+    {
+        $this->moduleLt = $moduleLt;
+
+        return $this;
+    }
+
+    /**
+     * Get moduleLt
+     *
+     * @return \AppBundle\Entity\ModuleLt
+     */
+    public function getModuleLt()
+    {
+        return $this->moduleLt;
+    }
+
+    /**
+     * Set moduleGe
+     *
+     * @param \AppBundle\Entity\ModuleGe $moduleGe
+     *
+     * @return Song
+     */
+    public function setModuleGe(\AppBundle\Entity\ModuleGe $moduleGe = null)
+    {
+        $this->moduleGe = $moduleGe;
+
+        return $this;
+    }
+
+    /**
+     * Get moduleGe
+     *
+     * @return \AppBundle\Entity\ModuleGe
+     */
+    public function getModuleGe()
+    {
+        return $this->moduleGe;
+    }
+
+    /**
+     * Set moduleDw
+     *
+     * @param \AppBundle\Entity\ModuleDw $moduleDw
+     *
+     * @return Song
+     */
+    public function setModuleDw(\AppBundle\Entity\ModuleDw $moduleDw = null)
+    {
+        $this->moduleDw = $moduleDw;
+
+        return $this;
+    }
+
+    /**
+     * Get moduleDw
+     *
+     * @return \AppBundle\Entity\ModuleDw
+     */
+    public function getModuleDw()
+    {
+        return $this->moduleDw;
+    }
+
+    /**
+     * Set moduleLs
+     *
+     * @param \AppBundle\Entity\ModuleLs $moduleLs
+     *
+     * @return Song
+     */
+    public function setModuleLs(\AppBundle\Entity\ModuleLs $moduleLs = null)
+    {
+        $this->moduleLs = $moduleLs;
+
+        return $this;
+    }
+
+    /**
+     * Get moduleLs
+     *
+     * @return \AppBundle\Entity\ModuleLs
+     */
+    public function getModuleLs()
+    {
+        return $this->moduleLs;
+    }
+}

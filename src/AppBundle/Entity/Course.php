@@ -77,4 +77,212 @@ class Course
     }
 
 
+
+    /**
+     * Get id
+     *
+     * @return integer
+     */
+    public function getId()
+    {
+        return $this->id;
+    }
+
+    /**
+     * Set name
+     *
+     * @param string $name
+     *
+     * @return Course
+     */
+    public function setName($name)
+    {
+        $this->name = $name;
+
+        return $this;
+    }
+
+    /**
+     * Get name
+     *
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /**
+     * Set description
+     *
+     * @param string $description
+     *
+     * @return Course
+     */
+    public function setDescription($description)
+    {
+        $this->description = $description;
+
+        return $this;
+    }
+
+    /**
+     * Get description
+     *
+     * @return string
+     */
+    public function getDescription()
+    {
+        return $this->description;
+    }
+
+    /**
+     * Set designer
+     *
+     * @param \AppBundle\Entity\User $designer
+     *
+     * @return Course
+     */
+    public function setDesigner(\AppBundle\Entity\User $designer = null)
+    {
+        $this->designer = $designer;
+
+        return $this;
+    }
+
+    /**
+     * Get designer
+     *
+     * @return \AppBundle\Entity\User
+     */
+    public function getDesigner()
+    {
+        return $this->designer;
+    }
+
+    /**
+     * Add professorRegistration
+     *
+     * @param \AppBundle\Entity\ProfessorRegistration $professorRegistration
+     *
+     * @return Course
+     */
+    public function addProfessorRegistration(\AppBundle\Entity\ProfessorRegistration $professorRegistration)
+    {
+        $this->professorRegistrations[] = $professorRegistration;
+
+        return $this;
+    }
+
+    /**
+     * Remove professorRegistration
+     *
+     * @param \AppBundle\Entity\ProfessorRegistration $professorRegistration
+     */
+    public function removeProfessorRegistration(\AppBundle\Entity\ProfessorRegistration $professorRegistration)
+    {
+        $this->professorRegistrations->removeElement($professorRegistration);
+    }
+
+    /**
+     * Get professorRegistrations
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getProfessorRegistrations()
+    {
+        return $this->professorRegistrations;
+    }
+
+    /**
+     * Add class
+     *
+     * @param \AppBundle\Entity\CLSPClass $class
+     *
+     * @return Course
+     */
+    public function addClass(\AppBundle\Entity\CLSPClass $class)
+    {
+        $this->classes[] = $class;
+
+        return $this;
+    }
+
+    /**
+     * Remove class
+     *
+     * @param \AppBundle\Entity\CLSPClass $class
+     */
+    public function removeClass(\AppBundle\Entity\CLSPClass $class)
+    {
+        $this->classes->removeElement($class);
+    }
+
+    /**
+     * Get classes
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getClasses()
+    {
+        return $this->classes;
+    }
+
+    /**
+     * Set language
+     *
+     * @param \AppBundle\Entity\Language $language
+     *
+     * @return Course
+     */
+    public function setLanguage(\AppBundle\Entity\Language $language = null)
+    {
+        $this->language = $language;
+
+        return $this;
+    }
+
+    /**
+     * Get language
+     *
+     * @return \AppBundle\Entity\Language
+     */
+    public function getLanguage()
+    {
+        return $this->language;
+    }
+
+    /**
+     * Add unit
+     *
+     * @param \AppBundle\Entity\Unit $unit
+     *
+     * @return Course
+     */
+    public function addUnit(\AppBundle\Entity\Unit $unit)
+    {
+        $this->units[] = $unit;
+
+        return $this;
+    }
+
+    /**
+     * Remove unit
+     *
+     * @param \AppBundle\Entity\Unit $unit
+     */
+    public function removeUnit(\AppBundle\Entity\Unit $unit)
+    {
+        $this->units->removeElement($unit);
+    }
+
+    /**
+     * Get units
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getUnits()
+    {
+        return $this->units;
+    }
 }

@@ -63,5 +63,158 @@ class ModuleQuestionItem
      */
     private $heading;
 
-}
 
+    /**
+     * Get id
+     *
+     * @return integer
+     */
+    public function getId()
+    {
+        return $this->id;
+    }
+
+    /**
+     * Set content
+     *
+     * @param string $content
+     *
+     * @return ModuleQuestionItem
+     */
+    public function setContent($content)
+    {
+        $this->content = $content;
+
+        return $this;
+    }
+
+    /**
+     * Get content
+     *
+     * @return string
+     */
+    public function getContent()
+    {
+        return $this->content;
+    }
+
+    /**
+     * Set type
+     *
+     * @param string $type
+     *
+     * @return ModuleQuestionItem
+     */
+    public function setType($type)
+    {
+        $this->type = $type;
+
+        return $this;
+    }
+
+    /**
+     * Get type
+     *
+     * @return string
+     */
+    public function getType()
+    {
+        return $this->type;
+    }
+
+    /**
+     * Set weight
+     *
+     * @param integer $weight
+     *
+     * @return ModuleQuestionItem
+     */
+    public function setWeight($weight)
+    {
+        $this->weight = $weight;
+
+        return $this;
+    }
+
+    /**
+     * Get weight
+     *
+     * @return integer
+     */
+    public function getWeight()
+    {
+        return $this->weight;
+    }
+
+    /**
+     * Set choices
+     *
+     * @param string $choices
+     *
+     * @return ModuleQuestionItem
+     */
+    public function setChoices($choices)
+    {
+        $this->choices = $choices;
+
+        return $this;
+    }
+
+    /**
+     * Get choices
+     *
+     * @return string
+     */
+    public function getChoices()
+    {
+        return $this->choices;
+    }
+
+    /**
+     * Set answers
+     *
+     * @param string $answers
+     *
+     * @return ModuleQuestionItem
+     */
+    public function setAnswers($answers)
+    {
+        $this->answers = $answers;
+
+        return $this;
+    }
+
+    /**
+     * Get answers
+     *
+     * @return string
+     */
+    public function getAnswers()
+    {
+        return $this->answers;
+    }
+
+    /**
+     * Set heading
+     *
+     * @param \AppBundle\Entity\ModuleQuestionHeading $heading
+     *
+     * @return ModuleQuestionItem
+     */
+    public function setHeading(\AppBundle\Entity\ModuleQuestionHeading $heading = null)
+    {
+        $this->heading = $heading;
+
+        return $this;
+    }
+
+    /**
+     * Get heading
+     *
+     * @return \AppBundle\Entity\ModuleQuestionHeading
+     */
+    public function getHeading()
+    {
+        return $this->heading;
+    }
+}

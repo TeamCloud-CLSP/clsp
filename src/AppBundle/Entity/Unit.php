@@ -54,5 +54,120 @@ class Unit
     }
 
 
-}
 
+    /**
+     * Get id
+     *
+     * @return integer
+     */
+    public function getId()
+    {
+        return $this->id;
+    }
+
+    /**
+     * Set name
+     *
+     * @param string $name
+     *
+     * @return Unit
+     */
+    public function setName($name)
+    {
+        $this->name = $name;
+
+        return $this;
+    }
+
+    /**
+     * Get name
+     *
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /**
+     * Set description
+     *
+     * @param string $description
+     *
+     * @return Unit
+     */
+    public function setDescription($description)
+    {
+        $this->description = $description;
+
+        return $this;
+    }
+
+    /**
+     * Get description
+     *
+     * @return string
+     */
+    public function getDescription()
+    {
+        return $this->description;
+    }
+
+    /**
+     * Set course
+     *
+     * @param \AppBundle\Entity\Course $course
+     *
+     * @return Unit
+     */
+    public function setCourse(\AppBundle\Entity\Course $course = null)
+    {
+        $this->course = $course;
+
+        return $this;
+    }
+
+    /**
+     * Get course
+     *
+     * @return \AppBundle\Entity\Course
+     */
+    public function getCourse()
+    {
+        return $this->course;
+    }
+
+    /**
+     * Add song
+     *
+     * @param \AppBundle\Entity\Song $song
+     *
+     * @return Unit
+     */
+    public function addSong(\AppBundle\Entity\Song $song)
+    {
+        $this->songs[] = $song;
+
+        return $this;
+    }
+
+    /**
+     * Remove song
+     *
+     * @param \AppBundle\Entity\Song $song
+     */
+    public function removeSong(\AppBundle\Entity\Song $song)
+    {
+        $this->songs->removeElement($song);
+    }
+
+    /**
+     * Get songs
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getSongs()
+    {
+        return $this->songs;
+    }
+}

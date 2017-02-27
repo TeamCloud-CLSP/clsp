@@ -17,3 +17,4 @@
 /.idea/
 /web/assets/vendor/*
 src/AppBundle/Database.php
+*.php~
