@@ -26,6 +26,11 @@ class User implements UserInterface, \Serializable
     private $username;
 
     /**
+     * @ORM\Column(type="string", length=128)
+     */
+    private $name;
+
+    /**
      * @ORM\Column(type="string", length=64)
      */
     private $password;
@@ -145,9 +150,9 @@ class User implements UserInterface, \Serializable
     }
 
     public function getUsername()
-    {
-        return $this->username;
-    }
+{
+    return $this->username;
+}
 
     public function getSalt()
     {
@@ -230,7 +235,6 @@ class User implements UserInterface, \Serializable
         return $userArray;
     }
 
-
     /**
      * Get id
      *
@@ -253,6 +257,30 @@ class User implements UserInterface, \Serializable
         $this->username = $username;
 
         return $this;
+    }
+
+    /**
+     * Set name
+     *
+     * @param string $name
+     *
+     * @return User
+     */
+    public function setName($name)
+    {
+        $this->name = $name;
+
+        return $this;
+    }
+
+    /**
+     * Get name
+     *
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->name;
     }
 
     /**
