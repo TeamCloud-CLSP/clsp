@@ -6,7 +6,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * Class Course
  * @ORM\Entity
- * @ORM\Table(name ="course")
+ * @ORM\Table(name ="courses")
  */
 class Course
 {
