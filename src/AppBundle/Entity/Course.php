@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Yuanhan
- * Date: 2/14/2017
- * Time: 5:59 PM
- */
 namespace AppBundle\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
@@ -12,11 +6,13 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * Class Course
  * @ORM\Entity
- * @ORM\Table(name ="courses")
+ * @ORM\Table(name ="course")
  */
 class Course
 {
     /**
+     * @var integer $id Unique course ID
+     *
      * @ORM\Column(name="id", type = "integer")
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="AUTO")
@@ -24,11 +20,21 @@ class Course
     private $id;
 
     /**
+     * @var string $name Name of the course
+     *
      * @ORM\Column(name = "name", type = "string", length = 255)
      */
     private $name;
 
     /**
+     * @var string $description Course Description
+     *
+     * @ORM\Column(type = "string")
+     */
+    private $description;
+
+    /**
+     * @var $designer User that owns this course
      *
      * @ORM\ManyToOne(targetEntity = "User", inversedBy = "courses")
      * @ORM\JoinColumn(name = "user_id", referencedColumnName = "id", onDelete = "set null")
@@ -36,146 +42,39 @@ class Course
     private $designer;
 
     /**
+     * @var $professorRegistrations ProfessorRegistration that give access to this course
+     *
      * @ORM\OneToMany(targetEntity = "ProfessorRegistration", mappedBy = "course")
      */
     private $professorRegistrations;
 
     /**
+     * @var $classes CLSPClass's that use this course
+     *
      * @ORM\OneToMany(targetEntity = "CLSPClass", mappedBy = "course")
      */
     private $classes;
+
+    /**
+     * Many Courses have One Language
+     * @ORM\ManyToOne(targetEntity="Language", inversedBy="courses")
+     * @ORM\JoinColumn(name="language_id", referencedColumnName="id")
+     */
+    private $language;
+
+    /**
+     * One Course has Many Units.
+     * @ORM\OneToMany(targetEntity="Unit", mappedBy="course")
+     */
+    private $units;
 
 
     public function __construct()
     {
         $this->professorRegistrations = new ArrayCollection();
         $this->classes = new ArrayCollection();
-    }
-
-    /**
-     * Get id
-     *
-     * @return integer
-     */
-    public function getId()
-    {
-        return $this->id;
+        $this->units = new ArrayCollection();
     }
 
 
-    /**
-     * Set name
-     *
-     * @param string $name
-     *
-     * @return Course
-     */
-    public function setName($name)
-    {
-        $this->name = $name;
-
-        return $this;
-    }
-
-    /**
-     * Get name
-     *
-     * @return string
-     */
-    public function getName()
-    {
-        return $this->name;
-    }
-
-    /**
-     * Set designer
-     *
-     * @param \AppBundle\Entity\User $designer
-     *
-     * @return Course
-     */
-    public function setDesigner(\AppBundle\Entity\User $designer = null)
-    {
-        $this->designer = $designer;
-
-        return $this;
-    }
-
-    /**
-     * Get designer
-     *
-     * @return \AppBundle\Entity\User
-     */
-    public function getDesigner()
-    {
-        return $this->designer;
-    }
-
-    /**
-     * Add professorRegistration
-     *
-     * @param \AppBundle\Entity\ProfessorRegistration $professorRegistration
-     *
-     * @return Course
-     */
-    public function addProfessorRegistration(\AppBundle\Entity\ProfessorRegistration $professorRegistration)
-    {
-        $this->professorRegistrations[] = $professorRegistration;
-
-        return $this;
-    }
-
-    /**
-     * Remove professorRegistration
-     *
-     * @param \AppBundle\Entity\ProfessorRegistration $professorRegistration
-     */
-    public function removeProfessorRegistration(\AppBundle\Entity\ProfessorRegistration $professorRegistration)
-    {
-        $this->professorRegistrations->removeElement($professorRegistration);
-    }
-
-    /**
-     * Get professorRegistrations
-     *
-     * @return \Doctrine\Common\Collections\Collection
-     */
-    public function getProfessorRegistrations()
-    {
-        return $this->professorRegistrations;
-    }
-
-    /**
-     * Add class
-     *
-     * @param \AppBundle\Entity\CLSPClass $class
-     *
-     * @return Course
-     */
-    public function addClass(\AppBundle\Entity\CLSPClass $class)
-    {
-        $this->classes[] = $class;
-
-        return $this;
-    }
-
-    /**
-     * Remove class
-     *
-     * @param \AppBundle\Entity\CLSPClass $class
-     */
-    public function removeClass(\AppBundle\Entity\CLSPClass $class)
-    {
-        $this->classes->removeElement($class);
-    }
-
-    /**
-     * Get classes
-     *
-     * @return \Doctrine\Common\Collections\Collection
-     */
-    public function getClasses()
-    {
-        return $this->classes;
-    }
 }

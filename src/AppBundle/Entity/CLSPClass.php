@@ -13,7 +13,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * Class CLSPClass
  * @ORM\Entity
- * @ORM\Table(name = "classes")
+ * @ORM\Table(name = "class")
  */
 class CLSPClass
 {
