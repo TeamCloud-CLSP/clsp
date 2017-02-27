@@ -59,21 +59,21 @@ class Song
     /**
      * @var string $fileName Song File Name
      *
-     * @ORM\Column(type = "string")
+     * @ORM\Column(type = "string", nullable=true)
      */
     private $fileName;
 
     /**
      * @var string $fileType File Type of Song File
      *
-     * @ORM\Column(type = "string")
+     * @ORM\Column(type = "string", nullable=true)
      */
     private $fileType;
 
     /**
      * @var string $embed Embed Code for a Song
      *
-     * @ORM\Column(type = "string")
+     * @ORM\Column(type = "string", nullable=true)
      */
     private $embed;
 
