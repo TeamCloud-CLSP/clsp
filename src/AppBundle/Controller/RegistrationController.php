@@ -39,7 +39,7 @@ class RegistrationController extends Controller
     /**
      * Finds a matching signup code, then registers the corresponding user.
      *
-     * Takes: username, password, email, signup_code
+     * Takes: username, name, password, email, signup_code
      *
      * Username and Email must be unique in the database.
      *
@@ -51,12 +51,13 @@ class RegistrationController extends Controller
 
         $post_parameters = $request->request->all();
 
-        if (array_key_exists('username', $post_parameters) && array_key_exists('password', $post_parameters) && array_key_exists('email', $post_parameters) && array_key_exists('signup_code', $post_parameters)) {
+        if (array_key_exists('username', $post_parameters) && array_key_exists('password', $post_parameters) && array_key_exists('email', $post_parameters) && array_key_exists('signup_code', $post_parameters) && array_key_exists('name', $post_parameters)) {
             $conn = Database::getInstance();
             $signup_code = $post_parameters['signup_code'];
             $username = $post_parameters['username'];
             $password = $post_parameters['password'];
             $email = $post_parameters['email'];
+            $name = $post_parameters['name'];
             $user = new User();
 
             // check to make sure username and email are unique
@@ -96,12 +97,13 @@ class RegistrationController extends Controller
                             'is_student' => '?',
                             'is_professor' => '?',
                             'is_designer' => '?',
-                            'is_administrator' => '?'
+                            'is_administrator' => '?',
+                            'name' => '?'
                         )
                     )
                     ->setParameter(0, $username)->setParameter(1, $encoder->encodePassword($user, $password))->setParameter(2, $email)->setParameter(3, 1)->setParameter(4, time())
                     ->setParameter(5, time())->setParameter(6, $date_end)->setParameter(7, date_default_timezone_get())
-                    ->setParameter(8, 0)->setParameter(9, 1)->setParameter(10, 0)->setParameter(11, 0)->execute();
+                    ->setParameter(8, 0)->setParameter(9, 1)->setParameter(10, 0)->setParameter(11, 0)->setParameter(12, $name)->execute();
 
                 $professor_id = $conn->lastInsertId();
 
@@ -147,12 +149,13 @@ class RegistrationController extends Controller
                             'is_professor' => '?',
                             'is_designer' => '?',
                             'is_administrator' => '?',
-                            'student_registration_id' => '?'
+                            'student_registration_id' => '?',
+                            'name' => '?'
                         )
                     )
                     ->setParameter(0, $username)->setParameter(1, $encoder->encodePassword($user, $password))->setParameter(2, $email)->setParameter(3, 1)->setParameter(4, time())
                     ->setParameter(5, time())->setParameter(6, $date_end)->setParameter(7, date_default_timezone_get())
-                    ->setParameter(8, 1)->setParameter(9, 0)->setParameter(10, 0)->setParameter(11, 0)->setParameter(12, $sr_id)->execute();
+                    ->setParameter(8, 1)->setParameter(9, 0)->setParameter(10, 0)->setParameter(11, 0)->setParameter(12, $sr_id)->setParameter(13, $name)->execute();
 
                 $student_id = $conn->lastInsertId();
 

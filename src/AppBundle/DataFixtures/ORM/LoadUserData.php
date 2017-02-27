@@ -14,6 +14,7 @@ use AppBundle\Entity\ProfessorRegistration;
 use AppBundle\Entity\StudentRegistration;
 use AppBundle\Entity\Course;
 use AppBundle\Entity\CLSPClass;
+use AppBundle\Entity\Language;
 
 class LoadUserData implements FixtureInterface, ContainerAwareInterface
 {
@@ -64,11 +65,21 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
         $testClass4 = $this->createCLSPClass($this->getClass4Info());
         $testClass5 = $this->createCLSPClass($this->getClass5Info());
         $testClass6 = $this->createCLSPClass($this->getClass6Info());
+        $testLanguage1 = $this->createLanguage($this->getLanguage1Info());
+        $testLanguage2 = $this->createLanguage($this->getLanguage2Info());
+        $testLanguage3 = $this->createLanguage($this->getLanguage3Info());
+        $testLanguage4 = $this->createLanguage($this->getLanguage4Info());
+        $testLanguage5 = $this->createLanguage($this->getLanguage5Info());
 
         // specifies the designer that made the course
         $testCourse1->setDesigner($testDesigner1);
         $testCourse2->setDesigner($testDesigner2);
         $testCourse3->setDesigner($testDesigner2);
+
+        // specifies language for the course
+        $testCourse1->setLanguage($testLanguage1);
+        $testCourse2->setLanguage($testLanguage3);
+        $testCourse3->setLanguage($testLanguage3);
 
         // specifies owner who made prof registration, and the course the registration is being given to
         $testReg1->setOwner($testDesigner1);
@@ -158,6 +169,11 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
         $testStudent10->setRegisteredClass($testStudentReg6);
 
         $manager->persist($testAdmin);
+        $manager->persist($testLanguage1);
+        $manager->persist($testLanguage2);
+        $manager->persist($testLanguage3);
+        $manager->persist($testLanguage4);
+        $manager->persist($testLanguage5);
         $manager->persist($testProfessor1);
         $manager->persist($testProfessor2);
         $manager->persist($testProfessor3);
@@ -202,6 +218,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
         $encoder = $this->container->get('security.password_encoder');
         $newUser = new User();
         $newUser->setUsername           ($userInfo['username']);
+        $newUser->setName               ($userInfo['name']);
         $newUser->setPassword           ($encoder->encodePassword($newUser, $userInfo['password']));
         $newUser->setEmail              ($userInfo['email']);
         $newUser->setIsActive           ($userInfo['isActive']);
@@ -241,6 +258,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
     private function createCourse($registrationInfo) {
         $newCourse = new Course();
         $newCourse->setName        ($registrationInfo['name']);
+        $newCourse->setDescription ($registrationInfo['description']);
         return $newCourse;
     }
 
@@ -250,9 +268,17 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
         return $newCLSPClass;
     }
 
+    private function createLanguage($registrationInfo) {
+        $newLanguage = new Language();
+        $newLanguage->setName        ($registrationInfo['name']);
+        $newLanguage->setLanguageCode($registrationInfo['language_code']);
+        return $newLanguage;
+    }
+
     private function getTestAdminInfo() {
         $testAdmin = array(
             "username"          => "testAdmin",
+            "name"              => "Admin",
             "password"          => "p",
             "email"             => "testAdmin@test.com",
             "isActive"          => true,
@@ -272,6 +298,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
     private function getTestDesigner1Info() {
         $testDesigner = array(
             "username"          => "testDesignerChinese",
+            "name"              => "Chinese Designer",
             "password"          => "p",
             "email"             => "testDesignerChinese@test.com",
             "isActive"          => true,
@@ -291,6 +318,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
     private function getTestDesigner2Info() {
         $testDesigner = array(
             "username"          => "testDesignerJapanese",
+            "name"              => "Japanese Designer",
             "password"          => "p",
             "email"             => "testDesignerJapanese@test.com",
             "isActive"          => true,
@@ -310,6 +338,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
     private function getTestProfessor1Info() {
         $testProfessor = array(
             "username"          => "testProfessor1C",
+            "name"              => "Chinese Professor 1",
             "password"          => "p",
             "email"             => "testProfessor1C@test.com",
             "isActive"          => true,
@@ -329,6 +358,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
     private function getTestProfessor2Info() {
         $testProfessor = array(
             "username"          => "testProfessor2C",
+            "name"              => "Chinese Professor 2",
             "password"          => "p",
             "email"             => "testProfessor2C@test.com",
             "isActive"          => true,
@@ -348,6 +378,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
     private function getTestProfessor3Info() {
         $testProfessor = array(
             "username"          => "testProfessor3J",
+            "name"              => "Japanese Professor 1",
             "password"          => "p",
             "email"             => "testProfessor3J@test.com",
             "isActive"          => true,
@@ -367,6 +398,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
     private function getTestStudentInfo1() {
         $testStudentInfo = array(
             "username"          => "testStudent1",
+            "name"              => "Student 1",
             "password"          => "p",
             "email"             => "testStudent1@test.com",
             "isActive"          => true,
@@ -386,6 +418,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
     private function getTestStudentInfo2() {
         $testStudentInfo = array(
             "username"          => "testStudent2",
+            "name"              => "Student 2",
             "password"          => "p",
             "email"             => "testStudent2@test.com",
             "isActive"          => true,
@@ -405,6 +438,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
     private function getTestStudentInfo3() {
         $testStudentInfo = array(
             "username"          => "testStudent3",
+            "name"              => "Student 3",
             "password"          => "p",
             "email"             => "testStudent3@test.com",
             "isActive"          => true,
@@ -424,6 +458,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
     private function getTestStudentInfo4() {
         $testStudentInfo = array(
             "username"          => "testStudent4",
+            "name"              => "Student 4",
             "password"          => "p",
             "email"             => "testStudent4@test.com",
             "isActive"          => true,
@@ -443,6 +478,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
     private function getTestStudentInfo5() {
         $testStudentInfo = array(
             "username"          => "testStudent5",
+            "name"              => "Student 5",
             "password"          => "p",
             "email"             => "testStudent5@test.com",
             "isActive"          => true,
@@ -462,6 +498,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
     private function getTestStudentInfo6() {
         $testStudentInfo = array(
             "username"          => "testStudent6",
+            "name"              => "Student 6",
             "password"          => "p",
             "email"             => "testStudent6@test.com",
             "isActive"          => true,
@@ -481,6 +518,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
     private function getTestStudentInfo7() {
         $testStudentInfo = array(
             "username"          => "testStudent7",
+            "name"              => "Student 7",
             "password"          => "p",
             "email"             => "testStudent7@test.com",
             "isActive"          => true,
@@ -500,6 +538,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
     private function getTestStudentInfo8() {
         $testStudentInfo = array(
             "username"          => "testStudent8",
+            "name"              => "Student 8",
             "password"          => "p",
             "email"             => "testStudent8@test.com",
             "isActive"          => true,
@@ -519,6 +558,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
     private function getTestStudentInfo9() {
         $testStudentInfo = array(
             "username"          => "testStudent9",
+            "name"              => "Student 9",
             "password"          => "p",
             "email"             => "testStudent9@test.com",
             "isActive"          => true,
@@ -538,6 +578,7 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
     private function getTestStudentInfo10() {
         $testStudentInfo = array(
             "username"          => "testStudent10",
+            "name"              => "Student 10",
             "password"          => "p",
             "email"             => "testStudent10@test.com",
             "isActive"          => true,
@@ -673,21 +714,24 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
 
     private function getCourse1Info() {
         $regInfo = array(
-            "name"       => "CHIN 3002"
+            "name"       => "CHIN 3002",
+            "description"=> "Advanced Chinese Language, part 2"
         );
         return $regInfo;
     }
 
     private function getCourse2Info() {
         $regInfo = array(
-            "name"       => "JAPN 3001"
+            "name"       => "JAPN 3001",
+            "description"=> "Advanced Japanese Language"
         );
         return $regInfo;
     }
 
     private function getCourse3Info() {
         $regInfo = array(
-            "name"       => "JAPN 4361"
+            "name"       => "JAPN 4361",
+            "description"=> "Japanese Literature"
         );
         return $regInfo;
     }
@@ -730,6 +774,46 @@ class LoadUserData implements FixtureInterface, ContainerAwareInterface
     private function getClass6Info() {
         $regInfo = array(
             "name"       => "JAPN 4361 A"
+        );
+        return $regInfo;
+    }
+
+    private function getLanguage1Info() {
+        $regInfo = array(
+            "name"       => "Chinese",
+            "language_code" => "ZH"
+        );
+        return $regInfo;
+    }
+
+    private function getLanguage2Info() {
+        $regInfo = array(
+            "name"       => "Russian",
+            "language_code" => "RU"
+        );
+        return $regInfo;
+    }
+
+    private function getLanguage3Info() {
+        $regInfo = array(
+            "name"       => "Japanese",
+            "language_code" => "JA"
+        );
+        return $regInfo;
+    }
+
+    private function getLanguage4Info() {
+        $regInfo = array(
+            "name"       => "Arabic",
+            "language_code" => "AR"
+        );
+        return $regInfo;
+    }
+
+    private function getLanguage5Info() {
+        $regInfo = array(
+            "name"       => "Korean",
+            "language_code" => "KO"
         );
         return $regInfo;
     }

@@ -28,7 +28,7 @@ class AdministratorController extends Controller
     /**
      * Gets a list of all non-admin users
      *
-     * Can filter by name
+     * Can filter by username or name
      *
      * @Route("/api/admin/users", name="getUsersAsAdministrator")
      * @Method({"GET", "OPTIONS"})
@@ -37,16 +37,22 @@ class AdministratorController extends Controller
         $request_parameters = $request->query->all();
 
         // gets the name parameter from request parameters, or just leaves it as double wildcard
+        $username = "%%";
         $name = "%%";
         if (array_key_exists('username', $request_parameters)) {
-            $name = '%' . $request_parameters['username'] . '%';
+            $username = '%' . $request_parameters['username'] . '%';
         }
+
+        if (array_key_exists('name', $request_parameters)) {
+            $name = '%' . $request_parameters['name'] . '%';
+        }
+
         $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
-        $result = $queryBuilder->select('id', 'username', 'email', 'is_active', 'date_created', 'date_deleted', 'date_start', 'date_end', 'timezone', 'is_student', 'is_professor', 'is_designer', 'is_administrator')
+        $result = $queryBuilder->select('id', 'username', 'name', 'email', 'is_active', 'date_created', 'date_deleted', 'date_start', 'date_end', 'timezone', 'is_student', 'is_professor', 'is_designer', 'is_administrator')
             ->from('app_users', 'users')
-            ->where('users.username LIKE ?')->andWhere('users.is_administrator = 0')
-            ->setParameter(0, $name)->execute()->fetchAll();
+            ->where('users.username LIKE ?')->andWhere('users.is_administrator = 0')->andWhere('users.name LIKE ?')
+            ->setParameter(0, $username)->setParmameter(1, $name)->execute()->fetchAll();
 
         $jsr = new JsonResponse(array('size' => count($result), 'data' => $result));
         $jsr->setStatusCode(200);
@@ -71,7 +77,7 @@ class AdministratorController extends Controller
 
         $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
-        $result = $queryBuilder->select('id', 'username', 'email', 'is_active', 'date_created', 'date_deleted', 'date_start', 'date_end', 'timezone', 'is_student', 'is_professor', 'is_designer', 'is_administrator')
+        $result = $queryBuilder->select('id', 'username', 'name', 'email', 'is_active', 'date_created', 'date_deleted', 'date_start', 'date_end', 'timezone', 'is_student', 'is_professor', 'is_designer', 'is_administrator')
             ->from('app_users', 'users')
             ->where('users.id = ?')->andWhere('users.is_administrator = 0')
             ->setParameter(0, $user_id)->execute()->fetchAll();
@@ -125,7 +131,7 @@ class AdministratorController extends Controller
     /**
      * Creates a designer account
      * 
-     * Takes: username, password, email
+     * Takes: username, password, email, name
      * 
      * @Route("/api/admin/designer", name="createDesignerAsAdministrator")
      * @Method({"POST", "OPTIONS"})
@@ -135,11 +141,12 @@ class AdministratorController extends Controller
     public function createDesigner(Request $request) {
         $encoder = $this->container->get('security.password_encoder');
         $post_parameters = $request->request->all();
-        if (array_key_exists('username', $post_parameters) && array_key_exists('password', $post_parameters) && array_key_exists('email', $post_parameters)) {
+        if (array_key_exists('username', $post_parameters) && array_key_exists('password', $post_parameters) && array_key_exists('email', $post_parameters) && array_key_exists('name', $post_parameters)) {
             $conn = Database::getInstance();
             $username = $post_parameters['username'];
             $password = $post_parameters['password'];
             $email = $post_parameters['email'];
+            $name = $post_parameters['name'];
             $user = new User();
 
             // check to make sure username and email are unique
@@ -169,17 +176,18 @@ class AdministratorController extends Controller
                         'is_student' => '?',
                         'is_professor' => '?',
                         'is_designer' => '?',
-                        'is_administrator' => '?'
+                        'is_administrator' => '?',
+                        'name' => '?'
                     )
                 )
                 ->setParameter(0, $username)->setParameter(1, $encoder->encodePassword($user, $password))->setParameter(2, $email)->setParameter(3, 1)->setParameter(4, time())
                 ->setParameter(5, time())->setParameter(6, time() + 365*24*60*60)->setParameter(7, date_default_timezone_get())
-                ->setParameter(8, 0)->setParameter(9, 0)->setParameter(10, 1)->setParameter(11, 0)->execute();
+                ->setParameter(8, 0)->setParameter(9, 0)->setParameter(10, 1)->setParameter(11, 0)->setParameter(12, $name)->execute();
 
             $student_id = $conn->lastInsertId();
 
             $queryBuilder = $conn->createQueryBuilder();
-            $results = $queryBuilder->select('id', 'username', 'email', 'is_active', 'date_created', 'date_deleted', 'date_start', 'date_end', 'timezone', 'is_student', 'is_professor', 'is_designer', 'is_administrator')
+            $results = $queryBuilder->select('id', 'username', 'name', 'email', 'is_active', 'date_created', 'date_deleted', 'date_start', 'date_end', 'timezone', 'is_student', 'is_professor', 'is_designer', 'is_administrator')
                 ->from('app_users', 'users')->where('users.id = ?')->setParameter(0, $student_id)->execute()->fetchAll();
             if (count($results) < 1) {
                 $jsr = new JsonResponse(array('error' => 'An error upon account creation has occurred.'));

@@ -12,7 +12,8 @@ use AppBundle\Database;
 
 /**
  * Available functions:
- * 
+ *
+ * getLanguages - /api/designer/languages - gets all available languages
  * getStudentRegistrations - /api/designer/registrations/professor/{professor_registration_id}/student - gets all student registrations that are tied to a professor registration
  * getCourses - /api/designer/courses - get courses
  * getCourse - /api/designer/course/{id} - get a single course by its id
@@ -32,6 +33,25 @@ use AppBundle\Database;
  */
 class DesignerController extends Controller
 {
+
+    /**
+     * Gets list of available languages
+     * @Route("/api/designer/languages", name="getLanguagesAsDesigner")
+     * @Method({"GET", "OPTIONS"})
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getLanguages(Request $request) {
+        $conn = Database::getInstance();
+
+        $queryBuilder = $conn->createQueryBuilder();
+        $results = $queryBuilder->select('language.id', 'language.language_code', 'language.name')
+            ->from('language')->execute()->fetchAll();
+
+        $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));
+        $jsr->setStatusCode(200);
+        return $jsr;
+    }
 
     /**
      * Gets all student registrations associated with a professor registration (that the designer owns!)
@@ -82,8 +102,9 @@ class DesignerController extends Controller
         }
         $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
-        $result = $queryBuilder->select('courses.id', 'courses.name')
-            ->from('app_users')->innerJoin('app_users', 'courses', 'courses', 'app_users.id = courses.user_id')->where('app_users.id = ?')->andWhere('courses.name LIKE ?')
+        $result = $queryBuilder->select('courses.id', 'courses.name', 'courses.description', 'language.name AS language_name', 'language.id AS language_id')
+            ->from('app_users')->innerJoin('app_users', 'courses', 'courses', 'app_users.id = courses.user_id')
+            ->innerJoin('courses', 'language', 'language', 'courses.language_id = language.id')->where('app_users.id = ?')->andWhere('courses.name LIKE ?')
             ->setParameter(0, $user_id)->setParameter(1, $name)->execute()->fetchAll();
 
         $jsr = new JsonResponse(array('size' => count($result), 'data' => $result));
@@ -111,8 +132,8 @@ class DesignerController extends Controller
         // check if the course belongs to the designer
         $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('courses.id', 'courses.name')->from('app_users', 'designers')
-            ->innerJoin('designers', 'courses', 'courses', 'designers.id = courses.user_id')
+        $results = $queryBuilder->select('courses.id', 'courses.name', 'courses.description', 'language.name AS language_name', 'language.id AS language_id')->from('app_users', 'designers')
+            ->innerJoin('designers', 'courses', 'courses', 'designers.id = courses.user_id')->innerJoin('courses', 'language', 'language', 'courses.language_id = language.id')
             ->where('designers.id = ?')->andWhere('courses.id = ?')
             ->setParameter(0, $user_id)->setParameter(1, $course_id)->execute()->fetchAll();
         if (count($results) < 1) {
@@ -133,6 +154,8 @@ class DesignerController extends Controller
      *
      * Takes in:
      *      "name" - Name of course
+     *      "description" - Description of course
+     *      "language_id" - ID of the language of the course
      *
      * @Route("/api/designer/course", name="createCourse")
      * @Method({"POST", "OPTIONS"})
@@ -143,19 +166,37 @@ class DesignerController extends Controller
 
         $post_parameters = $request->request->all();
 
-        if (array_key_exists('name', $post_parameters)) {
+        if (array_key_exists('name', $post_parameters) && array_key_exists('description', $post_parameters) && array_key_exists('language_id', $post_parameters)) {
             $name = $post_parameters['name'];
+            $description = $post_parameters['description'];
+            $language_id = $post_parameters['language_id'];
+            if (!is_numeric($language_id)) {
+                $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+                $jsr->setStatusCode(400);
+                return $jsr;
+            }
             $conn = Database::getInstance();
+
+            $queryBuilder = $conn->createQueryBuilder();
+            $results = $queryBuilder->select('language.id', 'language.language_code', 'language.name')
+                ->from('language')->where('language.id = ?')->setParameter(0, $language_id)->execute()->fetchAll();
+            if (count($results) < 1) {
+                $jsr = new JsonResponse(array('error' => 'Invalid language ID specified.'));
+                $jsr->setStatusCode(400);
+                return $jsr;
+            }
 
             $queryBuilder = $conn->createQueryBuilder();
             $queryBuilder->insert('courses')
                 ->values(
                     array(
                         'name' => '?',
-                        'user_id' => '?'
+                        'user_id' => '?',
+                        'description' => '?',
+                        'language_id' => '?'
                     )
                 )
-                ->setParameter(0, $name)->setParameter(1, $user_id)->execute();
+                ->setParameter(0, $name)->setParameter(1, $user_id)->setParameter(2, $description)->setParameter(3, $language_id)->execute();
             $id = $conn->lastInsertId();
 
             return $this->getCourse($request, $id);
@@ -172,6 +213,8 @@ class DesignerController extends Controller
      *
      * Takes in:
      *      "name" - Name of course
+     *      "description" - Description of course
+     *      "language_id" - ID of the language of the course
      *
      * @Route("/api/designer/course/{id}", name="editCourse")
      * @Method({"POST", "OPTIONS"})
@@ -202,14 +245,32 @@ class DesignerController extends Controller
 
         $post_parameters = $request->request->all();
 
-        if (array_key_exists('name', $post_parameters)) {
+        if (array_key_exists('name', $post_parameters) && array_key_exists('description', $post_parameters) && array_key_exists('language_id', $post_parameters)) {
             $name = $post_parameters['name'];
+            $description = $post_parameters['description'];
+            $language_id = $post_parameters['language_id'];
+            if (!is_numeric($language_id)) {
+                $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+                $jsr->setStatusCode(400);
+                return $jsr;
+            }
+
+            $queryBuilder = $conn->createQueryBuilder();
+            $results = $queryBuilder->select('language.id', 'language.language_code', 'language.name')
+                ->from('language')->where('language.id = ?')->setParameter(0, $language_id)->execute()->fetchAll();
+            if (count($results) < 1) {
+                $jsr = new JsonResponse(array('error' => 'Invalid language ID specified.'));
+                $jsr->setStatusCode(400);
+                return $jsr;
+            }
 
             $queryBuilder = $conn->createQueryBuilder();
             $queryBuilder->update('courses')
                 ->set('courses.name', '?')
+                ->set('courses.description', '?')
+                ->set('courses.language_id', '?')
                 ->where('courses.id = ?')
-                ->setParameter(0, $name)->setParameter(1, $course_id)->execute();
+                ->setParameter(0, $name)->setParameter(3, $course_id)->setParameter(1, $description)->setParameter(2, $language_id)->execute();
 
             return $this->getCourse($request, $course_id);
 
@@ -259,7 +320,7 @@ class DesignerController extends Controller
     /**
      * Gets all professor accounts (for assigning professor to registration code if needed)
      *
-     * Can filter by username
+     * Can filter by username and name
      *
      * @Route("/api/designer/professors", name="getProfessors")
      * @Method({"GET", "OPTIONS"})
@@ -268,15 +329,22 @@ class DesignerController extends Controller
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $user_id = $user->getId();
         $request_parameters = $request->query->all();
+
+        // gets the name parameter from request parameters, or just leaves it as double wildcard
         $username = "%%";
+        $name = "%%";
         if (array_key_exists('username', $request_parameters)) {
             $username = '%' . $request_parameters['username'] . '%';
         }
+
+        if (array_key_exists('name', $request_parameters)) {
+            $name = '%' . $request_parameters['name'] . '%';
+        }
         $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
-        $result = $queryBuilder->select('app_users.id', 'app_users.username')
-            ->from('app_users')->where('app_users.is_professor = 1')->andWhere('app_users.username LIKE ?')
-            ->setParameter(0, $username)->execute()->fetchAll();
+        $result = $queryBuilder->select('app_users.id', 'app_users.username', 'app_users.name')
+            ->from('app_users')->where('app_users.is_professor = 1')->andWhere('app_users.username LIKE ?')->andWhere('app_users.name LIKE ?')
+            ->setParameter(0, $username)->setParameter(1, $name)->execute()->fetchAll();
 
         $jsr = new JsonResponse(array('size' => count($result), 'data' => $result));
         $jsr->setStatusCode(200);
@@ -294,12 +362,12 @@ class DesignerController extends Controller
         $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
         $result = $queryBuilder->select('pr.id', 'pr.date_created', 'pr.date_deleted', 'pr.date_start', 'pr.date_end', 'pr.signup_code',
-            'professors.id AS professor_id', 'professors.username AS professor_username',
-            'courses.id AS course_id', 'courses.name AS course_name')
+            'professors.id AS professor_id', 'professors.username AS professor_username', 'professors.name AS professor_name',
+            'courses.id AS course_id', 'courses.name AS course_name', 'courses.description AS course_description', 'language.name AS language_name')
             ->from('app_users', 'designers')
             ->innerJoin('designers', 'professor_registrations', 'pr', 'designers.id = pr.owner_id')
             ->leftJoin('pr', 'app_users', 'professors', 'pr.professor_id = professors.id')
-            ->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
+            ->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')->innerJoin('courses', 'language', 'language', 'courses.language_id = language.id')
             ->where('designers.id = ?')
             ->setParameter(0, $user_id)->execute()->fetchAll();
 
@@ -329,12 +397,12 @@ class DesignerController extends Controller
         $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
         $result = $queryBuilder->select('pr.id', 'pr.date_created', 'pr.date_deleted', 'pr.date_start', 'pr.date_end', 'pr.signup_code',
-            'professors.id AS professor_id', 'professors.username AS professor_username',
-            'courses.id AS course_id', 'courses.name AS course_name')
+            'professors.id AS professor_id', 'professors.username AS professor_username', 'professors.name AS professor_name',
+            'courses.id AS course_id', 'courses.name AS course_name', 'courses.description AS course_description', 'language.name AS language_name')
             ->from('app_users', 'designers')
             ->innerJoin('designers', 'professor_registrations', 'pr', 'designers.id = pr.owner_id')
             ->leftJoin('pr', 'app_users', 'professors', 'pr.professor_id = professors.id')
-            ->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
+            ->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')->innerJoin('courses', 'language', 'language', 'courses.language_id = language.id')
             ->where('designers.id = ?')->andWhere('course_id = ?')
             ->setParameter(0, $user_id)->setParameter(1, $course_id)->execute()->fetchAll();
 
@@ -364,11 +432,12 @@ class DesignerController extends Controller
         $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
         $results = $queryBuilder->select('pr.id', 'pr.date_created', 'pr.date_deleted', 'pr.date_start', 'pr.date_end', 'pr.signup_code',
-                                'professors.id AS professor_id', 'professors.username AS professor_username',
-                                'courses.id AS course_id', 'courses.name AS course_name')->from('app_users', 'designers')
+                                'professors.id AS professor_id', 'professors.username AS professor_username', 'professors.name AS professor_name',
+                                'courses.id AS course_id', 'courses.name AS course_name', 'courses.description AS course_description', 'language.name AS language_name')
+            ->from('app_users', 'designers')
             ->innerJoin('designers', 'professor_registrations', 'pr', 'designers.id = pr.owner_id')
             ->leftJoin('pr', 'app_users', 'professors', 'pr.professor_id = professors.id')
-            ->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
+            ->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')->innerJoin('courses', 'language', 'language', 'courses.language_id = language.id')
             ->where('designers.id = ?')->andWhere('pr.id = ?')
             ->setParameter(0, $user_id)->setParameter(1, $pr_id)->execute()->fetchAll();
         if (count($results) < 1) {

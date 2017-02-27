@@ -32,7 +32,7 @@ class Language
     /**
      * @var string $name string name of the language (ex. Japanese)
      *
-     * @ORM\Column(type = "string", length = 2)
+     * @ORM\Column(type = "string", length = 255)
      */
     private $name;
 
