@@ -18,6 +18,18 @@ use AppBundle\Database;
  * editCourse - /api/designer/course/{id} (POST) - edits a course by its id, takes in name, description, language_id request parameter
  * deleteCourse - /api/designer/course/{id} (DELETE) - deletes a course by id
  *
+ * getUnits - /api/designer/course/{id}/units - get the units that belong to a course
+ * getUnit - /api/designer/unit/{id}
+ * createUnit - /api/designer/unit (POST) - takes name, description, course_id, weight
+ * editUnit - /api/designer/unit/{id} (POST) - takes name, description, weight
+ * deleteUnit - /api/designer/unit/{id} (DELETE)
+ *
+ * getSongs - /api/designer/unit/{id}/songs - gets the songs that belong to a unit
+ * getSong - /api/designer/song/{id}
+ * createSong - /api/designer/song (POST) - takes title, album, artist, description, lyrics, weight, unit_id | optional: file_name, file_type, embed
+ * editSong - /api/designer/song/{id} (POST) - takes title, album, artist, description, lyrics, weight | optional: file_name, file_type, embed
+ * deleteSong - /api/designer/song/{id} (DELETE)
+ *
  * Class CourseController
  * @package AppBundle\Controller
  */
@@ -136,8 +148,8 @@ class CourseController extends Controller
                     )
                 )
                 ->setParameter(0, $name)->setParameter(1, $user_id)->setParameter(2, $description)->setParameter(3, $language_id)->execute();
+            
             $id = $conn->lastInsertId();
-
             return $this->getCourse($request, $id);
 
         } else {
@@ -273,7 +285,7 @@ class CourseController extends Controller
     /**
      * Gets specific information on a specific unit that belongs to the designer
      *
-     * @Route("/api/designer/unit/{id}", name="getUnitInformation")
+     * @Route("/api/designer/unit/{id}", name="getUnitInformationAsDesigner")
      * @Method({"GET", "OPTIONS"})
      */
     public function getUnit(Request $request, $id) {
@@ -317,7 +329,7 @@ class CourseController extends Controller
      *      "course_id" - ID of the course that the unit belongs to
      *      "weight" - order by which this unit should be displayed (number)
      *
-     * @Route("/api/designer/unit", name="createUnit")
+     * @Route("/api/designer/unit", name="createUnitAsDesigner")
      * @Method({"POST", "OPTIONS"})
      */
     public function createUnit(Request $request) {
@@ -328,11 +340,19 @@ class CourseController extends Controller
             $description = $post_parameters['description'];
             $course_id = $post_parameters['course_id'];
             $weight = $post_parameters['weight'];
+
             if (!is_numeric($course_id)) {
                 $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
                 $jsr->setStatusCode(400);
                 return $jsr;
             }
+
+            if (!is_numeric($weight)) {
+                $jsr = new JsonResponse(array('error' => 'Invalid non-numeric value specified for a numeric field.'));
+                $jsr->setStatusCode(400);
+                return $jsr;
+            }
+
 
             // check if course given belongs to the currently logged in user
             $result = $this->getCourse($request, $course_id);
@@ -352,8 +372,8 @@ class CourseController extends Controller
                     )
                 )
                 ->setParameter(0, $name)->setParameter(1, $weight)->setParameter(2, $description)->setParameter(3, $course_id)->execute();
+            
             $id = $conn->lastInsertId();
-
             return $this->getUnit($request, $id);
 
         } else {
@@ -398,6 +418,12 @@ class CourseController extends Controller
             $description = $post_parameters['description'];
             $weight = $post_parameters['weight'];
 
+            if (!is_numeric($weight)) {
+                $jsr = new JsonResponse(array('error' => 'Invalid non-numeric value specified for a numeric field.'));
+                $jsr->setStatusCode(400);
+                return $jsr;
+            }
+
             $conn = Database::getInstance();
             $queryBuilder = $conn->createQueryBuilder();
             $queryBuilder->update('unit')
@@ -431,7 +457,7 @@ class CourseController extends Controller
             return $jsr;
         }
 
-        // check if the course belongs to the designer
+        // check if the unit belongs to the designer
         $result = $this->getUnit($request, $unit_id);
         if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
             return $result;
@@ -440,6 +466,298 @@ class CourseController extends Controller
         $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
         $queryBuilder->delete('unit')->where('unit.id = ?')->setParameter(0, $unit_id)->execute();
+
+        return new Response();
+    }
+
+    /**
+     * Gets all songs that belong to the given unit, ordered by their weight
+     *
+     * @Route("/api/designer/unit/{id}/songs", name="getSongsAsDesigner")
+     * @Method({"GET", "OPTIONS"})
+     */
+    public function getSongs(Request $request, $id) {
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        $unit_id = $id;
+
+        if (!is_numeric($unit_id)) {
+            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+            $jsr->setStatusCode(400);
+            return $jsr;
+        }
+
+        // check if the unit belongs to the designer
+        $result = $this->getUnit($request, $unit_id);
+        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+            return $result;
+        }
+
+        $conn = Database::getInstance();
+        $queryBuilder = $conn->createQueryBuilder();
+        $results = $queryBuilder->select('song.id', 'song.title', 'song.album', 'song.artist', 'song.description', 'song.lyrics', 'song.file_name', 'song.file_type', 'song.embed', 'song.weight')
+            ->from('unit')->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')->where('unit_id = ?')
+            ->orderBy('song.weight', 'ASC')
+            ->setParameter(0, $unit_id)->execute()->fetchAll();
+
+        $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));
+        $jsr->setStatusCode(200);
+        return $jsr;
+    }
+
+    /**
+     * Gets specific information on a specific song
+     *
+     * @Route("/api/designer/song/{id}", name="getSongInformationAsDesigner")
+     * @Method({"GET", "OPTIONS"})
+     */
+    public function getSong(Request $request, $id) {
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        $song_id = $id;
+
+        if (!is_numeric($song_id)) {
+            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+            $jsr->setStatusCode(400);
+            return $jsr;
+        }
+
+        // check if the course belongs to the designer
+        $conn = Database::getInstance();
+        $queryBuilder = $conn->createQueryBuilder();
+        $results = $queryBuilder->select('song.id', 'song.title', 'song.album', 'song.artist', 'song.description', 'song.lyrics', 'song.file_name', 'song.file_type', 'song.embed', 'song.weight')
+            ->from('app_users', 'designers')->innerJoin('designers', 'courses', 'courses', 'designers.id = courses.user_id')
+            ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')
+            ->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')
+            ->where('designers.id = ?')->andWhere('song.id = ?')
+            ->orderBy('unit.weight', 'ASC')
+            ->setParameter(0, $user_id)->setParameter(1, $song_id)->execute()->fetchAll();
+        if (count($results) < 1) {
+            $jsr = new JsonResponse(array('error' => 'Song does not exist or does not belong to the currently authenticated user.'));
+            $jsr->setStatusCode(503);
+            return $jsr;
+        } else if (count($results) > 1) {
+            $jsr = new JsonResponse(array('error' => 'An error has occurred. Check for duplicate keys in the database.'));
+            $jsr->setStatusCode(500);
+            return $jsr;
+        }
+
+        return new JsonResponse($results[0]);
+    }
+
+    /**
+     * Creates a new song object tied to the current unit
+     *
+     * Takes in:
+     *      "title" - Title of song
+     *      "album" - Album of song
+     *      "artist" - Artist of song
+     *      "description" - description of song
+     *      "lyrics" - lyrics for the song
+     *      "file_name" - name of the file with the song (OPTIONAL)
+     *      "file_type" - type of file (OPTIONAL)
+     *      "embed" - link to an embed resource for the song (OPTIONAL)
+     *      "weight" - order by which this unit should be displayed
+     *      "unit_id" - ID of the unit that the song belongs to
+     *
+     * @Route("/api/designer/song", name="createSongAsDesigner")
+     * @Method({"POST", "OPTIONS"})
+     */
+    public function createSong(Request $request) {
+        $post_parameters = $request->request->all();
+
+        if (array_key_exists('title', $post_parameters) && array_key_exists('album', $post_parameters) && array_key_exists('artist', $post_parameters)
+            && array_key_exists('description', $post_parameters) && array_key_exists('lyrics', $post_parameters) && array_key_exists('weight', $post_parameters)
+            && array_key_exists('unit_id', $post_parameters)) {
+
+            $title = $post_parameters['title'];
+            $album = $post_parameters['album'];
+            $artist = $post_parameters['artist'];
+            $description = $post_parameters['description'];
+            $lyrics = $post_parameters['lyrics'];
+            $weight = $post_parameters['weight'];
+            $unit_id = $post_parameters['unit_id'];
+
+            $embed = null;
+            $file_name = null;
+            $file_type = null;
+
+            if (array_key_exists('embed', $post_parameters)) {
+                $embed = $post_parameters['embed'];
+            }
+
+            if (array_key_exists('file_name', $post_parameters)) {
+                $file_name = $post_parameters['file_name'];
+            }
+
+            if (array_key_exists('file_type', $post_parameters)) {
+                $file_type = $post_parameters['file_type'];
+            }
+
+            if (!is_numeric($unit_id)) {
+                $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+                $jsr->setStatusCode(400);
+                return $jsr;
+            }
+
+            if (!is_numeric($weight)) {
+                $jsr = new JsonResponse(array('error' => 'Invalid non-numeric value specified for a numeric field.'));
+                $jsr->setStatusCode(400);
+                return $jsr;
+            }
+
+            // check if unit given belongs to the currently logged in user
+            $result = $this->getUnit($request, $unit_id);
+            if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+                return $result;
+            }
+
+            $conn = Database::getInstance();
+            $queryBuilder = $conn->createQueryBuilder();
+            $queryBuilder->insert('song')
+                ->values(
+                    array(
+                        'title' => '?',
+                        'album' => '?',
+                        'artist' => '?',
+                        'description' => '?',
+                        'lyrics' => '?',
+                        'file_name' => '?',
+                        'file_type' => '?',
+                        'embed' => '?',
+                        'weight' => '?',
+                        'unit_id' => '?'
+                    )
+                )
+                ->setParameter(0, $title)->setParameter(1, $album)->setParameter(2, $artist)->setParameter(3, $description)
+                ->setParameter(4, $lyrics)->setParameter(5, $file_name)->setParameter(6, $file_type)->setParameter(7, $embed)
+                ->setParameter(8, $weight)->setParameter(9, $unit_id)->execute();
+            
+            $id = $conn->lastInsertId();
+            return $this->getSong($request, $id);
+
+        } else {
+            $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
+            $jsr->setStatusCode(200);
+            return $jsr;
+        }
+    }
+
+    /**
+     * Edits a song object tied to the current unit
+     *
+     * Takes in:
+     *      "title" - Title of song
+     *      "album" - Album of song
+     *      "artist" - Artist of song
+     *      "description" - description of song
+     *      "lyrics" - lyrics for the song
+     *      "file_name" - name of the file with the song (OPTIONAL)
+     *      "file_type" - type of file (OPTIONAL)
+     *      "embed" - link to an embed resource for the song (OPTIONAL)
+     *      "weight" - order by which this unit should be displayed
+     *
+     * @Route("/api/designer/song/{id}", name="editSongAsDesigner")
+     * @Method({"POST", "OPTIONS"})
+     */
+    public function editSong(Request $request, $id) {
+        $post_parameters = $request->request->all();
+
+        $song_id = $id;
+        if (!is_numeric($song_id)) {
+            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+            $jsr->setStatusCode(400);
+            return $jsr;
+        }
+
+        if (array_key_exists('title', $post_parameters) && array_key_exists('album', $post_parameters) && array_key_exists('artist', $post_parameters)
+            && array_key_exists('description', $post_parameters) && array_key_exists('lyrics', $post_parameters) && array_key_exists('weight', $post_parameters)) {
+
+            $title = $post_parameters['title'];
+            $album = $post_parameters['album'];
+            $artist = $post_parameters['artist'];
+            $description = $post_parameters['description'];
+            $lyrics = $post_parameters['lyrics'];
+            $weight = $post_parameters['weight'];
+
+            $embed = null;
+            $file_name = null;
+            $file_type = null;
+
+            if (array_key_exists('embed', $post_parameters)) {
+                $embed = $post_parameters['embed'];
+            }
+
+            if (array_key_exists('file_name', $post_parameters)) {
+                $file_name = $post_parameters['file_name'];
+            }
+
+            if (array_key_exists('file_type', $post_parameters)) {
+                $file_type = $post_parameters['file_type'];
+            }
+
+            if (!is_numeric($weight)) {
+                $jsr = new JsonResponse(array('error' => 'Invalid non-numeric value specified for a numeric field.'));
+                $jsr->setStatusCode(400);
+                return $jsr;
+            }
+
+            // check if song given belongs to the currently logged in user
+            $result = $this->getSong($request, $song_id);
+            if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+                return $result;
+            }
+
+            $conn = Database::getInstance();
+            $queryBuilder = $conn->createQueryBuilder();
+            $queryBuilder->update('song')
+                ->set('title', '?')
+                ->set('album', '?')
+                ->set('artist', '?')
+                ->set('description', '?')
+                ->set('lyrics', '?')
+                ->set('file_name', '?')
+                ->set('file_type', '?')
+                ->set('embed', '?')
+                ->set('weight', '?')
+                ->where('song.id = ?')
+                ->setParameter(0, $title)->setParameter(1, $album)->setParameter(2, $artist)->setParameter(3, $description)
+                ->setParameter(4, $lyrics)->setParameter(5, $file_name)->setParameter(6, $file_type)->setParameter(7, $embed)
+                ->setParameter(8, $weight)->setParameter(9, $song_id)->execute();
+
+            return $this->getSong($request, $song_id);
+
+        } else {
+            $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
+            $jsr->setStatusCode(200);
+            return $jsr;
+        }
+    }
+
+    /**
+     * Deletes a song that belongs to the current course
+     *
+     * @Route("/api/designer/song/{id}", name="deleteSongAsDesigner")
+     * @Method({"DELETE", "OPTIONS"})
+     */
+    public function deleteSong(Request $request, $id) {
+        $song_id = $id;
+
+        if (!is_numeric($song_id)) {
+            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+            $jsr->setStatusCode(400);
+            return $jsr;
+        }
+
+        // check if the unit belongs to the designer
+        $result = $this->getSong($request, $song_id);
+        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+            return $result;
+        }
+
+        $conn = Database::getInstance();
+        $queryBuilder = $conn->createQueryBuilder();
+        $queryBuilder->delete('song')->where('song.id = ?')->setParameter(0, $song_id)->execute();
 
         return new Response();
     }
