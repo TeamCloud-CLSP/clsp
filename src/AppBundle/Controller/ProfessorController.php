@@ -139,7 +139,7 @@ class ProfessorController extends Controller
                 'sr.id AS student_registration_id', 'sr.date_start AS student_registration_date_start', 'sr.date_end AS student_registration_date_end')
                 ->from('professor_registrations', 'pr')->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
                 ->innerJoin('pr', 'classes', 'classes', 'pr.id = classes.registration_id')
-                ->innerJoin('classes', 'student_registrations', 'sr', 'sr.class_id = classes.id')
+                ->leftJoin('classes', 'student_registrations', 'sr', 'sr.class_id = classes.id')
                 ->where('pr.id = ?')
                 ->setParameter(0, $pr_id)->execute()->fetchAll();
             $professor_registrations[$i]['classes'] = $results;
