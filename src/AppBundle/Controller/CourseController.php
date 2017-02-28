@@ -530,7 +530,6 @@ class CourseController extends Controller
             ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')
             ->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')
             ->where('designers.id = ?')->andWhere('song.id = ?')
-            ->orderBy('unit.weight', 'ASC')
             ->setParameter(0, $user_id)->setParameter(1, $song_id)->execute()->fetchAll();
         if (count($results) < 1) {
             $jsr = new JsonResponse(array('error' => 'Song does not exist or does not belong to the currently authenticated user.'));
