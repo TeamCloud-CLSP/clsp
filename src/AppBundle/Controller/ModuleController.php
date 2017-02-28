@@ -13,6 +13,21 @@ use AppBundle\Database;
 /**
  * Available functions:
  *
+ * XX - name of module
+ *
+ * getModuleXX - /api/designer/song/{id}/module_xx
+ * createModuleXX - /api/designer/song/{id}/module_xx/create (POST) - takes password, has_password - song_id is given through URL
+ * editModuleXX - /api/designer/song/{id}/module_xx/edit (POST) - takes password, has_password
+ * deleteModuleXX - /api/designer/song/{id}/module_xx (DELETE)
+ *
+ * getModules - /api/designer/song/{id}/modules - get modules that a song has
+ *
+ * getKeywords - /api/designer/song/{id}/keywords - get keywords that a song has - song must have a CN module for this to work
+ * getKeyword - /api/designer/keyword/{id}
+ * createKeyword - /api/designer/keyword (POST) - takes phrase, description, song_id | OPTIONAL: description, link, image_file, document_file
+ * editKeyword - /api/designer/keyword/{id} (POST) - takes phrase, description | OPTIONAL: description, link, image_file, document_file
+ * deleteKeyword - /api/designer/keyword/{id} (DELETE)
+ *
  * Class ModuleController
  * @package AppBundle\Controller
  */
@@ -476,6 +491,310 @@ class ModuleController extends Controller
     public function deleteModuleQU(Request $request, $id) {
         return $this->deleteModuleInDatabase($request, 'module_qu', $id);
     }
+
+    /**
+     * Returns all modules associated with a song
+     *
+     * @Route("/api/designer/song/{id}/modules", name="getModulesAsDesigner")
+     * @Method({"GET", "OPTIONS"})
+     */
+    public function getModules(Request $request, $id) {
+        $modules = array();
+        $result = $this->getModuleCN($request, $id);
+        if ($result->getStatusCode() > 199 && $result->getStatusCode() < 300) {
+            array_push($modules, json_decode($result->getContent()));
+        }
+        $result = $this->getModuleDW($request, $id);
+        if ($result->getStatusCode() > 199 && $result->getStatusCode() < 300) {
+            array_push($modules, json_decode($result->getContent()));
+        }
+        $result = $this->getModuleGE($request, $id);
+        if ($result->getStatusCode() > 199 && $result->getStatusCode() < 300) {
+            array_push($modules, json_decode($result->getContent()));
+        }
+        $result = $this->getModuleLS($request, $id);
+        if ($result->getStatusCode() > 199 && $result->getStatusCode() < 300) {
+            array_push($modules, json_decode($result->getContent()));
+        }
+        $result = $this->getModuleLT($request, $id);
+        if ($result->getStatusCode() > 199 && $result->getStatusCode() < 300) {
+            array_push($modules, json_decode($result->getContent()));
+        }
+        $result = $this->getModuleQU($request, $id);
+        if ($result->getStatusCode() > 199 && $result->getStatusCode() < 300) {
+            array_push($modules, json_decode($result->getContent()));
+        }
+
+        if (count($modules) < 1) {
+            return $result;
+        }
+
+        return new JsonResponse(array('size' => count($modules), 'data' => $modules));
+    }
+
+    /**
+     * Gets all keywords that belong to a song
+     *
+     * @Route("/api/designer/song/{id}/keywords", name="getKeywordsAsDesigner")
+     * @Method({"GET", "OPTIONS"})
+     */
+    public function getKeywords(Request $request, $id) {
+        $song_id = $id;
+
+        if (!is_numeric($song_id)) {
+            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+            $jsr->setStatusCode(400);
+            return $jsr;
+        }
+
+        // check if the module belongs to the designer
+        $result = $this->getModuleCN($request, $song_id);
+        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+            return $result;
+        }
+        $result = json_decode($result->getContent());
+        $module_id = $result->id;
+
+        $conn = Database::getInstance();
+        $queryBuilder = $conn->createQueryBuilder();
+        $results = $queryBuilder->select('id', 'phrase', 'description', 'link', 'image_file', 'document_file')
+            ->from('module_cn_keyword')->where('cn_id = ?')
+            ->setParameter(0, $module_id)->execute()->fetchAll();
+
+        $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));
+        $jsr->setStatusCode(200);
+        return $jsr;
+    }
+
+    /**
+     * Gets information on a specific keyword
+     *
+     * @Route("/api/designer/keyword/{id}", name="getKeywordAsDesigner")
+     * @Method({"GET", "OPTIONS"})
+     */
+    public function getKeyword(Request $request, $id) {
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        $keyword_id = $id;
+
+        if (!is_numeric($keyword_id)) {
+            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+            $jsr->setStatusCode(400);
+            return $jsr;
+        }
+
+        // do a whole bunch of joins to see if the currently registered designer has access to this keyword
+        $conn = Database::getInstance();
+        $queryBuilder = $conn->createQueryBuilder();
+        $results = $queryBuilder->select('mck.id', 'mck.phrase', 'mck.description', 'mck.link', 'mck.image_file', 'mck.document_file', 'song.id')
+            ->from('app_users', 'designers')->innerJoin('designers', 'courses', 'courses', 'designers.id = courses.user_id')
+            ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')
+            ->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')->innerJoin('song', 'module_cn', 'module_cn', 'song.id = module_cn.song_id')
+            ->innerJoin('module_cn', 'module_cn_keyword', 'mck', 'module_cn.id = mck.cn_id')
+            ->where('designers.id = ?')->andWhere('mck.id = ?')
+            ->setParameter(0, $user_id)->setParameter(1, $keyword_id)->execute()->fetchAll();
+
+        if (count($results) < 1) {
+            $jsr = new JsonResponse(array('error' => 'Keyword does not exist or does not belong to the currently authenticated user.'));
+            $jsr->setStatusCode(503);
+            return $jsr;
+        } else if (count($results) > 1) {
+            $jsr = new JsonResponse(array('error' => 'An error has occurred. Check for duplicate keys in the database.'));
+            $jsr->setStatusCode(500);
+            return $jsr;
+        }
+
+        return new JsonResponse($results[0]);
+    }
+
+    /**
+     * Creates a new keyword tied to the module_cn of the current song
+     *
+     * Takes in:
+     *      "song_id" - Song keyword is associated with
+     *      "phrase" - Phrase of the keyword to match against
+     *      "description" - description of phrase (OPTIONAL)
+     *      "link" - link to which the phrase should take you (OPTIONAL)
+     *      "image_file" - image describing the phrase (OPTIONAL)
+     *      "document_file" - link to a document describing the phrase on the server (OPTIONAL)
+     *
+     * @Route("/api/designer/keyword", name="createKeywordAsDesigner")
+     * @Method({"POST", "OPTIONS"})
+     */
+    public function createKeyword(Request $request) {
+        $post_parameters = $request->request->all();
+
+        if (array_key_exists('phrase', $post_parameters) && array_key_exists('song_id', $post_parameters)) {
+            $phrase = $post_parameters['phrase'];
+            $song_id = $post_parameters['song_id'];
+
+            if (!is_numeric($song_id)) {
+                $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+                $jsr->setStatusCode(400);
+                return $jsr;
+            }
+
+            // check if song + module cn given belongs to the currently logged in user
+            $result = $this->getModuleCN($request, $song_id);
+            if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+                return $result;
+            }
+            $result = json_decode($result->getContent());
+            $module_id = $result->id;
+
+            $description = null;
+            $link = null;
+            $image_file = null;
+            $document_file = null;
+
+            if (array_key_exists('description', $post_parameters)) {
+                $description = $post_parameters['description'];
+            }
+
+            if (array_key_exists('link', $post_parameters)) {
+                $link = $post_parameters['link'];
+            }
+
+            if (array_key_exists('image_file', $post_parameters)) {
+                $image_file = $post_parameters['image_file'];
+            }
+
+            if (array_key_exists('document_file', $post_parameters)) {
+                $document_file = $post_parameters['document_file'];
+            }
+
+            $conn = Database::getInstance();
+
+            $queryBuilder = $conn->createQueryBuilder();
+            $queryBuilder->insert('module_cn_keyword')
+                ->values(
+                    array(
+                        'phrase' => '?',
+                        'description' => '?',
+                        'link' => '?',
+                        'image_file' => '?',
+                        'document_file' => '?',
+                        'cn_id' => '?'
+                    )
+                )
+                ->setParameter(0, $phrase)->setParameter(1, $description)->setParameter(2, $link)->setParameter(3, $image_file)
+                ->setParameter(4, $document_file)->setParameter(5, $module_id)->execute();
+
+            $id = $conn->lastInsertId();
+            return $this->getKeyword($request, $id);
+
+        } else {
+            $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
+            $jsr->setStatusCode(200);
+            return $jsr;
+        }
+    }
+
+    /**
+     * Creates a new keyword tied to the module_cn of the current song
+     *
+     * Takes in:
+     *      "phrase" - Phrase of the keyword to match against
+     *      "description" - description of phrase (OPTIONAL)
+     *      "link" - link to which the phrase should take you (OPTIONAL)
+     *      "image_file" - image describing the phrase (OPTIONAL)
+     *      "document_file" - link to a document describing the phrase on the server (OPTIONAL)
+     *
+     * @Route("/api/designer/keyword/{id}", name="editKeywordAsDesigner")
+     * @Method({"POST", "OPTIONS"})
+     */
+    public function editKeyword(Request $request, $id) {
+        $post_parameters = $request->request->all();
+        $keyword_id = $id;
+
+        if (array_key_exists('phrase', $post_parameters)) {
+            $phrase = $post_parameters['phrase'];
+
+            if (!is_numeric($keyword_id)) {
+                $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+                $jsr->setStatusCode(400);
+                return $jsr;
+            }
+
+            // check if keyword belongs to currently logged in user
+            $result = $this->getKeyword($request, $keyword_id);
+            if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+                return $result;
+            }
+
+            $description = null;
+            $link = null;
+            $image_file = null;
+            $document_file = null;
+
+            if (array_key_exists('description', $post_parameters)) {
+                $description = $post_parameters['description'];
+            }
+
+            if (array_key_exists('link', $post_parameters)) {
+                $link = $post_parameters['link'];
+            }
+
+            if (array_key_exists('image_file', $post_parameters)) {
+                $image_file = $post_parameters['image_file'];
+            }
+
+            if (array_key_exists('document_file', $post_parameters)) {
+                $document_file = $post_parameters['document_file'];
+            }
+
+            $conn = Database::getInstance();
+
+            $queryBuilder = $conn->createQueryBuilder();
+            $queryBuilder->update('module_cn_keyword')
+                ->set('phrase', '?')
+                ->set('description', '?')
+                ->set('link', '?')
+                ->set('image_file', '?')
+                ->set('document_file', '?')
+                ->where('id = ?')
+                ->setParameter(0, $phrase)->setParameter(1, $description)->setParameter(2, $link)->setParameter(3, $image_file)
+                ->setParameter(4, $document_file)->setParameter(5, $keyword_id)->execute();
+
+            return $this->getKeyword($request, $keyword_id);
+
+        } else {
+            $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
+            $jsr->setStatusCode(200);
+            return $jsr;
+        }
+    }
+
+    /**
+     * Deletes a specific keyword
+     *
+     * @Route("/api/designer/keyword/{id}", name="deleteKeywordAsDesigner")
+     * @Method({"DELETE", "OPTIONS"})
+     */
+    public function deleteKeyword(Request $request, $id) {
+        $keyword_id = $id;
+
+        if (!is_numeric($keyword_id)) {
+            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+            $jsr->setStatusCode(400);
+            return $jsr;
+        }
+
+        // check if keyword belongs to currently logged in user
+        $result = $this->getKeyword($request, $keyword_id);
+        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+            return $result;
+        }
+
+        // if so, delete the keyword
+        $conn = Database::getInstance();
+        $queryBuilder = $conn->createQueryBuilder();
+        $queryBuilder->delete('module_cn_keyword')->where('id = ?')->setParameter(0, $keyword_id)->execute();
+
+        return new Response();
+    }
+
+
 
 
 }
