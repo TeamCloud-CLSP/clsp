@@ -302,7 +302,7 @@ class CourseController extends Controller
         // check if the course belongs to the designer
         $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('unit.name', 'unit.description', 'unit.id', 'unit.weight')
+        $results = $queryBuilder->select('unit.name', 'unit.description', 'unit.id', 'unit.weight', 'courses.id AS course_id')
             ->from('app_users', 'designers')->innerJoin('designers', 'courses', 'courses', 'designers.id = courses.user_id')
             ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')->where('designers.id = ?')->andWhere('unit.id = ?')
             ->orderBy('unit.weight', 'ASC')
@@ -525,7 +525,7 @@ class CourseController extends Controller
         // check if the course belongs to the designer
         $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('song.id', 'song.title', 'song.album', 'song.artist', 'song.description', 'song.lyrics', 'song.file_name', 'song.file_type', 'song.embed', 'song.weight')
+        $results = $queryBuilder->select('song.id', 'song.title', 'song.album', 'song.artist', 'song.description', 'song.lyrics', 'song.file_name', 'song.file_type', 'song.embed', 'song.weight', 'unit.id AS unit_id')
             ->from('app_users', 'designers')->innerJoin('designers', 'courses', 'courses', 'designers.id = courses.user_id')
             ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')
             ->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')
