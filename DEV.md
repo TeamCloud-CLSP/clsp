@@ -12,6 +12,11 @@ run built in PHP 7.1 development web server
 php bin/console server:run
 ```
 
+drop the database
+```
+php bin/console doctrine:database:drop --force
+```
+
 create databse
 ```
 php bin/console doctrine:database:create
@@ -21,7 +26,6 @@ run the seeder
 ```
 php bin/console doctrine:fixtures:load
 ```
-
 
 validate database schema
 ```
