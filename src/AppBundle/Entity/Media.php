@@ -62,6 +62,8 @@ class Media
      *********************************
      */
 
+    
+
     /**
      * Get id
      *
@@ -145,13 +147,37 @@ class Media
     }
 
     /**
-     * Set moduleCnKeyword
+     * Set song
      *
-     * @param \AppBundle\Entity\Song $moduleCnKeyword
+     * @param \AppBundle\Entity\Song $song
      *
      * @return Media
      */
-    public function setModuleCnKeyword(\AppBundle\Entity\Song $moduleCnKeyword = null)
+    public function setSong(\AppBundle\Entity\Song $song = null)
+    {
+        $this->song = $song;
+
+        return $this;
+    }
+
+    /**
+     * Get song
+     *
+     * @return \AppBundle\Entity\Song
+     */
+    public function getSong()
+    {
+        return $this->song;
+    }
+
+    /**
+     * Set moduleCnKeyword
+     *
+     * @param \AppBundle\Entity\ModuleCnKeyword $moduleCnKeyword
+     *
+     * @return Media
+     */
+    public function setModuleCnKeyword(\AppBundle\Entity\ModuleCnKeyword $moduleCnKeyword = null)
     {
         $this->moduleCnKeyword = $moduleCnKeyword;
 
@@ -161,34 +187,10 @@ class Media
     /**
      * Get moduleCnKeyword
      *
-     * @return \AppBundle\Entity\Song
+     * @return \AppBundle\Entity\ModuleCnKeyword
      */
     public function getModuleCnKeyword()
     {
         return $this->moduleCnKeyword;
-    }
-
-    /**
-     * Set product
-     *
-     * @param \AppBundle\Entity\ModuleCnKeyword $product
-     *
-     * @return Media
-     */
-    public function setProduct(\AppBundle\Entity\ModuleCnKeyword $product = null)
-    {
-        $this->product = $product;
-
-        return $this;
-    }
-
-    /**
-     * Get product
-     *
-     * @return \AppBundle\Entity\ModuleCnKeyword
-     */
-    public function getProduct()
-    {
-        return $this->product;
     }
 }
