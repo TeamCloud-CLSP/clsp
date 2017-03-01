@@ -56,3 +56,21 @@ create new controller
 ```
 php app/console generate:controller
 ```
+
+# Setting Up MySQL to use UTF-8
+
+### Instructions
+add the following lines to your ```my.cnf``` or ```my.ini``` file. Check your version of MySQL's documenation for the actual file.
+```ini
+[mysqld]
+collation-server     = utf8_unicode_ci
+character-set-server = utf8           
+```
+
+
+
+
+More information in the "Setting up the Database to be UTF8" section of the Symfony doctrine documentation
+
+http://symfony.com/doc/current/doctrine.html
+
