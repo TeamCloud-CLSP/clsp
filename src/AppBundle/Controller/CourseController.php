@@ -973,6 +973,13 @@ class CourseController extends Controller
         }
 
         $conn = Database::getInstance();
+        $result = $conn->createQueryBuilder()->select('filename')->from('media')->where('id = ?')->setParameter(0, $file_id)->execute()->fetchAll();
+        $filename = $result[0]['filename'];
+
+        // delete file
+        unlink('files/' . $filename);
+
+        $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
         $queryBuilder->delete('media')->where('id = ?')->setParameter(0, $file_id)->execute();
 
