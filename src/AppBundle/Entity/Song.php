@@ -24,56 +24,56 @@ class Song
     /**
      * @var string $title Song Title
      *
-     * @ORM\Column(type = "string")
+     * @ORM\Column(type = "string", length = 255)
      */
     private $title;
 
     /**
      * @var string $album Song Album
      *
-     * @ORM\Column(type = "string")
+     * @ORM\Column(type = "string", length = 255)
      */
     private $album;
 
     /**
      * @var string $artist Song Artist
      *
-     * @ORM\Column(type = "string")
+     * @ORM\Column(type = "string", length = 255)
      */
     private $artist;
 
     /**
      * @var string $description Song Description
      *
-     * @ORM\Column(type = "string")
+     * @ORM\Column(type = "text")
      */
     private $description;
 
     /**
      * @var string $lyrics Song Lyrics
      *
-     * @ORM\Column(type = "string")
+     * @ORM\Column(type = "text")
      */
     private $lyrics;
 
     /**
      * @var string $fileName Song File Name
      *
-     * @ORM\Column(type = "string", nullable=true)
+     * @ORM\Column(type = "string", length = 1000,  nullable=true)
      */
     private $fileName;
 
     /**
      * @var string $fileType File Type of Song File
      *
-     * @ORM\Column(type = "string", nullable=true)
+     * @ORM\Column(type = "string", length = 64, nullable=true)
      */
     private $fileType;
 
     /**
      * @var string $embed Embed Code for a Song
      *
-     * @ORM\Column(type = "string", nullable=true)
+     * @ORM\Column(type = "string", length = 1000, nullable=true)
      */
     private $embed;
 

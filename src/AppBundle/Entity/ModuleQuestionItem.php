@@ -24,14 +24,14 @@ class ModuleQuestionItem
     /**
      * @var string $content Body of the question
      *
-     * @ORM\Column(type="string")
+     * @ORM\Column(type="text")
      */
     private $content;
 
     /**
      * @var string $type Question type (Text Only (TO), Multiple Choice (MC), etc)
      *
-     * @ORM\Column(type="string")
+     * @ORM\Column(type="string", length = 64)
      */
     private $type;
 
@@ -45,14 +45,14 @@ class ModuleQuestionItem
     /**
      * @var string $choices Question Choices (Comma separated list of possible question choices)
      *
-     * @ORM\Column(type="string", nullable=true)
+     * @ORM\Column(type="text", nullable=true)
      */
     private $choices;
 
     /**
      * @var string $answers Question Answers (Comma sepearted list of possible question answers)
      *
-     * @ORM\Column(type="string", nullable=true)
+     * @ORM\Column(type="text", nullable=true)
      */
     private $answers;
 

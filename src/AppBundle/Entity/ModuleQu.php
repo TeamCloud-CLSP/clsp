@@ -26,7 +26,7 @@ class ModuleQu
     /**
      * @var string
      *
-     * @ORM\Column(type="string", length=64)
+     * @ORM\Column(type="string", length=64, nullable = True)
      */
     private $password;
 

@@ -29,7 +29,7 @@ class Course
     /**
      * @var string $description Course Description
      *
-     * @ORM\Column(type = "string")
+     * @ORM\Column(type = "text")
      */
     private $description;
 
@@ -114,6 +114,8 @@ class Course
     {
         return $this->name;
     }
+
+    
 
     /**
      * Set description
