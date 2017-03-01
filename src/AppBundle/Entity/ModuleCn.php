@@ -37,6 +37,13 @@ class ModuleCn
     private $hasPassword;
 
     /**
+     * @var boolean
+     *
+     * @ORM\Column(type="boolean")
+     */
+    private $isEnabled;
+
+    /**
      * One ModuleCn has One Song
      * @ORM\OneToOne(targetEntity="Song", inversedBy="moduleCn")
      * @ORM\JoinColumn(name="song_id", referencedColumnName="id")
@@ -58,6 +65,8 @@ class ModuleCn
      *********************************
      */
 
+
+    
 
     /**
      * Get id
@@ -115,6 +124,30 @@ class ModuleCn
     public function getHasPassword()
     {
         return $this->hasPassword;
+    }
+
+    /**
+     * Set isEnabled
+     *
+     * @param boolean $isEnabled
+     *
+     * @return ModuleCn
+     */
+    public function setIsEnabled($isEnabled)
+    {
+        $this->isEnabled = $isEnabled;
+
+        return $this;
+    }
+
+    /**
+     * Get isEnabled
+     *
+     * @return boolean
+     */
+    public function getIsEnabled()
+    {
+        return $this->isEnabled;
     }
 
     /**
