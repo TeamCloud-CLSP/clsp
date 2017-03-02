@@ -24,11 +24,19 @@ use AppBundle\Database;
  * editUnit - /api/designer/unit/{id} (POST) - takes name, description, weight
  * deleteUnit - /api/designer/unit/{id} (DELETE)
  *
+ * ALL SONGS + MODULES + KEYWORDS ENDPOINTS ARE CURRENTLY BROKEN! DO NOT USE!
  * getSongs - /api/designer/unit/{id}/songs - gets the songs that belong to a unit
  * getSong - /api/designer/song/{id}
  * createSong - /api/designer/song (POST) - takes title, album, artist, description, lyrics, weight, unit_id | optional: file_name, file_type, embed
  * editSong - /api/designer/song/{id} (POST) - takes title, album, artist, description, lyrics, weight | optional: file_name, file_type, embed
  * deleteSong - /api/designer/song/{id} (DELETE)
+ *
+ * getFiles - /api/designer/files - gets all files the designer owns
+ * getFile - /api/designer/file/{id}
+ * uploadFile - /api/designer/file (POST) - takes file (the actual file) | optional: name, file_type
+ * editFile - /api/designer/file/{id} (POST) - takes name
+ * deleteFile - /api/designer/file/{id} (DELETE)
+ *
  *
  * Class CourseController
  * @package AppBundle\Controller
@@ -759,6 +767,224 @@ class CourseController extends Controller
         $queryBuilder->delete('song')->where('song.id = ?')->setParameter(0, $song_id)->execute();
 
         return new Response();
+    }
+
+    /**
+     * Gets all files a designer has
+     *
+     * @Route("/api/designer/files", name="getFilesAsDesigner")
+     * @Method({"GET", "OPTIONS"})
+     */
+    public function getFiles(Request $request) {
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+
+        $conn = Database::getInstance();
+        $queryBuilder = $conn->createQueryBuilder();
+        $results = $queryBuilder->select('id', 'name', 'filename', 'file_type')
+            ->from('media')
+            ->where('designer_id = ?')
+            ->setParameter(0, $user_id)->execute()->fetchAll();
+
+        return new JsonResponse($results);
+    }
+
+    /**
+     * Gets information on a file
+     *
+     * @Route("/api/designer/file/{id}", name="getFileInformationAsDesigner")
+     * @Method({"GET", "OPTIONS"})
+     */
+    public function getFile(Request $request, $id) {
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        $file_id = $id;
+
+        if (!is_numeric($file_id)) {
+            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+            $jsr->setStatusCode(400);
+            return $jsr;
+        }
+
+        // check if the file belongs to the designer
+        $conn = Database::getInstance();
+        $queryBuilder = $conn->createQueryBuilder();
+        $results = $queryBuilder->select('id', 'name', 'filename', 'file_type')
+            ->from('media')
+            ->where('designer_id = ?')->andWhere('id = ?')
+            ->setParameter(0, $user_id)->setParameter(1, $file_id)->execute()->fetchAll();
+        if (count($results) < 1) {
+            $jsr = new JsonResponse(array('error' => 'File does not exist or does not belong to the currently authenticated user.'));
+            $jsr->setStatusCode(503);
+            return $jsr;
+        } else if (count($results) > 1) {
+            $jsr = new JsonResponse(array('error' => 'An error has occurred. Check for duplicate keys in the database.'));
+            $jsr->setStatusCode(500);
+            return $jsr;
+        }
+
+        return new JsonResponse($results[0]);
+    }
+
+    /**
+     * endpoint for uploading a file
+     *
+     * Takes:
+     *      "file" = the file being uploaded
+     *
+     * Optional:
+     *      "file_type" = overrides the file type being processed from the file
+     *      "name" = overrides the default name of the file
+     *
+     * @Route("/api/designer/file", name="uploadFileAsDesigner")
+     * @Method({"POST", "OPTIONS"})
+     */
+    public function uploadFile(Request $request) {
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+
+        $post_parameters = $request->request->all();
+        $file_post_parameters = $request->files->all();
+
+        if (array_key_exists('file', $file_post_parameters)) {
+            $file = $file_post_parameters['file'];
+            $file_type = null;
+            $name = null;
+
+            $sections = explode('.', $file->getClientOriginalName());
+            $extension = $sections[count($sections) - 1];
+
+            if (array_key_exists('file_type', $post_parameters)) {
+                $file_type = $post_parameters['file_type'];
+            } else {
+                $file_type = $extension;
+            }
+
+            if (array_key_exists('name', $post_parameters)) {
+                $name = $post_parameters['name'];
+            } else {
+                $name = $file->getClientOriginalName();
+                $name = substr($name, 0, -1 * (strlen($extension) + 1 ));
+            }
+
+            $filename = md5(uniqid(rand(), true)) . '.' . $extension;
+            // make sure generated md5 hash is unique
+            $conn = Database::getInstance();
+            $breakOut = 0;
+            while ($breakOut = 0) {
+
+                $queryBuilder = $conn->createQueryBuilder();
+                $results = $queryBuilder->select('id')->from('media')->where('filename = ?')->setParameter(0, $filename)->execute()->fetchAll();
+                if (count($results) < 1) {
+                    $breakOut = 1;
+                } else {
+                    $filename = md5(uniqid(rand(), true)) . '.' . $extension;
+                }
+            }
+
+            // save the file
+            $file = $file->move('files', $filename);
+
+            $conn = Database::getInstance();
+
+            $queryBuilder = $conn->createQueryBuilder();
+            $queryBuilder->insert('media')
+                ->values(
+                    array(
+                        'name' => '?',
+                        'filename' => '?',
+                        'file_type' => '?',
+                        'designer_id' => '?'
+                    )
+                )
+                ->setParameter(0, $name)->setParameter(1, $filename)->setParameter(2, $file_type)->setParameter(3, $user_id)->execute();
+
+            $id = $conn->lastInsertId();
+            return $this->getFile($request, $id);
+
+        } else {
+            $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
+            $jsr->setStatusCode(200);
+            return $jsr;
+        }
+    }
+
+    /**
+     * endpoint for editing a file
+     *
+     * Takes:
+     *      "name" - changes name of the file - visible name, not stored name
+     *
+     * @Route("/api/designer/file/{id}", name="editFileAsDesigner")
+     * @Method({"POST", "OPTIONS"})
+     */
+    public function editFile(Request $request, $id) {
+        $file_id = $id;
+        if (!is_numeric($file_id)) {
+            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+            $jsr->setStatusCode(400);
+            return $jsr;
+        }
+
+        $post_parameters = $request->request->all();
+
+        if (array_key_exists('name', $post_parameters)) {
+            $name = $post_parameters['name'];
+
+            // check if file given belongs to the currently logged in user
+            $result = $this->getFile($request, $file_id);
+            if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+                return $result;
+            }
+
+            $conn = Database::getInstance();
+            $queryBuilder = $conn->createQueryBuilder();
+            $queryBuilder->update('media')
+                ->set('name', '?')->where('id = ?')
+                ->setParameter(0, $name)->setParameter(1, $file_id)->execute();
+
+            return $this->getFile($request, $file_id);
+
+        } else {
+            $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
+            $jsr->setStatusCode(200);
+            return $jsr;
+        }
+    }
+
+    /**
+     * endpoint for deleting a file
+     *
+     * @Route("/api/designer/file/{id}", name="deleteFileAsDesigner")
+     * @Method({"DELETE", "OPTIONS"})
+     */
+    public function deleteFile(Request $request, $id) {
+        $file_id = $id;
+        if (!is_numeric($file_id)) {
+            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+            $jsr->setStatusCode(400);
+            return $jsr;
+        }
+
+        // check if file given belongs to the currently logged in user
+        $result = $this->getFile($request, $file_id);
+        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+            return $result;
+        }
+
+        $conn = Database::getInstance();
+        $result = $conn->createQueryBuilder()->select('filename')->from('media')->where('id = ?')->setParameter(0, $file_id)->execute()->fetchAll();
+        $filename = $result[0]['filename'];
+
+        // delete file
+        unlink('files/' . $filename);
+
+        $conn = Database::getInstance();
+        $queryBuilder = $conn->createQueryBuilder();
+        $queryBuilder->delete('media')->where('id = ?')->setParameter(0, $file_id)->execute();
+
+        return new Response();
+
     }
 
 }
