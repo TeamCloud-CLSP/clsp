@@ -24,19 +24,24 @@ use AppBundle\Database;
  * editUnit - /api/designer/unit/{id} (POST) - takes name, description, weight
  * deleteUnit - /api/designer/unit/{id} (DELETE)
  *
- * ALL SONGS + MODULES + KEYWORDS ENDPOINTS ARE CURRENTLY BROKEN! DO NOT USE!
  * getSongs - /api/designer/unit/{id}/songs - gets the songs that belong to a unit
  * getSong - /api/designer/song/{id}
- * createSong - /api/designer/song (POST) - takes title, album, artist, description, lyrics, weight, unit_id | optional: file_name, file_type, embed
- * editSong - /api/designer/song/{id} (POST) - takes title, album, artist, description, lyrics, weight | optional: file_name, file_type, embed
+ * createSong - /api/designer/song (POST) - takes title, album, artist, description, lyrics, weight, unit_id | optional: embed
+ * editSong - /api/designer/song/{id} (POST) - takes title, album, artist, description, lyrics, weight | optional: embed
  * deleteSong - /api/designer/song/{id} (DELETE)
  *
- * getFiles - /api/designer/files - gets all files the designer owns
- * getFile - /api/designer/file/{id}
- * uploadFile - /api/designer/file (POST) - takes file (the actual file) | optional: name, file_type
- * editFile - /api/designer/file/{id} (POST) - takes name
- * deleteFile - /api/designer/file/{id} (DELETE)
+ * getAllMedia - /api/designer/media - gets all files the designer owns
+ * getMedia - /api/designer/media/{id}
+ * createMedia - /api/designer/media (POST) - takes file (the actual file) | optional: name, file_type
+ * editMedia - /api/designer/media/{id} (POST) - takes name
+ * deleteMedia - /api/designer/media/{id} (DELETE)
  *
+ * getSongMedia - /api/designer/song/{id}/media - gets all media that belongs to a song
+ * getMediaSong - /api/designer/media/{id}/song - gets all songs that belong to a media
+ *
+ * getSongMediaLink - /api/designer/song/{song_id}/media/{media_id}
+ * createSongMediaLink - /api/designer/song-media (POST) - takes song_id, media_id
+ * deleteSongMediaLink - /api/designer/song/{song_id}/media/{media_id} (DELETE)
  *
  * Class CourseController
  * @package AppBundle\Controller
@@ -485,8 +490,6 @@ class CourseController extends Controller
      * @Method({"GET", "OPTIONS"})
      */
     public function getSongs(Request $request, $id) {
-        $user = $this->get('security.token_storage')->getToken()->getUser();
-        $user_id = $user->getId();
         $unit_id = $id;
 
         if (!is_numeric($unit_id)) {
@@ -503,7 +506,7 @@ class CourseController extends Controller
 
         $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('song.id', 'song.title', 'song.album', 'song.artist', 'song.description', 'song.lyrics', 'song.file_name', 'song.file_type', 'song.embed', 'song.weight')
+        $results = $queryBuilder->select('song.id', 'song.title', 'song.album', 'song.artist', 'song.description', 'song.lyrics', 'song.embed', 'song.weight')
             ->from('unit')->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')->where('unit_id = ?')
             ->orderBy('song.weight', 'ASC')
             ->setParameter(0, $unit_id)->execute()->fetchAll();
@@ -533,7 +536,7 @@ class CourseController extends Controller
         // check if the course belongs to the designer
         $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('song.id', 'song.title', 'song.album', 'song.artist', 'song.description', 'song.lyrics', 'song.file_name', 'song.file_type', 'song.embed', 'song.weight', 'unit.id AS unit_id')
+        $results = $queryBuilder->select('song.id', 'song.title', 'song.album', 'song.artist', 'song.description', 'song.lyrics', 'song.embed', 'song.weight', 'unit.id AS unit_id')
             ->from('app_users', 'designers')->innerJoin('designers', 'courses', 'courses', 'designers.id = courses.user_id')
             ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')
             ->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')
@@ -561,8 +564,6 @@ class CourseController extends Controller
      *      "artist" - Artist of song
      *      "description" - description of song
      *      "lyrics" - lyrics for the song
-     *      "file_name" - name of the file with the song (OPTIONAL)
-     *      "file_type" - type of file (OPTIONAL)
      *      "embed" - link to an embed resource for the song (OPTIONAL)
      *      "weight" - order by which this unit should be displayed
      *      "unit_id" - ID of the unit that the song belongs to
@@ -586,19 +587,9 @@ class CourseController extends Controller
             $unit_id = $post_parameters['unit_id'];
 
             $embed = null;
-            $file_name = null;
-            $file_type = null;
 
             if (array_key_exists('embed', $post_parameters)) {
                 $embed = $post_parameters['embed'];
-            }
-
-            if (array_key_exists('file_name', $post_parameters)) {
-                $file_name = $post_parameters['file_name'];
-            }
-
-            if (array_key_exists('file_type', $post_parameters)) {
-                $file_type = $post_parameters['file_type'];
             }
 
             if (!is_numeric($unit_id)) {
@@ -629,16 +620,14 @@ class CourseController extends Controller
                         'artist' => '?',
                         'description' => '?',
                         'lyrics' => '?',
-                        'file_name' => '?',
-                        'file_type' => '?',
                         'embed' => '?',
                         'weight' => '?',
                         'unit_id' => '?'
                     )
                 )
                 ->setParameter(0, $title)->setParameter(1, $album)->setParameter(2, $artist)->setParameter(3, $description)
-                ->setParameter(4, $lyrics)->setParameter(5, $file_name)->setParameter(6, $file_type)->setParameter(7, $embed)
-                ->setParameter(8, $weight)->setParameter(9, $unit_id)->execute();
+                ->setParameter(4, $lyrics)->setParameter(5, $embed)
+                ->setParameter(6, $weight)->setParameter(7, $unit_id)->execute();
             
             $id = $conn->lastInsertId();
             return $this->getSong($request, $id);
@@ -659,8 +648,6 @@ class CourseController extends Controller
      *      "artist" - Artist of song
      *      "description" - description of song
      *      "lyrics" - lyrics for the song
-     *      "file_name" - name of the file with the song (OPTIONAL)
-     *      "file_type" - type of file (OPTIONAL)
      *      "embed" - link to an embed resource for the song (OPTIONAL)
      *      "weight" - order by which this unit should be displayed
      *
@@ -688,20 +675,11 @@ class CourseController extends Controller
             $weight = $post_parameters['weight'];
 
             $embed = null;
-            $file_name = null;
-            $file_type = null;
 
             if (array_key_exists('embed', $post_parameters)) {
                 $embed = $post_parameters['embed'];
             }
 
-            if (array_key_exists('file_name', $post_parameters)) {
-                $file_name = $post_parameters['file_name'];
-            }
-
-            if (array_key_exists('file_type', $post_parameters)) {
-                $file_type = $post_parameters['file_type'];
-            }
 
             if (!is_numeric($weight)) {
                 $jsr = new JsonResponse(array('error' => 'Invalid non-numeric value specified for a numeric field.'));
@@ -729,8 +707,8 @@ class CourseController extends Controller
                 ->set('weight', '?')
                 ->where('song.id = ?')
                 ->setParameter(0, $title)->setParameter(1, $album)->setParameter(2, $artist)->setParameter(3, $description)
-                ->setParameter(4, $lyrics)->setParameter(5, $file_name)->setParameter(6, $file_type)->setParameter(7, $embed)
-                ->setParameter(8, $weight)->setParameter(9, $song_id)->execute();
+                ->setParameter(4, $lyrics)->setParameter(5, $embed)
+                ->setParameter(6, $weight)->setParameter(7, $song_id)->execute();
 
             return $this->getSong($request, $song_id);
 
@@ -772,10 +750,10 @@ class CourseController extends Controller
     /**
      * Gets all files a designer has
      *
-     * @Route("/api/designer/files", name="getFilesAsDesigner")
+     * @Route("/api/designer/media", name="getFilesAsDesigner")
      * @Method({"GET", "OPTIONS"})
      */
-    public function getFiles(Request $request) {
+    public function getAllMedia(Request $request) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $user_id = $user->getId();
 
@@ -783,7 +761,7 @@ class CourseController extends Controller
         $queryBuilder = $conn->createQueryBuilder();
         $results = $queryBuilder->select('id', 'name', 'filename', 'file_type')
             ->from('media')
-            ->where('designer_id = ?')
+            ->where('user_id = ?')
             ->setParameter(0, $user_id)->execute()->fetchAll();
 
         return new JsonResponse($results);
@@ -792,10 +770,10 @@ class CourseController extends Controller
     /**
      * Gets information on a file
      *
-     * @Route("/api/designer/file/{id}", name="getFileInformationAsDesigner")
+     * @Route("/api/designer/media/{id}", name="getFileInformationAsDesigner")
      * @Method({"GET", "OPTIONS"})
      */
-    public function getFile(Request $request, $id) {
+    public function getMedia(Request $request, $id) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $user_id = $user->getId();
         $file_id = $id;
@@ -811,7 +789,7 @@ class CourseController extends Controller
         $queryBuilder = $conn->createQueryBuilder();
         $results = $queryBuilder->select('id', 'name', 'filename', 'file_type')
             ->from('media')
-            ->where('designer_id = ?')->andWhere('id = ?')
+            ->where('user_id = ?')->andWhere('id = ?')
             ->setParameter(0, $user_id)->setParameter(1, $file_id)->execute()->fetchAll();
         if (count($results) < 1) {
             $jsr = new JsonResponse(array('error' => 'File does not exist or does not belong to the currently authenticated user.'));
@@ -836,10 +814,10 @@ class CourseController extends Controller
      *      "file_type" = overrides the file type being processed from the file
      *      "name" = overrides the default name of the file
      *
-     * @Route("/api/designer/file", name="uploadFileAsDesigner")
+     * @Route("/api/designer/media", name="uploadFileAsDesigner")
      * @Method({"POST", "OPTIONS"})
      */
-    public function uploadFile(Request $request) {
+    public function createMedia(Request $request) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $user_id = $user->getId();
 
@@ -894,13 +872,13 @@ class CourseController extends Controller
                         'name' => '?',
                         'filename' => '?',
                         'file_type' => '?',
-                        'designer_id' => '?'
+                        'user_id' => '?'
                     )
                 )
                 ->setParameter(0, $name)->setParameter(1, $filename)->setParameter(2, $file_type)->setParameter(3, $user_id)->execute();
 
             $id = $conn->lastInsertId();
-            return $this->getFile($request, $id);
+            return $this->getMedia($request, $id);
 
         } else {
             $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
@@ -915,10 +893,10 @@ class CourseController extends Controller
      * Takes:
      *      "name" - changes name of the file - visible name, not stored name
      *
-     * @Route("/api/designer/file/{id}", name="editFileAsDesigner")
+     * @Route("/api/designer/media/{id}", name="editFileAsDesigner")
      * @Method({"POST", "OPTIONS"})
      */
-    public function editFile(Request $request, $id) {
+    public function editMedia(Request $request, $id) {
         $file_id = $id;
         if (!is_numeric($file_id)) {
             $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
@@ -932,7 +910,7 @@ class CourseController extends Controller
             $name = $post_parameters['name'];
 
             // check if file given belongs to the currently logged in user
-            $result = $this->getFile($request, $file_id);
+            $result = $this->getMedia($request, $file_id);
             if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
                 return $result;
             }
@@ -943,7 +921,7 @@ class CourseController extends Controller
                 ->set('name', '?')->where('id = ?')
                 ->setParameter(0, $name)->setParameter(1, $file_id)->execute();
 
-            return $this->getFile($request, $file_id);
+            return $this->getMedia($request, $file_id);
 
         } else {
             $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
@@ -955,10 +933,10 @@ class CourseController extends Controller
     /**
      * endpoint for deleting a file
      *
-     * @Route("/api/designer/file/{id}", name="deleteFileAsDesigner")
+     * @Route("/api/designer/media/{id}", name="deleteFileAsDesigner")
      * @Method({"DELETE", "OPTIONS"})
      */
-    public function deleteFile(Request $request, $id) {
+    public function deleteMedia(Request $request, $id) {
         $file_id = $id;
         if (!is_numeric($file_id)) {
             $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
@@ -967,7 +945,7 @@ class CourseController extends Controller
         }
 
         // check if file given belongs to the currently logged in user
-        $result = $this->getFile($request, $file_id);
+        $result = $this->getMedia($request, $file_id);
         if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
             return $result;
         }
@@ -979,12 +957,206 @@ class CourseController extends Controller
         // delete file
         unlink('files/' . $filename);
 
-        $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
         $queryBuilder->delete('media')->where('id = ?')->setParameter(0, $file_id)->execute();
 
         return new Response();
-
     }
+
+    /**
+     * Gets all media that belongs to a song
+     *
+     * @Route("/api/designer/song/{id}/media", name="getSongMediaAsDesigner")
+     * @Method({"GET", "OPTIONS"})
+     */
+    public function getSongMedia(Request $request, $id) {
+        $song_id = $id;
+
+        if (!is_numeric($song_id)) {
+            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+            $jsr->setStatusCode(400);
+            return $jsr;
+        }
+
+        // check if the song belongs to the designer
+        $result = $this->getSong($request, $song_id);
+        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+            return $result;
+        }
+
+        $conn = Database::getInstance();
+        $queryBuilder = $conn->createQueryBuilder();
+        $results = $queryBuilder->select('media.id', 'media.name', 'media.filename', 'media.file_type')
+            ->from('media')->innerJoin('media', 'songs_media', 'songs_media', 'media.id = songs_media.media_id')
+            ->innerJoin('songs_media', 'song', 'song', 'songs_media.song_id = song.id')->where('song.id = ?')
+            ->setParameter(0, $song_id)->execute()->fetchAll();
+
+        $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));
+        $jsr->setStatusCode(200);
+        return $jsr;
+    }
+
+    /**
+     * Gets all songs that use a particular piece of media
+     *
+     * @Route("/api/designer/media/{id}/song", name="getSongMediaAsDesigner")
+     * @Method({"GET", "OPTIONS"})
+     */
+    public function getMediaSong(Request $request, $id) {
+        $media_id = $id;
+
+        if (!is_numeric($media_id)) {
+            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+            $jsr->setStatusCode(400);
+            return $jsr;
+        }
+
+        // check if the song belongs to the designer
+        $result = $this->getFile($request, $media_id);
+        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+            return $result;
+        }
+
+        $conn = Database::getInstance();
+        $queryBuilder = $conn->createQueryBuilder();
+        $results = $queryBuilder->select('song.id', 'song.unit_id', 'song.title', 'song.album', 'song.artist', 'song.description', 'song.lyrics', 'song.embed', 'song.weight')
+            ->from('media')->innerJoin('media', 'songs_media', 'songs_media', 'media.id = songs_media.media_id')
+            ->innerJoin('songs_media', 'song', 'song', 'songs_media.song_id = song.id')->where('media.id = ?')
+            ->setParameter(0, $media_id)->execute()->fetchAll();
+
+        $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));
+        $jsr->setStatusCode(200);
+        return $jsr;
+    }
+
+    /**
+     * Checks if media link exists between the two objects
+     *
+     * @Route("/api/designer/song/{song_id}/media/{media_id}", name="getSongMediaLinkAsDesigner")
+     * @Method({"GET", "OPTIONS"})
+     */
+    public function getSongMediaLink(Request $request, $song_id, $media_id) {
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+
+        if (!is_numeric($song_id) || !is_numeric($media_id)) {
+            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+            $jsr->setStatusCode(400);
+            return $jsr;
+        }
+
+        // get the media link
+        $conn = Database::getInstance();
+        $queryBuilder = $conn->createQueryBuilder();
+        $results = $queryBuilder->select('songs_media.song_id', 'songs_media.media_id')
+            ->from('songs_media')->innerJoin('songs_media', 'media', 'media', 'songs_media.media_id = media.id')
+            ->where('songs_media.song_id = ?')->andWhere('songs_media.media_id = ?')->andWhere('media.user_id = ?')
+            ->setParameter(0, $song_id)->setParameter(1, $media_id)->setParameter(2, $user_id)->execute()->fetchAll();
+        if (count($results) < 1) {
+            $jsr = new JsonResponse(array('error' => 'Link does not exist or does not belong to the currently authenticated user.'));
+            $jsr->setStatusCode(503);
+            return $jsr;
+        } else if (count($results) > 1) {
+            $jsr = new JsonResponse(array('error' => 'An error has occurred. Check for duplicate keys in the database.'));
+            $jsr->setStatusCode(500);
+            return $jsr;
+        }
+
+        return new JsonResponse($results[0]);
+    }
+
+    /**
+     * Creates a new link from media content to song
+     *
+     * Takes in:
+     *      "song_id" - id of song to link to
+     *      "media_id" - id of media to link to
+     *
+     * @Route("/api/designer/song-media", name="createSongMediaLinkAsDesigner")
+     * @Method({"POST", "OPTIONS"})
+     */
+    public function createSongMediaLink(Request $request) {
+        $post_parameters = $request->request->all();
+
+        if (array_key_exists('song_id', $post_parameters) && array_key_exists('media_id', $post_parameters)) {
+
+            $song_id = $post_parameters['song_id'];
+            $media_id = $post_parameters['media_id'];
+
+            if (!is_numeric($song_id) || !is_numeric($media_id)) {
+                $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+                $jsr->setStatusCode(400);
+                return $jsr;
+            }
+
+            // check if song given belongs to the currently logged in user
+            $result = $this->getSong($request, $song_id);
+            if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+                return $result;
+            }
+
+            // check if media given belongs to the currently logged in user
+            $result = $this->getFile($request, $media_id);
+            if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+                return $result;
+            }
+
+            // check if this media link already exists
+            $result = $this->getSongMediaLink($request, $song_id, $media_id);
+            if ($result->getStatusCode() >= 200 || $result->getStatusCode() <= 299) {
+                $jsr = new JsonResponse(array('error' => 'The link already exists.'));
+                $jsr->setStatusCode(400);
+                return $jsr;
+            }
+
+            $conn = Database::getInstance();
+            $queryBuilder = $conn->createQueryBuilder();
+            $queryBuilder->insert('songs_media')
+                ->values(
+                    array(
+                        'song_id' => '?',
+                        'media_id' => '?',
+                    )
+                )
+                ->setParameter(0, $song_id)->setParameter(1, $media_id)->execute();
+
+            $id = $conn->lastInsertId();
+            return $this->getSongMediaLink($request, $song_id, $media_id);
+
+        } else {
+            $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
+            $jsr->setStatusCode(200);
+            return $jsr;
+        }
+    }
+
+    /**
+     * delete a media link
+     *
+     * @Route("/api/designer/song/{song_id}/media/{media_id}", name="deleteSongMediaLinkAsDesigner")
+     * @Method({"DELETE", "OPTIONS"})
+     */
+    public function deleteSongMediaLink(Request $request, $song_id, $media_id) {
+        if (!is_numeric($song_id) || !is_numeric($media_id)) {
+            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+            $jsr->setStatusCode(400);
+            return $jsr;
+        }
+
+        // check if media link given belongs to currently logged in user
+        $result = $this->getSongMediaLink($request, $song_id, $media_id);
+        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+            return $result;
+        }
+
+        $conn = Database::getInstance();
+        $queryBuilder = $conn->createQueryBuilder();
+        $queryBuilder->delete('songs_media')->where('song_id = ?')->andWhere('media_id = ?')
+            ->setParameter(0, $song_id)->setParameter(1, $media_id)->execute();
+
+        return new Response();
+    }
+
+
 
 }
