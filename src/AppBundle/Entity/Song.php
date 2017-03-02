@@ -30,6 +30,13 @@ class Song
     private $title;
 
     /**
+     * @var string $weight Weight for sorting
+     *
+     * @ORM\Column(type = "integer")
+     */
+    private $weight;
+
+    /**
      * @var string $album Song Album
      *
      * @ORM\Column(type = "string", length = 255)
@@ -124,15 +131,7 @@ class Song
      *********************************
      */
 
-
-
-
-
-
-
-
-
-
+    
 
     /**
      * Get id
@@ -166,6 +165,30 @@ class Song
     public function getTitle()
     {
         return $this->title;
+    }
+
+    /**
+     * Set weight
+     *
+     * @param integer $weight
+     *
+     * @return Song
+     */
+    public function setWeight($weight)
+    {
+        $this->weight = $weight;
+
+        return $this;
+    }
+
+    /**
+     * Get weight
+     *
+     * @return integer
+     */
+    public function getWeight()
+    {
+        return $this->weight;
     }
 
     /**
