@@ -13,20 +13,28 @@ use AppBundle\Database;
 /**
  * Available functions:
  *
- * XX - name of module
+ * XX - name of module (cn, dw, ge, ls, lt, qu)
  *
+ * --NOTE--: If there is no password, pass in an empty string into the password field - do not leave the field out of the JSON.
  * getModuleXX - /api/designer/song/{id}/module_xx
- * createModuleXX - /api/designer/song/{id}/module_xx/create (POST) - takes password, has_password - song_id is given through URL
- * editModuleXX - /api/designer/song/{id}/module_xx/edit (POST) - takes password, has_password
+ * createModuleXX - /api/designer/song/{id}/module_xx/create (POST) - takes password, has_password, is_enabled - song_id is given through URL
+ * editModuleXX - /api/designer/song/{id}/module_xx/edit (POST) - takes password, has_password, is_enabled
  * deleteModuleXX - /api/designer/song/{id}/module_xx (DELETE)
  *
- * getModules - /api/designer/song/{id}/modules - get modules that a song has
+ * getModules - /api/designer/song/{id}/modules - get ALL modules that a song has
  *
  * getKeywords - /api/designer/song/{id}/keywords - get keywords that a song has - song must have a CN module for this to work
  * getKeyword - /api/designer/keyword/{id}
- * createKeyword - /api/designer/keyword (POST) - takes phrase, description, song_id | OPTIONAL: description, link, image_file, document_file
- * editKeyword - /api/designer/keyword/{id} (POST) - takes phrase, description | OPTIONAL: description, link, image_file, document_file
+ * createKeyword - /api/designer/keyword (POST) - takes phrase, song_id | OPTIONAL: description, link
+ * editKeyword - /api/designer/keyword/{id} (POST) - takes phrase | OPTIONAL: description, link
  * deleteKeyword - /api/designer/keyword/{id} (DELETE)
+ *
+ * getKeywordMedia - /api/designer/keyword/{id}/media - get all media that belongs to a keyword
+ * getMediaKeywords - /api/designer/media/{id}/keyword - get all keywords that a media is attached to
+ *
+ * getKeywordMediaLink - /api/designer/keyword/{keyword_id}/media/{media_id}
+ * createKeywordMediaLink - /api/designer/keyword-media (POST) - takes keyword_id, media_id
+ * deleteKeywordMediaLink - /api/designer/keyword/{keyword_id}/media/{media_id} (DELETE)
  *
  * Class ModuleController
  * @package AppBundle\Controller
@@ -54,7 +62,7 @@ class ModuleController extends Controller
         // check if the course belongs to the designer
         $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('song.id', 'song.title', 'song.album', 'song.artist', 'song.description', 'song.lyrics', 'song.file_name', 'song.file_type', 'song.embed', 'song.weight')
+        $results = $queryBuilder->select('song.id', 'song.title', 'song.album', 'song.artist', 'song.description', 'song.lyrics', 'song.embed', 'song.weight', 'unit.id AS unit_id')
             ->from('app_users', 'designers')->innerJoin('designers', 'courses', 'courses', 'designers.id = courses.user_id')
             ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')
             ->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')
@@ -62,6 +70,40 @@ class ModuleController extends Controller
             ->setParameter(0, $user_id)->setParameter(1, $song_id)->execute()->fetchAll();
         if (count($results) < 1) {
             $jsr = new JsonResponse(array('error' => 'Song does not exist or does not belong to the currently authenticated user.'));
+            $jsr->setStatusCode(503);
+            return $jsr;
+        } else if (count($results) > 1) {
+            $jsr = new JsonResponse(array('error' => 'An error has occurred. Check for duplicate keys in the database.'));
+            $jsr->setStatusCode(500);
+            return $jsr;
+        }
+
+        return new JsonResponse($results[0]);
+    }
+
+    /**
+     * Another helper function only - should be the same method as the one in course controller
+     */
+    public function getMedia(Request $request, $id) {
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        $file_id = $id;
+
+        if (!is_numeric($file_id)) {
+            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+            $jsr->setStatusCode(400);
+            return $jsr;
+        }
+
+        // check if the file belongs to the designer
+        $conn = Database::getInstance();
+        $queryBuilder = $conn->createQueryBuilder();
+        $results = $queryBuilder->select('id', 'name', 'filename', 'file_type')
+            ->from('media')
+            ->where('user_id = ?')->andWhere('id = ?')
+            ->setParameter(0, $user_id)->setParameter(1, $file_id)->execute()->fetchAll();
+        if (count($results) < 1) {
+            $jsr = new JsonResponse(array('error' => 'File does not exist or does not belong to the currently authenticated user.'));
             $jsr->setStatusCode(503);
             return $jsr;
         } else if (count($results) > 1) {
@@ -88,7 +130,7 @@ class ModuleController extends Controller
 
         $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('module.id', 'module.password', 'module.has_password', 'module.song_id')
+        $results = $queryBuilder->select('module.id', 'module.password', 'module.has_password', 'module.song_id', 'module.is_enabled', 'song.id AS song_id')
             ->from('app_users', 'designers')->innerJoin('designers', 'courses', 'courses', 'designers.id = courses.user_id')
             ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')
             ->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')->innerJoin('song', $moduleName, 'module', 'song.id = module.song_id')
@@ -111,7 +153,7 @@ class ModuleController extends Controller
     /**
      * Generic function to create a new module. NOT AN ENDPOINT.
      *
-     * Requires: song_id (passed in through URL), password, has_password
+     * Requires: song_id (passed in through URL), password, has_password, is_enabled
      */
     public function createModuleInDatabase($request, $moduleName, $song_id) {
         if (!is_numeric($song_id)) {
@@ -136,9 +178,10 @@ class ModuleController extends Controller
 
         // check post parameters to make sure required fields exist
         $post_parameters = $request->request->all();
-        if (array_key_exists('password', $post_parameters) && array_key_exists('has_password', $post_parameters)) {
+        if (array_key_exists('password', $post_parameters) && array_key_exists('has_password', $post_parameters) && array_key_exists('is_enabled', $post_parameters)) {
             $password = $post_parameters['password'];
             $has_password = $post_parameters['has_password'];
+            $is_enabled = $post_parameters['is_enabled'];
 
             if ($has_password == 0 && ($password != '' || $password != null)) {
                 $jsr = new JsonResponse(array('error' => 'Specified a password but did not allow a password.'));
@@ -152,6 +195,10 @@ class ModuleController extends Controller
                 return $jsr;
             }
 
+            if (strcmp($password, '') == 0) {
+                $password = null;
+            }
+
             $conn = Database::getInstance();
             $queryBuilder = $conn->createQueryBuilder();
             $queryBuilder->insert($moduleName)
@@ -159,10 +206,12 @@ class ModuleController extends Controller
                     array(
                         'song_id' => '?',
                         'password' => '?',
-                        'has_password' => '?'
+                        'has_password' => '?',
+                        'is_enabled' => '?'
                     )
                 )
-                ->setParameter(0, $song_id)->setParameter(1, $password)->setParameter(2, $has_password)->execute();
+                ->setParameter(0, $song_id)->setParameter(1, $password)->setParameter(2, $has_password)
+                ->setParameter(3, $is_enabled)->execute();
 
             return $this->getModuleFromDatabase($request, $moduleName, $song_id);
 
@@ -176,7 +225,7 @@ class ModuleController extends Controller
     /**
      * Generic function to edit an existing module. NOT AN ENDPOINT.
      *
-     * Requires: song_id (passed in through URL), password, has_password
+     * Requires: song_id (passed in through URL), password, has_password, is_enabled
      */
     public function editModuleInDatabase($request, $moduleName, $song_id) {
         if (!is_numeric($song_id)) {
@@ -193,9 +242,10 @@ class ModuleController extends Controller
 
         // check post parameters to make sure required fields exist
         $post_parameters = $request->request->all();
-        if (array_key_exists('password', $post_parameters) && array_key_exists('has_password', $post_parameters)) {
+        if (array_key_exists('password', $post_parameters) && array_key_exists('has_password', $post_parameters) && array_key_exists('is_enabled', $post_parameters)) {
             $password = $post_parameters['password'];
             $has_password = $post_parameters['has_password'];
+            $is_enabled = $post_parameters['is_enabled'];
 
             if ($has_password == 0 && ($password != '' || $password != null)) {
                 $jsr = new JsonResponse(array('error' => 'Specified a password but did not allow a password.'));
@@ -214,8 +264,9 @@ class ModuleController extends Controller
             $queryBuilder->update($moduleName)
                 ->set('password', '?')
                 ->set('has_password', '?')
+                ->set('is_enabled', '?')
                 ->where('song_id = ?')
-                ->setParameter(2, $song_id)->setParameter(0, $password)->setParameter(1, $has_password)->execute();
+                ->setParameter(3, $song_id)->setParameter(0, $password)->setParameter(1, $has_password)->setParameter(2, $is_enabled)->execute();
 
             return $this->getModuleFromDatabase($request, $moduleName, $song_id);
 
@@ -557,7 +608,7 @@ class ModuleController extends Controller
 
         $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('id', 'phrase', 'description', 'link', 'image_file', 'document_file')
+        $results = $queryBuilder->select('id', 'phrase', 'description', 'link')
             ->from('module_cn_keyword')->where('cn_id = ?')
             ->setParameter(0, $module_id)->execute()->fetchAll();
 
@@ -586,7 +637,7 @@ class ModuleController extends Controller
         // do a whole bunch of joins to see if the currently registered designer has access to this keyword
         $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('mck.id', 'mck.phrase', 'mck.description', 'mck.link', 'mck.image_file', 'mck.document_file', 'song.id')
+        $results = $queryBuilder->select('mck.id', 'mck.phrase', 'mck.description', 'mck.link', 'song.id AS song_id')
             ->from('app_users', 'designers')->innerJoin('designers', 'courses', 'courses', 'designers.id = courses.user_id')
             ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')
             ->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')->innerJoin('song', 'module_cn', 'module_cn', 'song.id = module_cn.song_id')
@@ -604,6 +655,7 @@ class ModuleController extends Controller
             return $jsr;
         }
 
+        $results[0]['module_type'] = 'module_cn';
         return new JsonResponse($results[0]);
     }
 
@@ -615,8 +667,6 @@ class ModuleController extends Controller
      *      "phrase" - Phrase of the keyword to match against
      *      "description" - description of phrase (OPTIONAL)
      *      "link" - link to which the phrase should take you (OPTIONAL)
-     *      "image_file" - image describing the phrase (OPTIONAL)
-     *      "document_file" - link to a document describing the phrase on the server (OPTIONAL)
      *
      * @Route("/api/designer/keyword", name="createKeywordAsDesigner")
      * @Method({"POST", "OPTIONS"})
@@ -644,8 +694,6 @@ class ModuleController extends Controller
 
             $description = null;
             $link = null;
-            $image_file = null;
-            $document_file = null;
 
             if (array_key_exists('description', $post_parameters)) {
                 $description = $post_parameters['description'];
@@ -653,14 +701,6 @@ class ModuleController extends Controller
 
             if (array_key_exists('link', $post_parameters)) {
                 $link = $post_parameters['link'];
-            }
-
-            if (array_key_exists('image_file', $post_parameters)) {
-                $image_file = $post_parameters['image_file'];
-            }
-
-            if (array_key_exists('document_file', $post_parameters)) {
-                $document_file = $post_parameters['document_file'];
             }
 
             $conn = Database::getInstance();
@@ -672,13 +712,10 @@ class ModuleController extends Controller
                         'phrase' => '?',
                         'description' => '?',
                         'link' => '?',
-                        'image_file' => '?',
-                        'document_file' => '?',
                         'cn_id' => '?'
                     )
                 )
-                ->setParameter(0, $phrase)->setParameter(1, $description)->setParameter(2, $link)->setParameter(3, $image_file)
-                ->setParameter(4, $document_file)->setParameter(5, $module_id)->execute();
+                ->setParameter(0, $phrase)->setParameter(1, $description)->setParameter(2, $link)->setParameter(3, $module_id)->execute();
 
             $id = $conn->lastInsertId();
             return $this->getKeyword($request, $id);
@@ -697,8 +734,6 @@ class ModuleController extends Controller
      *      "phrase" - Phrase of the keyword to match against
      *      "description" - description of phrase (OPTIONAL)
      *      "link" - link to which the phrase should take you (OPTIONAL)
-     *      "image_file" - image describing the phrase (OPTIONAL)
-     *      "document_file" - link to a document describing the phrase on the server (OPTIONAL)
      *
      * @Route("/api/designer/keyword/{id}", name="editKeywordAsDesigner")
      * @Method({"POST", "OPTIONS"})
@@ -724,8 +759,6 @@ class ModuleController extends Controller
 
             $description = null;
             $link = null;
-            $image_file = null;
-            $document_file = null;
 
             if (array_key_exists('description', $post_parameters)) {
                 $description = $post_parameters['description'];
@@ -735,13 +768,6 @@ class ModuleController extends Controller
                 $link = $post_parameters['link'];
             }
 
-            if (array_key_exists('image_file', $post_parameters)) {
-                $image_file = $post_parameters['image_file'];
-            }
-
-            if (array_key_exists('document_file', $post_parameters)) {
-                $document_file = $post_parameters['document_file'];
-            }
 
             $conn = Database::getInstance();
 
@@ -750,11 +776,8 @@ class ModuleController extends Controller
                 ->set('phrase', '?')
                 ->set('description', '?')
                 ->set('link', '?')
-                ->set('image_file', '?')
-                ->set('document_file', '?')
                 ->where('id = ?')
-                ->setParameter(0, $phrase)->setParameter(1, $description)->setParameter(2, $link)->setParameter(3, $image_file)
-                ->setParameter(4, $document_file)->setParameter(5, $keyword_id)->execute();
+                ->setParameter(0, $phrase)->setParameter(1, $description)->setParameter(2, $link)->setParameter(3, $keyword_id)->execute();
 
             return $this->getKeyword($request, $keyword_id);
 
@@ -794,7 +817,203 @@ class ModuleController extends Controller
         return new Response();
     }
 
+    // ------------ methods below are for media linking for keywords - they should essentially be the SAME functions as the ones in course controller for song ----------
 
+    /**
+     * Gets all media that belongs to a keyword
+     *
+     * @Route("/api/designer/keyword/{id}/media", name="getKeywordMediaAsDesigner")
+     * @Method({"GET", "OPTIONS"})
+     */
+    public function getKeywordMedia(Request $request, $id) {
+        $keyword_id = $id;
+
+        if (!is_numeric($keyword_id)) {
+            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+            $jsr->setStatusCode(400);
+            return $jsr;
+        }
+
+        // check if the keyword belongs to the designer
+        $result = $this->getKeyword($request, $keyword_id);
+        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+            return $result;
+        }
+
+        $conn = Database::getInstance();
+        $queryBuilder = $conn->createQueryBuilder();
+        $results = $queryBuilder->select('media.id', 'media.name', 'media.filename', 'media.file_type')
+            ->from('media')->innerJoin('media', 'module_cn_keywords_media', 'mck_media', 'media.id = mck_media.media_id')
+            ->innerJoin('mck_media', 'module_cn_keyword', 'mck', 'mck.id = mck_media.module_cn_keyword_id')->where('mck_media.module_cn_keyword_id = ?')
+            ->setParameter(0, $keyword_id)->execute()->fetchAll();
+
+        $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));
+        $jsr->setStatusCode(200);
+        return $jsr;
+    }
+
+    /**
+     * Gets all keywords that use a particular piece of media
+     *
+     * @Route("/api/designer/media/{id}/keyword", name="getMediaKeywordsAsDesigner")
+     * @Method({"GET", "OPTIONS"})
+     */
+    public function getMediaKeywords(Request $request, $id) {
+        $media_id = $id;
+
+        if (!is_numeric($media_id)) {
+            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+            $jsr->setStatusCode(400);
+            return $jsr;
+        }
+
+        // check if the song belongs to the designer
+        $result = $this->getMedia($request, $media_id);
+        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+            return $result;
+        }
+
+        $conn = Database::getInstance();
+        $queryBuilder = $conn->createQueryBuilder();
+        $results = $queryBuilder->select('mck.id', 'mck.phrase', 'mck.description', 'mck.link')
+            ->from('media')->innerJoin('media', 'module_cn_keywords_media', 'mck_media', 'media.id = mck_media.media_id')
+            ->innerJoin('mck_media', 'module_cn_keyword', 'mck', 'mck.id = mck_media.module_cn_keyword_id')->where('mck_media.media_id = ?')
+            ->setParameter(0, $media_id)->execute()->fetchAll();
+
+        $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));
+        $jsr->setStatusCode(200);
+        return $jsr;
+    }
+
+    /**
+     * Checks if media link exists between the two objects
+     *
+     * @Route("/api/designer/keyword/{keyword_id}/media/{media_id}", name="getKeywordMediaLinkAsDesigner")
+     * @Method({"GET", "OPTIONS"})
+     */
+    public function getKeywordMediaLink(Request $request, $keyword_id, $media_id) {
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+
+        if (!is_numeric($keyword_id) || !is_numeric($media_id)) {
+            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+            $jsr->setStatusCode(400);
+            return $jsr;
+        }
+
+        // get the media link
+        $conn = Database::getInstance();
+        $queryBuilder = $conn->createQueryBuilder();
+        $results = $queryBuilder->select('mck_media.module_cn_keyword_id', 'mck_media.media_id')
+            ->from('module_cn_keywords_media', 'mck_media')->innerJoin('mck_media', 'media', 'media', 'mck_media.media_id = media.id')
+            ->where('mck_media.module_cn_keyword_id = ?')->andWhere('mck_media.media_id = ?')->andWhere('media.user_id = ?')
+            ->setParameter(0, $keyword_id)->setParameter(1, $media_id)->setParameter(2, $user_id)->execute()->fetchAll();
+        if (count($results) < 1) {
+            $jsr = new JsonResponse(array('error' => 'Link does not exist or does not belong to the currently authenticated user.'));
+            $jsr->setStatusCode(503);
+            return $jsr;
+        } else if (count($results) > 1) {
+            $jsr = new JsonResponse(array('error' => 'An error has occurred. Check for duplicate keys in the database.'));
+            $jsr->setStatusCode(500);
+            return $jsr;
+        }
+
+        return new JsonResponse($results[0]);
+    }
+
+    /**
+     * Creates a new link from media content to keyword
+     *
+     * Takes in:
+     *      "keyword_id" - id of keyword to link to
+     *      "media_id" - id of media to link to
+     *
+     * @Route("/api/designer/keyword-media", name="createKeywordMediaLinkAsDesigner")
+     * @Method({"POST", "OPTIONS"})
+     */
+    public function createKeywordMediaLink(Request $request) {
+        $post_parameters = $request->request->all();
+
+        if (array_key_exists('keyword_id', $post_parameters) && array_key_exists('media_id', $post_parameters)) {
+
+            $keyword_id = $post_parameters['keyword_id'];
+            $media_id = $post_parameters['media_id'];
+
+            if (!is_numeric($keyword_id) || !is_numeric($media_id)) {
+                $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+                $jsr->setStatusCode(400);
+                return $jsr;
+            }
+
+            // check if song given belongs to the currently logged in user
+            $result = $this->getKeyword($request, $keyword_id);
+            if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+                return $result;
+            }
+
+            // check if media given belongs to the currently logged in user
+            $result = $this->getMedia($request, $media_id);
+            if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+                return $result;
+            }
+
+            // check if this media link already exists
+            $result = $this->getKeywordMediaLink($request, $keyword_id, $media_id);
+            if ($result->getStatusCode() >= 200 && $result->getStatusCode() <= 299) {
+                $jsr = new JsonResponse(array('error' => 'The link already exists.'));
+                $jsr->setStatusCode(400);
+                return $jsr;
+            }
+
+            $conn = Database::getInstance();
+            $queryBuilder = $conn->createQueryBuilder();
+            $queryBuilder->insert('module_cn_keywords_media')
+                ->values(
+                    array(
+                        'module_cn_keyword_id' => '?',
+                        'media_id' => '?',
+                    )
+                )
+                ->setParameter(0, $keyword_id)->setParameter(1, $media_id)->execute();
+
+            $id = $conn->lastInsertId();
+            return $this->getKeywordMediaLink($request, $keyword_id, $media_id);
+
+        } else {
+            $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
+            $jsr->setStatusCode(200);
+            return $jsr;
+        }
+    }
+
+    /**
+     * delete a media link
+     *
+     * @Route("/api/designer/keyword/{keyword_id}/media/{media_id}", name="deleteKeywordMediaLinkAsDesigner")
+     * @Method({"DELETE", "OPTIONS"})
+     */
+    public function deleteKeywordMediaLink(Request $request, $keyword_id, $media_id) {
+        if (!is_numeric($keyword_id) || !is_numeric($media_id)) {
+            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+            $jsr->setStatusCode(400);
+            return $jsr;
+        }
+
+        // check if media link given belongs to currently logged in user
+        $result = $this->getKeywordMediaLink($request, $keyword_id, $media_id);
+        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+            return $result;
+        }
+
+        $conn = Database::getInstance();
+        $queryBuilder = $conn->createQueryBuilder();
+        $queryBuilder->delete('module_cn_keywords_media')->where('module_cn_keyword_id = ?')->andWhere('media_id = ?')
+            ->setParameter(0, $keyword_id)->setParameter(1, $media_id)->execute();
+
+        return new Response();
+    }
+
+    // ------------ methods above are for media linking for keywords - they should essentially be the SAME functions as the ones in course controller for song ----------
 
 
 }

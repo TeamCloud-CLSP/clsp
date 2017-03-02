@@ -37,7 +37,7 @@ use AppBundle\Database;
  * deleteMedia - /api/designer/media/{id} (DELETE)
  *
  * getSongMedia - /api/designer/song/{id}/media - gets all media that belongs to a song
- * getMediaSong - /api/designer/media/{id}/song - gets all songs that belong to a media
+ * getMediaSongs - /api/designer/media/{id}/song - gets all songs that belong to a media
  *
  * getSongMediaLink - /api/designer/song/{song_id}/media/{media_id}
  * createSongMediaLink - /api/designer/song-media (POST) - takes song_id, media_id
@@ -999,10 +999,10 @@ class CourseController extends Controller
     /**
      * Gets all songs that use a particular piece of media
      *
-     * @Route("/api/designer/media/{id}/song", name="getSongMediaAsDesigner")
+     * @Route("/api/designer/media/{id}/song", name="getMediaSongsAsDesigner")
      * @Method({"GET", "OPTIONS"})
      */
-    public function getMediaSong(Request $request, $id) {
+    public function getMediaSongs(Request $request, $id) {
         $media_id = $id;
 
         if (!is_numeric($media_id)) {
@@ -1012,7 +1012,7 @@ class CourseController extends Controller
         }
 
         // check if the song belongs to the designer
-        $result = $this->getFile($request, $media_id);
+        $result = $this->getMedia($request, $media_id);
         if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
             return $result;
         }
@@ -1096,14 +1096,14 @@ class CourseController extends Controller
             }
 
             // check if media given belongs to the currently logged in user
-            $result = $this->getFile($request, $media_id);
+            $result = $this->getMedia($request, $media_id);
             if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
                 return $result;
             }
 
             // check if this media link already exists
             $result = $this->getSongMediaLink($request, $song_id, $media_id);
-            if ($result->getStatusCode() >= 200 || $result->getStatusCode() <= 299) {
+            if ($result->getStatusCode() >= 200 && $result->getStatusCode() <= 299) {
                 $jsr = new JsonResponse(array('error' => 'The link already exists.'));
                 $jsr->setStatusCode(400);
                 return $jsr;
