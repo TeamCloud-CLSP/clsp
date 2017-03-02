@@ -1015,5 +1015,335 @@ class ModuleController extends Controller
 
     // ------------ methods above are for media linking for keywords - they should essentially be the SAME functions as the ones in course controller for song ----------
 
+    /**
+     * Generic function that returns question headers that belong to a module of a song
+     */
+    public function getGenericHeaders($request, $moduleName, $module_id_name, $song_id) {
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+
+        if (!is_numeric($song_id)) {
+            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+            $jsr->setStatusCode(400);
+            return $jsr;
+        }
+
+        $conn = Database::getInstance();
+        $queryBuilder = $conn->createQueryBuilder();
+        $results = $queryBuilder->select('module_question_heading.id', 'module_question_heading.name')
+            ->from('app_users', 'designers')->innerJoin('designers', 'courses', 'courses', 'designers.id = courses.user_id')
+            ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')
+            ->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')->innerJoin('song', $moduleName, 'module', 'song.id = module.song_id')
+            ->innerJoin('module', 'module_question_heading', 'module_question_heading', 'module.id = module_question_heading.' . $module_id_name)
+            ->where('designers.id = ?')->andWhere('song.id = ?')
+            ->setParameter(0, $user_id)->setParameter(1, $song_id)->execute()->fetchAll();
+
+        $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));
+        $jsr->setStatusCode(200);
+        return $jsr;
+    }
+
+    /**
+     * Gets information on a specific header
+     *
+     * @Route("/api/designer/header/{id}", name="getHeadingAsDesigner")
+     * @Method({"GET", "OPTIONS"})
+     */
+    public function getHeading(Request $request, $id) {
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        $heading_id = $id;
+
+        if (!is_numeric($heading_id)) {
+            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+            $jsr->setStatusCode(400);
+            return $jsr;
+        }
+
+        // do a whole bunch of joins to see if the currently registered designer has access to this keyword
+        $conn = Database::getInstance();
+
+        // first, find the heading that the user is looking for
+        $queryBuilder = $conn->createQueryBuilder();
+        $results = $queryBuilder->select('module_question_heading.id', 'module_question_heading.name', 'dw_id', 'ge_id', 'ls_id', 'lt_id', 'qu_id')
+            ->from('module_question_heading')->where('id = ?')->setParameter(0, $heading_id)->execute()->fetchAll();
+        if (count($results) < 1) {
+            $jsr = new JsonResponse(array('error' => 'Heading does not exist or does not belong to the currently authenticated user.'));
+            $jsr->setStatusCode(503);
+            return $jsr;
+        } else if (count($results) > 1) {
+            $jsr = new JsonResponse(array('error' => 'An error has occurred. Check for duplicate keys in the database.'));
+            $jsr->setStatusCode(500);
+            return $jsr;
+        }
+
+        // now, if it exists, find what module it belongs to
+        $hits = 0;
+        $moduleName = null;
+        $module_id_name = null;
+        $module_id_list = ['dw_id', 'ge_id', 'ls_id', 'lt_id', 'qu_id'];
+        $module_name_list = ['module_dw', 'module_ge', 'module_ls', 'module_lt', 'module_qu'];
+        // determine the module type so we know what to join on in the up-chain
+        for ($i = 0; $i < count($module_id_list); $i++) {
+            $check = $module_id_list[$i];
+            if ($results[0][$check] != null) {
+                $moduleName = $module_name_list[$i];
+                $module_id_name = $check;
+            }
+        }
+
+        if ($hits > 1) {
+            $jsr = new JsonResponse(array('error' => 'An error has occurred. Check for duplicate keys in the database.'));
+            $jsr->setStatusCode(500);
+            return $jsr;
+        }
+
+        // now, make sure the heading belongs to the user
+        $queryBuilder = $conn->createQueryBuilder();
+        $results = $queryBuilder->select('module_question_heading.id', 'module_question_heading.name', 'song.id AS song_id')
+            ->from('app_users', 'designers')->innerJoin('designers', 'courses', 'courses', 'designers.id = courses.user_id')
+            ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')
+            ->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')
+            ->innerJoin('song', $moduleName, 'module', 'song.id = module.song_id')
+            ->innerJoin('module', 'module_question_heading', 'module_question_heading', 'module.id = module_question_heading.' . $module_id_name)
+            ->where('designers.id = ?')->andWhere('module_question_heading.id = ?')
+            ->setParameter(0, $user_id)->setParameter(1, $heading_id)->execute()->fetchAll();
+
+        if (count($results) < 1) {
+            $jsr = new JsonResponse(array('error' => 'Heading does not exist or does not belong to the currently authenticated user.'));
+            $jsr->setStatusCode(503);
+            return $jsr;
+        } else if (count($results) > 1) {
+            $jsr = new JsonResponse(array('error' => 'An error has occurred. Check for duplicate keys in the database.'));
+            $jsr->setStatusCode(500);
+            return $jsr;
+        }
+        return new JsonResponse($results[0]);
+    }
+
+    /**
+     * Creates a new heading based on the module type - not a route.
+     *
+     * Takes in:
+     *      "song_id" - Song keyword is associated with (passed through URL)
+     *      "name" - name of the heading
+     */
+    public function createGenericHeader(Request $request, $moduleName, $module_id_name, $song_id) {
+        $post_parameters = $request->request->all();
+
+        if (array_key_exists('name', $post_parameters)) {
+            $name = $post_parameters['name'];
+
+            if (!is_numeric($song_id)) {
+                $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+                $jsr->setStatusCode(400);
+                return $jsr;
+            }
+
+            // check if module we're looking for exists and belongs to the currently logged in user
+            $result = $this->getModuleFromDatabase($request, $moduleName, $song_id);
+            if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+                return $result;
+            }
+
+            $result = json_decode($result->getContent());
+            $module_id = $result->id;
+
+            // if so, create the header
+            $conn = Database::getInstance();
+            $queryBuilder = $conn->createQueryBuilder();
+            $queryBuilder->insert('module_question_heading')
+                ->values(
+                    array(
+                        'name' => '?',
+                        $module_id_name => '?'
+                    )
+                )
+                ->setParameter(0, $name)->setParameter(1, $module_id)->execute();
+
+            $id = $conn->lastInsertId();
+            return $this->getHeading($request, $id);
+
+        } else {
+            $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
+            $jsr->setStatusCode(200);
+            return $jsr;
+        }
+    }
+
+    /**
+     * Edit a header
+     *
+     * Takes in:
+     *      "name" - name of the header
+     *
+     * @Route("/api/designer/header/{id}", name="editHeaderAsDesigner")
+     * @Method({"POST", "OPTIONS"})
+     */
+    public function editHeader(Request $request, $id) {
+        $post_parameters = $request->request->all();
+        $heading_id = $id;
+
+        if (array_key_exists('name', $post_parameters)) {
+            $name = $post_parameters['name'];
+
+            if (!is_numeric($heading_id)) {
+                $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+                $jsr->setStatusCode(400);
+                return $jsr;
+            }
+
+            // check if keyword belongs to currently logged in user
+            $result = $this->getHeading($request, $heading_id);
+            if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+                return $result;
+            }
+
+            $conn = Database::getInstance();
+
+            $queryBuilder = $conn->createQueryBuilder();
+            $queryBuilder->update('module_question_heading')
+                ->set('name', '?')
+                ->where('id = ?')
+                ->setParameter(0, $name)->setParameter(1, $heading_id)->execute();
+
+            return $this->getHeading($request, $heading_id);
+
+        } else {
+            $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
+            $jsr->setStatusCode(200);
+            return $jsr;
+        }
+    }
+
+    /**
+     * Deletes a specific heading
+     *
+     * @Route("/api/designer/header/{id}", name="deleteHeadingAsDesigner")
+     * @Method({"DELETE", "OPTIONS"})
+     */
+    public function deleteHeading(Request $request, $id) {
+        $heading_id = $id;
+
+        if (!is_numeric($heading_id)) {
+            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+            $jsr->setStatusCode(400);
+            return $jsr;
+        }
+
+        // check if keyword belongs to currently logged in user
+        $result = $this->getHeading($request, $heading_id);
+        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+            return $result;
+        }
+
+        // if so, delete the keyword
+        $conn = Database::getInstance();
+        $queryBuilder = $conn->createQueryBuilder();
+        $queryBuilder->delete('module_question_heading')->where('id = ?')->setParameter(0, $heading_id)->execute();
+
+        return new Response();
+    }
+
+    /**
+     * Returns the headers associated with the module
+     *
+     * @Route("/api/designer/song/{id}/module_dw/headers", name="getModuleDwHeadersAsDesigner")
+     * @Method({"GET", "OPTIONS"})
+     */
+    public function getModuleDWHeaders(Request $request, $id) {
+        return $this->getGenericHeaders($request, 'module_dw', 'dw_id', $id);
+    }
+
+    /**
+     * Creates a header for the module
+     *
+     * @Route("/api/designer/song/{id}/module_dw/headers", name="createModuleDwHeadersAsDesigner")
+     * @Method({"POST", "OPTIONS"})
+     */
+    public function createModuleDWHeaders(Request $request, $id) {
+        return $this->createHeadingGeneric($request, 'module_dw', 'dw_id', $id);
+    }
+
+    /**
+     * Returns the headers associated with the module
+     *
+     * @Route("/api/designer/song/{id}/module_ge/headers", name="getModuleGeHeadersAsDesigner")
+     * @Method({"GET", "OPTIONS"})
+     */
+    public function getModuleGEHeaders(Request $request, $id) {
+        return $this->getGenericHeaders($request, 'module_ge', 'ge_id', $id);
+    }
+
+    /**
+     * Creates a header for the module
+     *
+     * @Route("/api/designer/song/{id}/module_ge/headers", name="createModuleGeHeadersAsDesigner")
+     * @Method({"POST", "OPTIONS"})
+     */
+    public function createModuleGEHeaders(Request $request, $id) {
+        return $this->createHeadingGeneric($request, 'module_ge', 'dw_ge', $id);
+    }
+
+    /**
+     * Returns the headers associated with the module
+     *
+     * @Route("/api/designer/song/{id}/module_ls/headers", name="getModuleLsHeadersAsDesigner")
+     * @Method({"GET", "OPTIONS"})
+     */
+    public function getModuleLSHeaders(Request $request, $id) {
+        return $this->getGenericHeaders($request, 'module_ls', 'ls_id', $id);
+    }
+
+    /**
+     * Creates a header for the module
+     *
+     * @Route("/api/designer/song/{id}/module_ls/headers", name="createModuleLsHeadersAsDesigner")
+     * @Method({"POST", "OPTIONS"})
+     */
+    public function createModuleLSHeaders(Request $request, $id) {
+        return $this->createHeadingGeneric($request, 'module_ls', 'dw_ls', $id);
+    }
+
+    /**
+     * Returns the headers associated with the module
+     *
+     * @Route("/api/designer/song/{id}/module_lt/headers", name="getModuleLtHeadersAsDesigner")
+     * @Method({"GET", "OPTIONS"})
+     */
+    public function getModuleLTHeaders(Request $request, $id) {
+        return $this->getGenericHeaders($request, 'module_lt', 'lt_id', $id);
+    }
+
+    /**
+     * Creates a header for the module
+     *
+     * @Route("/api/designer/song/{id}/module_lt/headers", name="createModuleLtHeadersAsDesigner")
+     * @Method({"POST", "OPTIONS"})
+     */
+    public function createModuleLTHeaders(Request $request, $id) {
+        return $this->createHeadingGeneric($request, 'module_lt', 'lt_id', $id);
+    }
+
+    /**
+     * Returns the headers associated with the module
+     *
+     * @Route("/api/designer/song/{id}/module_qu/headers", name="getModuleQuHeadersAsDesigner")
+     * @Method({"GET", "OPTIONS"})
+     */
+    public function getModuleQUHeaders(Request $request, $id) {
+        return $this->getGenericHeaders($request, 'module_qu', 'qu_id', $id);
+    }
+
+    /**
+     * Creates a header for the module
+     *
+     * @Route("/api/designer/song/{id}/module_qu/headers", name="createModuleQuHeadersAsDesigner")
+     * @Method({"POST", "OPTIONS"})
+     */
+    public function createModuleQUHeaders(Request $request, $id) {
+        return $this->createHeadingGeneric($request, 'module_qu', 'qu_id', $id);
+    }
+
 
 }
