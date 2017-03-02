@@ -1262,7 +1262,7 @@ class ModuleController extends Controller
      * @Method({"POST", "OPTIONS"})
      */
     public function createModuleDWHeaders(Request $request, $id) {
-        return $this->createHeadingGeneric($request, 'module_dw', 'dw_id', $id);
+        return $this->createGenericHeader($request, 'module_dw', 'dw_id', $id);
     }
 
     /**
@@ -1282,7 +1282,7 @@ class ModuleController extends Controller
      * @Method({"POST", "OPTIONS"})
      */
     public function createModuleGEHeaders(Request $request, $id) {
-        return $this->createHeadingGeneric($request, 'module_ge', 'dw_ge', $id);
+        return $this->createGenericHeader($request, 'module_ge', 'dw_ge', $id);
     }
 
     /**
@@ -1302,7 +1302,7 @@ class ModuleController extends Controller
      * @Method({"POST", "OPTIONS"})
      */
     public function createModuleLSHeaders(Request $request, $id) {
-        return $this->createHeadingGeneric($request, 'module_ls', 'dw_ls', $id);
+        return $this->createGenericHeader($request, 'module_ls', 'dw_ls', $id);
     }
 
     /**
@@ -1322,7 +1322,7 @@ class ModuleController extends Controller
      * @Method({"POST", "OPTIONS"})
      */
     public function createModuleLTHeaders(Request $request, $id) {
-        return $this->createHeadingGeneric($request, 'module_lt', 'lt_id', $id);
+        return $this->createGenericHeader($request, 'module_lt', 'lt_id', $id);
     }
 
     /**
@@ -1342,7 +1342,7 @@ class ModuleController extends Controller
      * @Method({"POST", "OPTIONS"})
      */
     public function createModuleQUHeaders(Request $request, $id) {
-        return $this->createHeadingGeneric($request, 'module_qu', 'qu_id', $id);
+        return $this->createGenericHeader($request, 'module_qu', 'qu_id', $id);
     }
 
 
