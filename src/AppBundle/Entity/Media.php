@@ -2,6 +2,7 @@
 
 namespace AppBundle\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -31,7 +32,7 @@ class Media
     /**
      * @var string $filename randomly generated unique name for file
      *
-     * @ORM\Column(type = "string", length = 64)
+     * @ORM\Column(type = "string", unique = True, length = 64)
      */
     private $filename;
 
@@ -43,18 +44,29 @@ class Media
     private $fileType;
 
     /**
-     * Many Media have One Song.
-     * @ORM\ManyToOne(targetEntity="Song", inversedBy="media")
-     * @ORM\JoinColumn(name="song_id", referencedColumnName="id")
+     * Many Media have One User.
+     * @ORM\ManyToOne(targetEntity="User", inversedBy="media")
+     * @ORM\JoinColumn(name="user_id", referencedColumnName="id")
      */
-    private $song;
+    private $user;
 
     /**
-     * Many Media have One ModuleCnKeyword.
-     * @ORM\ManyToOne(targetEntity="ModuleCnKeyword", inversedBy="media")
-     * @ORM\JoinColumn(name="keyword_id", referencedColumnName="id")
+     * Many Media have Many ModuleCnKeywords.
+     * @ORM\ManyToMany(targetEntity="ModuleCnKeyword", mappedBy="media")
      */
-    private $moduleCnKeyword;
+    private $keywords;
+
+    /**
+     * Many Media have Many Songs.
+     * @ORM\ManyToMany(targetEntity="Song", mappedBy="media")
+     */
+    private $songs;
+
+    public function __construct() {
+        $this->keywords = new ArrayCollection();
+        $this->songs = new ArrayCollection();
+    }
+
 
 
     /*********************************
@@ -62,7 +74,7 @@ class Media
      *********************************
      */
 
-    
+
 
     /**
      * Get id
@@ -147,50 +159,94 @@ class Media
     }
 
     /**
-     * Set song
+     * Set user
+     *
+     * @param \AppBundle\Entity\User $user
+     *
+     * @return Media
+     */
+    public function setUser(\AppBundle\Entity\User $user = null)
+    {
+        $this->user = $user;
+
+        return $this;
+    }
+
+    /**
+     * Get user
+     *
+     * @return \AppBundle\Entity\User
+     */
+    public function getUser()
+    {
+        return $this->user;
+    }
+
+    /**
+     * Add keyword
+     *
+     * @param \AppBundle\Entity\ModuleCnKeyword $keyword
+     *
+     * @return Media
+     */
+    public function addKeyword(\AppBundle\Entity\ModuleCnKeyword $keyword)
+    {
+        $this->keywords[] = $keyword;
+
+        return $this;
+    }
+
+    /**
+     * Remove keyword
+     *
+     * @param \AppBundle\Entity\ModuleCnKeyword $keyword
+     */
+    public function removeKeyword(\AppBundle\Entity\ModuleCnKeyword $keyword)
+    {
+        $this->keywords->removeElement($keyword);
+    }
+
+    /**
+     * Get keywords
+     *
+     * @return \Doctrine\Common\Collections\Collection
+     */
+    public function getKeywords()
+    {
+        return $this->keywords;
+    }
+
+    /**
+     * Add song
      *
      * @param \AppBundle\Entity\Song $song
      *
      * @return Media
      */
-    public function setSong(\AppBundle\Entity\Song $song = null)
+    public function addSong(\AppBundle\Entity\Song $song)
     {
-        $this->song = $song;
+        $this->songs[] = $song;
 
         return $this;
     }
 
     /**
-     * Get song
+     * Remove song
      *
-     * @return \AppBundle\Entity\Song
+     * @param \AppBundle\Entity\Song $song
      */
-    public function getSong()
+    public function removeSong(\AppBundle\Entity\Song $song)
     {
-        return $this->song;
+        $this->songs->removeElement($song);
     }
 
     /**
-     * Set moduleCnKeyword
+     * Get songs
      *
-     * @param \AppBundle\Entity\ModuleCnKeyword $moduleCnKeyword
-     *
-     * @return Media
+     * @return \Doctrine\Common\Collections\Collection
      */
-    public function setModuleCnKeyword(\AppBundle\Entity\ModuleCnKeyword $moduleCnKeyword = null)
+    public function getSongs()
     {
-        $this->moduleCnKeyword = $moduleCnKeyword;
-
-        return $this;
-    }
-
-    /**
-     * Get moduleCnKeyword
-     *
-     * @return \AppBundle\Entity\ModuleCnKeyword
-     */
-    public function getModuleCnKeyword()
-    {
-        return $this->moduleCnKeyword;
+        return $this->songs;
     }
 }
