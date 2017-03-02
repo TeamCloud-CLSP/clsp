@@ -3,10 +3,11 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Mar 02, 2017 at 03:08 AM
+-- Generation Time: Mar 02, 2017 at 03:42 AM
 -- Server version: 5.7.12-0ubuntu1.1
 -- PHP Version: 7.0.8-2+deb.sury.org~xenial+1
 
+SET FOREIGN_KEY_CHECKS=0;
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
 
@@ -199,6 +200,7 @@ INSERT INTO `unit` (`id`, `course_id`, `name`, `description`, `weight`) VALUES
 (2, 3, 'Unit 3 - 4361', 'Modern Japan', 3),
 (3, 3, 'Unit 2 - 4361', 'Historic Japan', 2),
 (4, 1, 'Unit 1 - CHINESE 3002', 'THIS DOES NOT BELONG TO 4361', 10);
+SET FOREIGN_KEY_CHECKS=1;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
