@@ -11,6 +11,10 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use AppBundle\Database;
 
 /**
+ *
+ * Everything in this file is kind of a giant mess. I will be restructuring most of it next week (3/8/2017)
+ * when I have more time to work on this.
+ *
  * Available functions:
  *
  * XX - name of module (cn, dw, ge, ls, lt, qu)
@@ -35,6 +39,20 @@ use AppBundle\Database;
  * getKeywordMediaLink - /api/designer/keyword/{keyword_id}/media/{media_id}
  * createKeywordMediaLink - /api/designer/keyword-media (POST) - takes keyword_id, media_id
  * deleteKeywordMediaLink - /api/designer/keyword/{keyword_id}/media/{media_id} (DELETE)
+ *
+ * getModuleXXHeadersStructure - /api/designer/song/{id}/module_xx/structure - gets all the headers and items that a specific module has in a nested list
+ *
+ * getModuleXXHeaders - /api/designer/song/{id}/module_xx/structure - get just the headers associated with a specific module
+ * getHeading - /api/designer/header/{id}
+ * createModuleXXHeaders - /api/designer/song/{id}/module_ge/headers (POST) - takes name; song_id given through URL
+ * editHeader - /api/designer/header/{id} (POST) - takes name
+ * deleteHeading - /api/designer/header/{id} (DELETE)
+ *
+ * getItems - /api/designer/header/{id}/items - get items that belong to an item
+ * getItem - /api/designer/item/{id}
+ * createItem - /api/designer/item (POST) - takes content, type, weight, heading_id | optional: choices, answers
+ * editItem - /api/designer/item/{id} (POST) - takes content, type, weight | optional: choices, answers
+ * deleteItem - /api/designer/item/{id} (DELETE)
  *
  * Class ModuleController
  * @package AppBundle\Controller
@@ -728,7 +746,7 @@ class ModuleController extends Controller
     }
 
     /**
-     * Creates a new keyword tied to the module_cn of the current song
+     * Edits an existing keyword tied to the module_cn of the current song
      *
      * Takes in:
      *      "phrase" - Phrase of the keyword to match against
@@ -1118,6 +1136,7 @@ class ModuleController extends Controller
             $jsr->setStatusCode(500);
             return $jsr;
         }
+        $results[0]['module_name'] = $moduleName;
         return new JsonResponse($results[0]);
     }
 
@@ -1266,6 +1285,16 @@ class ModuleController extends Controller
     }
 
     /**
+     * Returns the header-item structure  associated with the module
+     *
+     * @Route("/api/designer/song/{id}/module_dw/structure", name="getModuleDwStructureAsDesigner")
+     * @Method({"GET", "OPTIONS"})
+     */
+    public function getModuleDWHeadersStructure(Request $request, $id) {
+        return $this->getGenericHeaderItemStructure($request, 'module_dw', 'dw_id', $id);
+    }
+
+    /**
      * Returns the headers associated with the module
      *
      * @Route("/api/designer/song/{id}/module_ge/headers", name="getModuleGeHeadersAsDesigner")
@@ -1283,6 +1312,16 @@ class ModuleController extends Controller
      */
     public function createModuleGEHeaders(Request $request, $id) {
         return $this->createGenericHeader($request, 'module_ge', 'dw_ge', $id);
+    }
+
+    /**
+     * Returns the header-item structure  associated with the module
+     *
+     * @Route("/api/designer/song/{id}/module_ge/structure", name="getModuleGeStructureAsDesigner")
+     * @Method({"GET", "OPTIONS"})
+     */
+    public function getModuleGEHeadersStructure(Request $request, $id) {
+        return $this->getGenericHeaderItemStructure($request, 'module_ge', 'ge_id', $id);
     }
 
     /**
@@ -1306,6 +1345,16 @@ class ModuleController extends Controller
     }
 
     /**
+     * Returns the header-item structure  associated with the module
+     *
+     * @Route("/api/designer/song/{id}/module_ls/structure", name="getModuleLsStructureAsDesigner")
+     * @Method({"GET", "OPTIONS"})
+     */
+    public function getModuleLSHeadersStructure(Request $request, $id) {
+        return $this->getGenericHeaderItemStructure($request, 'module_ls', 'ls_id', $id);
+    }
+
+    /**
      * Returns the headers associated with the module
      *
      * @Route("/api/designer/song/{id}/module_lt/headers", name="getModuleLtHeadersAsDesigner")
@@ -1323,6 +1372,16 @@ class ModuleController extends Controller
      */
     public function createModuleLTHeaders(Request $request, $id) {
         return $this->createGenericHeader($request, 'module_lt', 'lt_id', $id);
+    }
+
+    /**
+     * Returns the header-item structure  associated with the module
+     *
+     * @Route("/api/designer/song/{id}/module_lt/structure", name="getModuleLtStructureAsDesigner")
+     * @Method({"GET", "OPTIONS"})
+     */
+    public function getModuleLTHeadersStructure(Request $request, $id) {
+        return $this->getGenericHeaderItemStructure($request, 'module_lt', 'lt_id', $id);
     }
 
     /**
@@ -1344,6 +1403,302 @@ class ModuleController extends Controller
     public function createModuleQUHeaders(Request $request, $id) {
         return $this->createGenericHeader($request, 'module_qu', 'qu_id', $id);
     }
+
+    /**
+     * Returns the header-item structure  associated with the module
+     *
+     * @Route("/api/designer/song/{id}/module_qu/structure", name="getModuleQuStructureAsDesigner")
+     * @Method({"GET", "OPTIONS"})
+     */
+    public function getModuleQUHeadersStructure(Request $request, $id) {
+        return $this->getGenericHeaderItemStructure($request, 'module_qu', 'qu_id', $id);
+    }
+
+    /**
+     * Gets items that belong to a header that belongs to a module of a song
+     *
+     * @Route("/api/designer/header/{id}/items", name="getHeaderItemsAsDesigner")
+     * @Method({"GET", "OPTIONS"})
+     */
+    public function getItems(Request $request, $id) {
+        $heading_id = $id;
+        if (!is_numeric($heading_id)) {
+            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+            $jsr->setStatusCode(400);
+            return $jsr;
+        }
+
+        // check if keyword belongs to currently logged in user
+        $result = $this->getHeading($request, $heading_id);
+        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+            return $result;
+        }
+
+        $conn = Database::getInstance();
+        $queryBuilder = $conn->createQueryBuilder();
+        $results = $queryBuilder->select('module_question_item.id', 'module_question_item.content', 'module_question_item.type',
+            'module_question_item.weight', 'module_question_item.choices', 'module_question_item.answers')
+            ->from('module_question_item')
+            ->where('module_question_item.heading_id = ?')
+            ->setParameter(0, $heading_id)->execute()->fetchAll();
+
+        $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));
+        $jsr->setStatusCode(200);
+        return $jsr;
+    }
+
+    /**
+     * Gets information on a specific item
+     *
+     * @Route("/api/designer/item/{id}", name="getItemAsDesigner")
+     * @Method({"GET", "OPTIONS"})
+     */
+    public function getItem(Request $request, $id) {
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        $item_id = $id;
+
+        if (!is_numeric($item_id)) {
+            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+            $jsr->setStatusCode(400);
+            return $jsr;
+        }
+
+        // do a whole bunch of joins to see if the currently registered designer has access to this keyword
+        $conn = Database::getInstance();
+        $queryBuilder = $conn->createQueryBuilder();
+
+        // find the question item we're looking for by id
+        $results = $queryBuilder->select('module_question_item.id', 'module_question_item.content', 'module_question_item.type',
+            'module_question_item.weight', 'module_question_item.choices', 'module_question_item.answers', 'heading_id')
+            ->from('module_question_item')->where('id = ?')->setParameter(0, $item_id)->execute()->fetchAll();
+        if (count($results) < 1) {
+            $jsr = new JsonResponse(array('error' => 'Item does not exist or does not belong to the currently authenticated user.'));
+            $jsr->setStatusCode(503);
+            return $jsr;
+        } else if (count($results) > 1) {
+            $jsr = new JsonResponse(array('error' => 'An error has occurred. Check for duplicate keys in the database.'));
+            $jsr->setStatusCode(500);
+            return $jsr;
+        }
+
+        $heading_id = $results[0]['heading_id'];
+        // do upcall to make sure heading belongs to the current user
+        $result = $this->getHeading($request, $heading_id);
+        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+            $jsr = new JsonResponse(array('error' => 'Item does not exist or does not belong to the currently authenticated user.'));
+            $jsr->setStatusCode(503);
+            return $jsr;
+        }
+
+        return new JsonResponse($results[0]);
+    }
+
+    /**
+     * Creates a new item tied to the current song
+     *
+     * Takes in:
+     *      "heading_id" - Heading that the item is associated with
+     *      "content" - Content of the question item (or label)
+     *      "type" - Type of the question (processed by front-end)
+     *      "weight" - Order by which the items will be sorted
+     *      "choices" - Answer choices if it is a multiple choice question (OPTIONAL)
+     *      "answers" - Correct answers to the question (OPTIONAL)
+     *
+     * @Route("/api/designer/item", name="createItemAsDesigner")
+     * @Method({"POST", "OPTIONS"})
+     */
+    public function createItem(Request $request) {
+        $post_parameters = $request->request->all();
+
+        if (array_key_exists('heading_id', $post_parameters) && array_key_exists('content', $post_parameters) && array_key_exists('type', $post_parameters)
+            && array_key_exists('weight', $post_parameters)) {
+            $heading_id = $post_parameters['heading_id'];
+            $content = $post_parameters['content'];
+            $type = $post_parameters['type'];
+            $weight = $post_parameters['weight'];
+
+            if (!is_numeric($heading_id)) {
+                $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+                $jsr->setStatusCode(400);
+                return $jsr;
+            }
+
+            // check if header belongs to currently logged in user
+            $result = $this->getHeading($request, $heading_id);
+            if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+                return $result;
+            }
+
+            $choices = null;
+            $answers = null;
+
+            if (array_key_exists('choices', $post_parameters)) {
+                $choices = $post_parameters['choices'];
+            }
+
+            if (array_key_exists('answers', $post_parameters)) {
+                $answers = $post_parameters['answers'];
+            }
+
+            $conn = Database::getInstance();
+
+            $queryBuilder = $conn->createQueryBuilder();
+            $queryBuilder->insert('module_question_item')
+                ->values(
+                    array(
+                        'content' => '?',
+                        'type' => '?',
+                        'weight' => '?',
+                        'choices' => '?',
+                        'answers' => '?',
+                        'heading_id' => '?'
+                    )
+                )
+                ->setParameter(0, $content)->setParameter(1, $type)->setParameter(2, $weight)->setParameter(3, $choices)
+                ->setParameter(4, $answers)->setParameter(5, $heading_id)->execute();
+
+            $id = $conn->lastInsertId();
+            return $this->getHeading($request, $id);
+
+        } else {
+            $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
+            $jsr->setStatusCode(200);
+            return $jsr;
+        }
+    }
+
+    /**
+     * Edits an existing question item
+     *
+     * Takes in:
+     *      "content" - Content of the question item (or label)
+     *      "type" - Type of the question (processed by front-end)
+     *      "weight" - Order by which the items will be sorted
+     *      "choices" - Answer choices if it is a multiple choice question (OPTIONAL)
+     *      "answers" - Correct answers to the question (OPTIONAL)
+     *
+     * @Route("/api/designer/item/{id}", name="editItemAsDesigner")
+     * @Method({"POST", "OPTIONS"})
+     */
+    public function editItem(Request $request, $id) {
+        $post_parameters = $request->request->all();
+        $item_id = $id;
+
+        if (array_key_exists('content', $post_parameters) && array_key_exists('type', $post_parameters)
+            && array_key_exists('weight', $post_parameters)) {
+            $content = $post_parameters['content'];
+            $type = $post_parameters['type'];
+            $weight = $post_parameters['weight'];
+
+            if (!is_numeric($item_id)) {
+                $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+                $jsr->setStatusCode(400);
+                return $jsr;
+            }
+
+            // check if keyword belongs to currently logged in user
+            $result = $this->getItem($request, $item_id);
+            if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+                return $result;
+            }
+
+            $choices = null;
+            $answers = null;
+
+            if (array_key_exists('choices', $post_parameters)) {
+                $choices = $post_parameters['choices'];
+            }
+
+            if (array_key_exists('answers', $post_parameters)) {
+                $answers = $post_parameters['answers'];
+            }
+
+
+            $conn = Database::getInstance();
+
+            $queryBuilder = $conn->createQueryBuilder();
+            $queryBuilder->update('module_question_item')
+                ->set('content', '?')
+                ->set('type', '?')
+                ->set('weight', '?')
+                ->set('choices', '?')
+                ->set('answers', '?')
+                ->where('id = ?')
+                ->setParameter(0, $content)->setParameter(1, $type)->setParameter(2, $weight)->setParameter(3, $choices)
+                ->setParameter(4, $answers)->setParameter(5, $item_id)->execute();
+
+            return $this->getItem($request, $item_id);
+
+        } else {
+            $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
+            $jsr->setStatusCode(200);
+            return $jsr;
+        }
+    }
+
+    /**
+     * Deletes a specific item
+     *
+     * @Route("/api/designer/item/{id}", name="deleteItemAsDesigner")
+     * @Method({"DELETE", "OPTIONS"})
+     */
+    public function deleteItem(Request $request, $id) {
+        $item_id = $id;
+
+        if (!is_numeric($item_id)) {
+            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+            $jsr->setStatusCode(400);
+            return $jsr;
+        }
+
+        // check if keyword belongs to currently logged in user
+        $result = $this->getItem($request, $item_id);
+        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+            return $result;
+        }
+
+        // if so, delete the keyword
+        $conn = Database::getInstance();
+        $queryBuilder = $conn->createQueryBuilder();
+        $queryBuilder->delete('module_question_item')->where('id = ?')->setParameter(0, $item_id)->execute();
+
+        return new Response();
+    }
+
+    /**
+     * Generic function that returns question headers and items with it for a given module of a song
+     */
+    public function getGenericHeaderItemStructure($request, $moduleName, $module_id_name, $song_id) {
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+
+        $result = $this->getGenericHeaders($request, $moduleName, $module_id_name, $song_id);
+        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+            return $result;
+        }
+
+        $result = json_decode($result->getContent());
+        $headers = $result->data;
+
+        for ($i = 0; $i < count($headers); $i++) {
+            $header = $headers[$i];
+            $header_id = $header->id;
+            $result = $this->getItems($request, $header_id);
+            if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+                return $result;
+            }
+            $result = json_decode($result->getContent());
+            $header->items = $result->data;
+            $header->item_count = $result->size;
+        }
+
+        $jsr = new JsonResponse(array('size' => count($headers), 'data' => $headers));
+        $jsr->setStatusCode(200);
+        return $jsr;
+    }
+
+
 
 
 }
