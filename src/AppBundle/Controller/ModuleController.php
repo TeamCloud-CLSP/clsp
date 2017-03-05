@@ -1559,7 +1559,7 @@ class ModuleController extends Controller
                 ->setParameter(4, $answers)->setParameter(5, $heading_id)->execute();
 
             $id = $conn->lastInsertId();
-            return $this->getHeading($request, $id);
+            return $this->getItem($request, $id);
 
         } else {
             $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
