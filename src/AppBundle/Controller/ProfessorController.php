@@ -339,7 +339,7 @@ class ProfessorController extends Controller
 
         } else {
             $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
-            $jsr->setStatusCode(200);
+            $jsr->setStatusCode(400);
             return $jsr;
         }
     }
@@ -592,7 +592,7 @@ class ProfessorController extends Controller
 
         } else {
             $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
-            $jsr->setStatusCode(200);
+            $jsr->setStatusCode(400);
             return $jsr;
         }
     }
@@ -649,7 +649,7 @@ class ProfessorController extends Controller
 
         } else {
             $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
-            $jsr->setStatusCode(200);
+            $jsr->setStatusCode(400);
             return $jsr;
         }
     }

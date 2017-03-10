@@ -55,7 +55,6 @@ class AdministratorController extends Controller
             ->setParameter(0, $username)->setParmameter(1, $name)->execute()->fetchAll();
 
         $jsr = new JsonResponse(array('size' => count($result), 'data' => $result));
-        $jsr->setStatusCode(200);
         return $jsr;
     }
 
@@ -89,7 +88,6 @@ class AdministratorController extends Controller
         }
 
         $jsr = new JsonResponse($result[0]);
-        $jsr->setStatusCode(200);
         return $jsr;
     }
 

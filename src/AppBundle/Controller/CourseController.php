@@ -167,7 +167,7 @@ class CourseController extends Controller
 
         } else {
             $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
-            $jsr->setStatusCode(200);
+            $jsr->setStatusCode(400);
             return $jsr;
         }
     }
@@ -232,7 +232,7 @@ class CourseController extends Controller
 
         } else {
             $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
-            $jsr->setStatusCode(200);
+            $jsr->setStatusCode(400);
             return $jsr;
         }
     }
@@ -291,7 +291,6 @@ class CourseController extends Controller
             ->setParameter(0, $user_id)->setParameter(1, $course_id)->execute()->fetchAll();
 
         $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));
-        $jsr->setStatusCode(200);
         return $jsr;
     }
 
@@ -391,7 +390,7 @@ class CourseController extends Controller
 
         } else {
             $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
-            $jsr->setStatusCode(200);
+            $jsr->setStatusCode(400);
             return $jsr;
         }
     }
@@ -450,7 +449,7 @@ class CourseController extends Controller
 
         } else {
             $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
-            $jsr->setStatusCode(200);
+            $jsr->setStatusCode(400);
             return $jsr;
         }
     }
@@ -512,7 +511,6 @@ class CourseController extends Controller
             ->setParameter(0, $unit_id)->execute()->fetchAll();
 
         $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));
-        $jsr->setStatusCode(200);
         return $jsr;
     }
 
@@ -634,7 +632,7 @@ class CourseController extends Controller
 
         } else {
             $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
-            $jsr->setStatusCode(200);
+            $jsr->setStatusCode(400);
             return $jsr;
         }
     }
@@ -714,7 +712,7 @@ class CourseController extends Controller
 
         } else {
             $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
-            $jsr->setStatusCode(200);
+            $jsr->setStatusCode(400);
             return $jsr;
         }
     }
@@ -882,7 +880,7 @@ class CourseController extends Controller
 
         } else {
             $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
-            $jsr->setStatusCode(200);
+            $jsr->setStatusCode(400);
             return $jsr;
         }
     }
@@ -925,7 +923,7 @@ class CourseController extends Controller
 
         } else {
             $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
-            $jsr->setStatusCode(200);
+            $jsr->setStatusCode(400);
             return $jsr;
         }
     }
@@ -992,7 +990,6 @@ class CourseController extends Controller
             ->setParameter(0, $song_id)->execute()->fetchAll();
 
         $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));
-        $jsr->setStatusCode(200);
         return $jsr;
     }
 
@@ -1025,7 +1022,6 @@ class CourseController extends Controller
             ->setParameter(0, $media_id)->execute()->fetchAll();
 
         $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));
-        $jsr->setStatusCode(200);
         return $jsr;
     }
 
@@ -1125,7 +1121,7 @@ class CourseController extends Controller
 
         } else {
             $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
-            $jsr->setStatusCode(200);
+            $jsr->setStatusCode(400);
             return $jsr;
         }
     }
