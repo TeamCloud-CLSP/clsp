@@ -627,8 +627,29 @@ class CourseController extends Controller
                 ->setParameter(4, $lyrics)->setParameter(5, $embed)
                 ->setParameter(6, $weight)->setParameter(7, $unit_id)->execute();
             
-            $id = $conn->lastInsertId();
-            return $this->getSong($request, $id);
+            $song_id = $conn->lastInsertId();
+
+            $conn = Database::getInstance();
+            $queryBuilder = $conn->createQueryBuilder();
+            
+            $moduleNames = ['module_cn', 'module_dw', 'module_ge', 'module_ls', 'module_lt', 'module_qu'];
+
+            for ($i = 0; $i < count($moduleNames); $i++) {
+                $moduleName = $moduleNames[$i];
+                $queryBuilder->insert($moduleName)
+                    ->values(
+                        array(
+                            'song_id' => '?',
+                            'password' => '?',
+                            'has_password' => '?',
+                            'is_enabled' => '?'
+                        )
+                    )
+                    ->setParameter(0, $song_id)->setParameter(1, '')->setParameter(2, 0)
+                    ->setParameter(3, 0)->execute();
+            }
+
+            return $this->getSong($request, $song_id);
 
         } else {
             $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
