@@ -9,6 +9,10 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use AppBundle\Database;
 use AppBundle\Repository\CourseRepository;
+use AppBundle\Repository\UnitRepository;
+use AppBundle\Repository\SongRepository;
+use AppBundle\Repository\MediaRepository;
+
 /**
  * Available functions:
  *
@@ -129,24 +133,7 @@ class CourseController extends Controller
     public function getUnits(Request $request, $id) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $user_id = $user->getId();
-        $course_id = $id;
-
-        if (!is_numeric($course_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        $conn = Database::getInstance();
-        $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('unit.name', 'unit.description', 'unit.id', 'unit.weight')
-            ->from('app_users', 'designers')->innerJoin('designers', 'courses', 'courses', 'designers.id = courses.user_id')
-            ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')->where('designers.id = ?')->andWhere('course_id = ?')
-            ->orderBy('unit.weight', 'ASC')
-            ->setParameter(0, $user_id)->setParameter(1, $course_id)->execute()->fetchAll();
-
-        $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));
-        return $jsr;
+        return UnitRepository::getUnits($request, $user_id, 'designer', $id);
     }
 
     /**
@@ -158,33 +145,7 @@ class CourseController extends Controller
     public function getUnit(Request $request, $id) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $user_id = $user->getId();
-        $unit_id = $id;
-
-        if (!is_numeric($unit_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        // check if the course belongs to the designer
-        $conn = Database::getInstance();
-        $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('unit.name', 'unit.description', 'unit.id', 'unit.weight', 'courses.id AS course_id')
-            ->from('app_users', 'designers')->innerJoin('designers', 'courses', 'courses', 'designers.id = courses.user_id')
-            ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')->where('designers.id = ?')->andWhere('unit.id = ?')
-            ->orderBy('unit.weight', 'ASC')
-            ->setParameter(0, $user_id)->setParameter(1, $unit_id)->execute()->fetchAll();
-        if (count($results) < 1) {
-            $jsr = new JsonResponse(array('error' => 'Unit does not exist or does not belong to the currently authenticated user.'));
-            $jsr->setStatusCode(503);
-            return $jsr;
-        } else if (count($results) > 1) {
-            $jsr = new JsonResponse(array('error' => 'An error has occurred. Check for duplicate keys in the database.'));
-            $jsr->setStatusCode(500);
-            return $jsr;
-        }
-
-        return new JsonResponse($results[0]);
+        return UnitRepository::getUnits($request, $user_id, 'designer', $id);
     }
 
     /**
@@ -200,54 +161,9 @@ class CourseController extends Controller
      * @Method({"POST", "OPTIONS"})
      */
     public function createUnit(Request $request) {
-        $post_parameters = $request->request->all();
-
-        if (array_key_exists('name', $post_parameters) && array_key_exists('description', $post_parameters) && array_key_exists('course_id', $post_parameters) && array_key_exists('weight', $post_parameters)) {
-            $name = $post_parameters['name'];
-            $description = $post_parameters['description'];
-            $course_id = $post_parameters['course_id'];
-            $weight = $post_parameters['weight'];
-
-            if (!is_numeric($course_id)) {
-                $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-                $jsr->setStatusCode(400);
-                return $jsr;
-            }
-
-            if (!is_numeric($weight)) {
-                $jsr = new JsonResponse(array('error' => 'Invalid non-numeric value specified for a numeric field.'));
-                $jsr->setStatusCode(400);
-                return $jsr;
-            }
-
-
-            // check if course given belongs to the currently logged in user
-            $result = $this->getCourse($request, $course_id);
-            if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-                return $result;
-            }
-            $conn = Database::getInstance();
-
-            $queryBuilder = $conn->createQueryBuilder();
-            $queryBuilder->insert('unit')
-                ->values(
-                    array(
-                        'name' => '?',
-                        'weight' => '?',
-                        'description' => '?',
-                        'course_id' => '?'
-                    )
-                )
-                ->setParameter(0, $name)->setParameter(1, $weight)->setParameter(2, $description)->setParameter(3, $course_id)->execute();
-            
-            $id = $conn->lastInsertId();
-            return $this->getUnit($request, $id);
-
-        } else {
-            $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return UnitRepository::createUnit($request, $user_id, 'designer');
     }
 
     /**
@@ -264,49 +180,9 @@ class CourseController extends Controller
      * @Method({"POST", "OPTIONS"})
      */
     public function editUnit(Request $request, $id) {
-        $unit_id = $id;
-
-        if (!is_numeric($unit_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        // check if the unit belongs to the designer
-        $result = $this->getUnit($request, $unit_id);
-        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-            return $result;
-        }
-
-        $post_parameters = $request->request->all();
-
-        if (array_key_exists('name', $post_parameters) && array_key_exists('description', $post_parameters) && array_key_exists('weight', $post_parameters)) {
-            $name = $post_parameters['name'];
-            $description = $post_parameters['description'];
-            $weight = $post_parameters['weight'];
-
-            if (!is_numeric($weight)) {
-                $jsr = new JsonResponse(array('error' => 'Invalid non-numeric value specified for a numeric field.'));
-                $jsr->setStatusCode(400);
-                return $jsr;
-            }
-
-            $conn = Database::getInstance();
-            $queryBuilder = $conn->createQueryBuilder();
-            $queryBuilder->update('unit')
-                ->set('unit.name', '?')
-                ->set('unit.description', '?')
-                ->set('unit.weight', '?')
-                ->where('unit.id = ?')
-                ->setParameter(0, $name)->setParameter(1, $description)->setParameter(2, $weight)->setParameter(3, $unit_id)->execute();
-
-            return $this->getUnit($request, $unit_id);
-
-        } else {
-            $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return UnitRepository::editUnit($request, $user_id, 'designer', $id);
     }
 
     /**
@@ -316,25 +192,9 @@ class CourseController extends Controller
      * @Method({"DELETE", "OPTIONS"})
      */
     public function deleteUnit(Request $request, $id) {
-        $unit_id = $id;
-
-        if (!is_numeric($unit_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        // check if the unit belongs to the designer
-        $result = $this->getUnit($request, $unit_id);
-        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-            return $result;
-        }
-
-        $conn = Database::getInstance();
-        $queryBuilder = $conn->createQueryBuilder();
-        $queryBuilder->delete('unit')->where('unit.id = ?')->setParameter(0, $unit_id)->execute();
-
-        return new Response();
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return UnitRepository::deleteUnit($request, $user_id, 'designer', $id);
     }
 
     /**
