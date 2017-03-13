@@ -204,29 +204,9 @@ class CourseController extends Controller
      * @Method({"GET", "OPTIONS"})
      */
     public function getSongs(Request $request, $id) {
-        $unit_id = $id;
-
-        if (!is_numeric($unit_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        // check if the unit belongs to the designer
-        $result = $this->getUnit($request, $unit_id);
-        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-            return $result;
-        }
-
-        $conn = Database::getInstance();
-        $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('song.id', 'song.title', 'song.album', 'song.artist', 'song.description', 'song.lyrics', 'song.embed', 'song.weight')
-            ->from('unit')->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')->where('unit_id = ?')
-            ->orderBy('song.weight', 'ASC')
-            ->setParameter(0, $unit_id)->execute()->fetchAll();
-
-        $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));
-        return $jsr;
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return SongRepository::getSongs($request, $user_id, 'designer', $id);
     }
 
     /**
@@ -238,34 +218,7 @@ class CourseController extends Controller
     public function getSong(Request $request, $id) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $user_id = $user->getId();
-        $song_id = $id;
-
-        if (!is_numeric($song_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        // check if the course belongs to the designer
-        $conn = Database::getInstance();
-        $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('song.id', 'song.title', 'song.album', 'song.artist', 'song.description', 'song.lyrics', 'song.embed', 'song.weight', 'unit.id AS unit_id')
-            ->from('app_users', 'designers')->innerJoin('designers', 'courses', 'courses', 'designers.id = courses.user_id')
-            ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')
-            ->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')
-            ->where('designers.id = ?')->andWhere('song.id = ?')
-            ->setParameter(0, $user_id)->setParameter(1, $song_id)->execute()->fetchAll();
-        if (count($results) < 1) {
-            $jsr = new JsonResponse(array('error' => 'Song does not exist or does not belong to the currently authenticated user.'));
-            $jsr->setStatusCode(503);
-            return $jsr;
-        } else if (count($results) > 1) {
-            $jsr = new JsonResponse(array('error' => 'An error has occurred. Check for duplicate keys in the database.'));
-            $jsr->setStatusCode(500);
-            return $jsr;
-        }
-
-        return new JsonResponse($results[0]);
+        return SongRepository::getSong($request, $user_id, 'designer', $id);
     }
 
     /**
@@ -285,92 +238,9 @@ class CourseController extends Controller
      * @Method({"POST", "OPTIONS"})
      */
     public function createSong(Request $request) {
-        $post_parameters = $request->request->all();
-
-        if (array_key_exists('title', $post_parameters) && array_key_exists('album', $post_parameters) && array_key_exists('artist', $post_parameters)
-            && array_key_exists('description', $post_parameters) && array_key_exists('lyrics', $post_parameters) && array_key_exists('weight', $post_parameters)
-            && array_key_exists('unit_id', $post_parameters)) {
-
-            $title = $post_parameters['title'];
-            $album = $post_parameters['album'];
-            $artist = $post_parameters['artist'];
-            $description = $post_parameters['description'];
-            $lyrics = $post_parameters['lyrics'];
-            $weight = $post_parameters['weight'];
-            $unit_id = $post_parameters['unit_id'];
-
-            $embed = null;
-
-            if (array_key_exists('embed', $post_parameters)) {
-                $embed = $post_parameters['embed'];
-            }
-
-            if (!is_numeric($unit_id)) {
-                $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-                $jsr->setStatusCode(400);
-                return $jsr;
-            }
-
-            if (!is_numeric($weight)) {
-                $jsr = new JsonResponse(array('error' => 'Invalid non-numeric value specified for a numeric field.'));
-                $jsr->setStatusCode(400);
-                return $jsr;
-            }
-
-            // check if unit given belongs to the currently logged in user
-            $result = $this->getUnit($request, $unit_id);
-            if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-                return $result;
-            }
-
-            $conn = Database::getInstance();
-            $queryBuilder = $conn->createQueryBuilder();
-            $queryBuilder->insert('song')
-                ->values(
-                    array(
-                        'title' => '?',
-                        'album' => '?',
-                        'artist' => '?',
-                        'description' => '?',
-                        'lyrics' => '?',
-                        'embed' => '?',
-                        'weight' => '?',
-                        'unit_id' => '?'
-                    )
-                )
-                ->setParameter(0, $title)->setParameter(1, $album)->setParameter(2, $artist)->setParameter(3, $description)
-                ->setParameter(4, $lyrics)->setParameter(5, $embed)
-                ->setParameter(6, $weight)->setParameter(7, $unit_id)->execute();
-            
-            $song_id = $conn->lastInsertId();
-
-            $conn = Database::getInstance();
-            $queryBuilder = $conn->createQueryBuilder();
-            
-            $moduleNames = ['module_cn', 'module_dw', 'module_ge', 'module_ls', 'module_lt', 'module_qu'];
-
-            for ($i = 0; $i < count($moduleNames); $i++) {
-                $moduleName = $moduleNames[$i];
-                $queryBuilder->insert($moduleName)
-                    ->values(
-                        array(
-                            'song_id' => '?',
-                            'password' => '?',
-                            'has_password' => '?',
-                            'is_enabled' => '?'
-                        )
-                    )
-                    ->setParameter(0, $song_id)->setParameter(1, '')->setParameter(2, 0)
-                    ->setParameter(3, 0)->execute();
-            }
-
-            return $this->getSong($request, $song_id);
-
-        } else {
-            $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return SongRepository::createSong($request, $user_id, 'designer');
     }
 
     /**
@@ -389,68 +259,9 @@ class CourseController extends Controller
      * @Method({"POST", "OPTIONS"})
      */
     public function editSong(Request $request, $id) {
-        $post_parameters = $request->request->all();
-
-        $song_id = $id;
-        if (!is_numeric($song_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        if (array_key_exists('title', $post_parameters) && array_key_exists('album', $post_parameters) && array_key_exists('artist', $post_parameters)
-            && array_key_exists('description', $post_parameters) && array_key_exists('lyrics', $post_parameters) && array_key_exists('weight', $post_parameters)) {
-
-            $title = $post_parameters['title'];
-            $album = $post_parameters['album'];
-            $artist = $post_parameters['artist'];
-            $description = $post_parameters['description'];
-            $lyrics = $post_parameters['lyrics'];
-            $weight = $post_parameters['weight'];
-
-            $embed = null;
-
-            if (array_key_exists('embed', $post_parameters)) {
-                $embed = $post_parameters['embed'];
-            }
-
-
-            if (!is_numeric($weight)) {
-                $jsr = new JsonResponse(array('error' => 'Invalid non-numeric value specified for a numeric field.'));
-                $jsr->setStatusCode(400);
-                return $jsr;
-            }
-
-            // check if song given belongs to the currently logged in user
-            $result = $this->getSong($request, $song_id);
-            if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-                return $result;
-            }
-
-            $conn = Database::getInstance();
-            $queryBuilder = $conn->createQueryBuilder();
-            $queryBuilder->update('song')
-                ->set('title', '?')
-                ->set('album', '?')
-                ->set('artist', '?')
-                ->set('description', '?')
-                ->set('lyrics', '?')
-                ->set('file_name', '?')
-                ->set('file_type', '?')
-                ->set('embed', '?')
-                ->set('weight', '?')
-                ->where('song.id = ?')
-                ->setParameter(0, $title)->setParameter(1, $album)->setParameter(2, $artist)->setParameter(3, $description)
-                ->setParameter(4, $lyrics)->setParameter(5, $embed)
-                ->setParameter(6, $weight)->setParameter(7, $song_id)->execute();
-
-            return $this->getSong($request, $song_id);
-
-        } else {
-            $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return SongRepository::editSong($request, $user_id, 'designer', $id);
     }
 
     /**
@@ -460,25 +271,9 @@ class CourseController extends Controller
      * @Method({"DELETE", "OPTIONS"})
      */
     public function deleteSong(Request $request, $id) {
-        $song_id = $id;
-
-        if (!is_numeric($song_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        // check if the unit belongs to the designer
-        $result = $this->getSong($request, $song_id);
-        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-            return $result;
-        }
-
-        $conn = Database::getInstance();
-        $queryBuilder = $conn->createQueryBuilder();
-        $queryBuilder->delete('song')->where('song.id = ?')->setParameter(0, $song_id)->execute();
-
-        return new Response();
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return SongRepository::deleteSong($request, $user_id, 'designer', $id);
     }
 
     /**

@@ -37,7 +37,7 @@ class UnitRepository extends \Doctrine\ORM\EntityRepository
             $jsr->setStatusCode(500);
             return $jsr;
         }
-
+        
         $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));
         return $jsr;
     }
@@ -65,6 +65,8 @@ class UnitRepository extends \Doctrine\ORM\EntityRepository
             $jsr->setStatusCode(500);
             return $jsr;
         }
+        
+        // check for invalid results
         if (count($results) < 1) {
             $jsr = new JsonResponse(array('error' => 'Unit does not exist or does not belong to the currently authenticated user.'));
             $jsr->setStatusCode(503);
