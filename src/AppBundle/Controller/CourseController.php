@@ -8,7 +8,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use AppBundle\Database;
-
+use AppBundle\Repository\CourseRepository;
 /**
  * Available functions:
  *
@@ -59,21 +59,7 @@ class CourseController extends Controller
     public function getCourses(Request $request) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $user_id = $user->getId();
-        $request_parameters = $request->query->all();
-        $name = "%%";
-        if (array_key_exists('name', $request_parameters)) {
-            $name = '%' . $request_parameters['name'] . '%';
-        }
-        $conn = Database::getInstance();
-        $queryBuilder = $conn->createQueryBuilder();
-        $result = $queryBuilder->select('courses.id', 'courses.name', 'courses.description', 'language.name AS language_name', 'language.id AS language_id')
-            ->from('app_users')->innerJoin('app_users', 'courses', 'courses', 'app_users.id = courses.user_id')
-            ->innerJoin('courses', 'language', 'language', 'courses.language_id = language.id')->where('app_users.id = ?')->andWhere('courses.name LIKE ?')
-            ->setParameter(0, $user_id)->setParameter(1, $name)->execute()->fetchAll();
-
-        $jsr = new JsonResponse(array('size' => count($result), 'data' => $result));
-        $jsr->setStatusCode(200);
-        return $jsr;
+        return CourseRepository::getCourses($request, $user_id, 'designer');
     }
 
     /**
@@ -85,32 +71,7 @@ class CourseController extends Controller
     public function getCourse(Request $request, $id) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $user_id = $user->getId();
-        $course_id = $id;
-
-        if (!is_numeric($course_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        // check if the course belongs to the designer
-        $conn = Database::getInstance();
-        $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('courses.id', 'courses.name', 'courses.description', 'language.name AS language_name', 'language.id AS language_id')->from('app_users', 'designers')
-            ->innerJoin('designers', 'courses', 'courses', 'designers.id = courses.user_id')->innerJoin('courses', 'language', 'language', 'courses.language_id = language.id')
-            ->where('designers.id = ?')->andWhere('courses.id = ?')
-            ->setParameter(0, $user_id)->setParameter(1, $course_id)->execute()->fetchAll();
-        if (count($results) < 1) {
-            $jsr = new JsonResponse(array('error' => 'Course does not exist or does not belong to the currently authenticated user.'));
-            $jsr->setStatusCode(503);
-            return $jsr;
-        } else if (count($results) > 1) {
-            $jsr = new JsonResponse(array('error' => 'An error has occurred. Check for duplicate keys in the database.'));
-            $jsr->setStatusCode(500);
-            return $jsr;
-        }
-
-        return new JsonResponse($results[0]);
+        return CourseRepository::getCourse($request, $user_id, 'designer', $id);
     }
 
     /**
@@ -127,49 +88,7 @@ class CourseController extends Controller
     public function createCourse(Request $request) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $user_id = $user->getId();
-
-        $post_parameters = $request->request->all();
-
-        if (array_key_exists('name', $post_parameters) && array_key_exists('description', $post_parameters) && array_key_exists('language_id', $post_parameters)) {
-            $name = $post_parameters['name'];
-            $description = $post_parameters['description'];
-            $language_id = $post_parameters['language_id'];
-            if (!is_numeric($language_id)) {
-                $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-                $jsr->setStatusCode(400);
-                return $jsr;
-            }
-            $conn = Database::getInstance();
-
-            $queryBuilder = $conn->createQueryBuilder();
-            $results = $queryBuilder->select('language.id', 'language.language_code', 'language.name')
-                ->from('language')->where('language.id = ?')->setParameter(0, $language_id)->execute()->fetchAll();
-            if (count($results) < 1) {
-                $jsr = new JsonResponse(array('error' => 'Invalid language ID specified.'));
-                $jsr->setStatusCode(400);
-                return $jsr;
-            }
-
-            $queryBuilder = $conn->createQueryBuilder();
-            $queryBuilder->insert('courses')
-                ->values(
-                    array(
-                        'name' => '?',
-                        'user_id' => '?',
-                        'description' => '?',
-                        'language_id' => '?'
-                    )
-                )
-                ->setParameter(0, $name)->setParameter(1, $user_id)->setParameter(2, $description)->setParameter(3, $language_id)->execute();
-            
-            $id = $conn->lastInsertId();
-            return $this->getCourse($request, $id);
-
-        } else {
-            $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
+        return CourseRepository::createCourse($request, $user_id, 'designer');
     }
 
     /**
@@ -184,57 +103,9 @@ class CourseController extends Controller
      * @Method({"POST", "OPTIONS"})
      */
     public function editCourse(Request $request, $id) {
-        $course_id = $id;
-
-        if (!is_numeric($course_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        // check if the course belongs to the designer
-        $result = $this->getCourse($request, $course_id);
-        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-            return $result;
-        }
-
-        $post_parameters = $request->request->all();
-
-        if (array_key_exists('name', $post_parameters) && array_key_exists('description', $post_parameters) && array_key_exists('language_id', $post_parameters)) {
-            $name = $post_parameters['name'];
-            $description = $post_parameters['description'];
-            $language_id = $post_parameters['language_id'];
-            if (!is_numeric($language_id)) {
-                $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-                $jsr->setStatusCode(400);
-                return $jsr;
-            }
-
-            $conn = Database::getInstance();
-            $queryBuilder = $conn->createQueryBuilder();
-            $results = $queryBuilder->select('language.id', 'language.language_code', 'language.name')
-                ->from('language')->where('language.id = ?')->setParameter(0, $language_id)->execute()->fetchAll();
-            if (count($results) < 1) {
-                $jsr = new JsonResponse(array('error' => 'Invalid language ID specified.'));
-                $jsr->setStatusCode(400);
-                return $jsr;
-            }
-
-            $queryBuilder = $conn->createQueryBuilder();
-            $queryBuilder->update('courses')
-                ->set('courses.name', '?')
-                ->set('courses.description', '?')
-                ->set('courses.language_id', '?')
-                ->where('courses.id = ?')
-                ->setParameter(0, $name)->setParameter(3, $course_id)->setParameter(1, $description)->setParameter(2, $language_id)->execute();
-
-            return $this->getCourse($request, $course_id);
-
-        } else {
-            $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return CourseRepository::editCourse($request, $user_id, 'designer', $id);
     }
 
     /**
@@ -244,25 +115,9 @@ class CourseController extends Controller
      * @Method({"DELETE", "OPTIONS"})
      */
     public function deleteCourse(Request $request, $id) {
-        $course_id = $id;
-
-        if (!is_numeric($course_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        // check if the course belongs to the designer
-        $result = $this->getCourse($request, $course_id);
-        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-            return $result;
-        }
-
-        $conn = Database::getInstance();
-        $queryBuilder = $conn->createQueryBuilder();
-        $queryBuilder->delete('courses')->where('courses.id = ?')->setParameter(0, $course_id)->execute();
-
-        return new Response();
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return CourseRepository::deleteCourse($request, $user_id, 'designer', $id);
     }
 
     /**
