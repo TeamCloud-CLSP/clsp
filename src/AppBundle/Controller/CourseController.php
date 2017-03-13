@@ -34,9 +34,9 @@ use AppBundle\Repository\MediaRepository;
  * editSong - /api/designer/song/{id} (POST) - takes title, album, artist, description, lyrics, weight | optional: embed
  * deleteSong - /api/designer/song/{id} (DELETE)
  *
- * getAllMedia - /api/designer/media - gets all files the designer owns
+ * getAllMedia - /api/designer/media - gets all files the designer owns; can filter by name and file_type
  * getMedia - /api/designer/media/{id}
- * createMedia - /api/designer/media (POST) - takes file (the actual file) | optional: name, file_type
+ * createMedia - /api/designer/media (POST) - takes file (the actual file) | optional: name
  * editMedia - /api/designer/media/{id} (POST) - takes name
  * deleteMedia - /api/designer/media/{id} (DELETE)
  *
@@ -145,7 +145,7 @@ class CourseController extends Controller
     public function getUnit(Request $request, $id) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $user_id = $user->getId();
-        return UnitRepository::getUnits($request, $user_id, 'designer', $id);
+        return UnitRepository::getUnit($request, $user_id, 'designer', $id);
     }
 
     /**
@@ -278,6 +278,8 @@ class CourseController extends Controller
 
     /**
      * Gets all files a designer has
+     * 
+     * Can filter by name and file_type
      *
      * @Route("/api/designer/media", name="getFilesAsDesigner")
      * @Method({"GET", "OPTIONS"})
@@ -285,15 +287,8 @@ class CourseController extends Controller
     public function getAllMedia(Request $request) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $user_id = $user->getId();
-
-        $conn = Database::getInstance();
-        $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('id', 'name', 'filename', 'file_type')
-            ->from('media')
-            ->where('user_id = ?')
-            ->setParameter(0, $user_id)->execute()->fetchAll();
-
-        return new JsonResponse($results);
+        return MediaRepository::getAllMedia($request, $user_id, 'designer');
+        
     }
 
     /**
@@ -305,32 +300,7 @@ class CourseController extends Controller
     public function getMedia(Request $request, $id) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $user_id = $user->getId();
-        $file_id = $id;
-
-        if (!is_numeric($file_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        // check if the file belongs to the designer
-        $conn = Database::getInstance();
-        $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('id', 'name', 'filename', 'file_type')
-            ->from('media')
-            ->where('user_id = ?')->andWhere('id = ?')
-            ->setParameter(0, $user_id)->setParameter(1, $file_id)->execute()->fetchAll();
-        if (count($results) < 1) {
-            $jsr = new JsonResponse(array('error' => 'File does not exist or does not belong to the currently authenticated user.'));
-            $jsr->setStatusCode(503);
-            return $jsr;
-        } else if (count($results) > 1) {
-            $jsr = new JsonResponse(array('error' => 'An error has occurred. Check for duplicate keys in the database.'));
-            $jsr->setStatusCode(500);
-            return $jsr;
-        }
-
-        return new JsonResponse($results[0]);
+        return MediaRepository::getMedia($request, $user_id, 'designer', $id);
     }
 
     /**
@@ -340,7 +310,7 @@ class CourseController extends Controller
      *      "file" = the file being uploaded
      *
      * Optional:
-     *      "file_type" = overrides the file type being processed from the file
+     *      "file_type" = overrides the file type being processed from the file - this should NOT be used
      *      "name" = overrides the default name of the file
      *
      * @Route("/api/designer/media", name="uploadFileAsDesigner")
@@ -349,71 +319,7 @@ class CourseController extends Controller
     public function createMedia(Request $request) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $user_id = $user->getId();
-
-        $post_parameters = $request->request->all();
-        $file_post_parameters = $request->files->all();
-
-        if (array_key_exists('file', $file_post_parameters)) {
-            $file = $file_post_parameters['file'];
-            $file_type = null;
-            $name = null;
-
-            $sections = explode('.', $file->getClientOriginalName());
-            $extension = $sections[count($sections) - 1];
-
-            if (array_key_exists('file_type', $post_parameters)) {
-                $file_type = $post_parameters['file_type'];
-            } else {
-                $file_type = $extension;
-            }
-
-            if (array_key_exists('name', $post_parameters)) {
-                $name = $post_parameters['name'];
-            } else {
-                $name = $file->getClientOriginalName();
-                $name = substr($name, 0, -1 * (strlen($extension) + 1 ));
-            }
-
-            $filename = md5(uniqid(rand(), true)) . '.' . $extension;
-            // make sure generated md5 hash is unique
-            $conn = Database::getInstance();
-            $breakOut = 0;
-            while ($breakOut = 0) {
-
-                $queryBuilder = $conn->createQueryBuilder();
-                $results = $queryBuilder->select('id')->from('media')->where('filename = ?')->setParameter(0, $filename)->execute()->fetchAll();
-                if (count($results) < 1) {
-                    $breakOut = 1;
-                } else {
-                    $filename = md5(uniqid(rand(), true)) . '.' . $extension;
-                }
-            }
-
-            // save the file
-            $file = $file->move('files', $filename);
-
-            $conn = Database::getInstance();
-
-            $queryBuilder = $conn->createQueryBuilder();
-            $queryBuilder->insert('media')
-                ->values(
-                    array(
-                        'name' => '?',
-                        'filename' => '?',
-                        'file_type' => '?',
-                        'user_id' => '?'
-                    )
-                )
-                ->setParameter(0, $name)->setParameter(1, $filename)->setParameter(2, $file_type)->setParameter(3, $user_id)->execute();
-
-            $id = $conn->lastInsertId();
-            return $this->getMedia($request, $id);
-
-        } else {
-            $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
+        return MediaRepository::createMedia($request, $user_id, 'designer');
     }
 
     /**
@@ -426,37 +332,10 @@ class CourseController extends Controller
      * @Method({"POST", "OPTIONS"})
      */
     public function editMedia(Request $request, $id) {
-        $file_id = $id;
-        if (!is_numeric($file_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return MediaRepository::editMedia($request, $user_id, 'designer', $id);
 
-        $post_parameters = $request->request->all();
-
-        if (array_key_exists('name', $post_parameters)) {
-            $name = $post_parameters['name'];
-
-            // check if file given belongs to the currently logged in user
-            $result = $this->getMedia($request, $file_id);
-            if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-                return $result;
-            }
-
-            $conn = Database::getInstance();
-            $queryBuilder = $conn->createQueryBuilder();
-            $queryBuilder->update('media')
-                ->set('name', '?')->where('id = ?')
-                ->setParameter(0, $name)->setParameter(1, $file_id)->execute();
-
-            return $this->getMedia($request, $file_id);
-
-        } else {
-            $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
     }
 
     /**
@@ -466,30 +345,10 @@ class CourseController extends Controller
      * @Method({"DELETE", "OPTIONS"})
      */
     public function deleteMedia(Request $request, $id) {
-        $file_id = $id;
-        if (!is_numeric($file_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        // check if file given belongs to the currently logged in user
-        $result = $this->getMedia($request, $file_id);
-        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-            return $result;
-        }
-
-        $conn = Database::getInstance();
-        $result = $conn->createQueryBuilder()->select('filename')->from('media')->where('id = ?')->setParameter(0, $file_id)->execute()->fetchAll();
-        $filename = $result[0]['filename'];
-
-        // delete file
-        unlink('files/' . $filename);
-
-        $queryBuilder = $conn->createQueryBuilder();
-        $queryBuilder->delete('media')->where('id = ?')->setParameter(0, $file_id)->execute();
-
-        return new Response();
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return MediaRepository::deleteMedia($request, $user_id, 'designer', $id);
+        
     }
 
     /**
