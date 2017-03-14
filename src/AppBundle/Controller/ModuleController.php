@@ -9,6 +9,11 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use AppBundle\Database;
+use AppBundle\Repository\ModuleRepository;
+use AppBundle\Repository\KeywordRepository;
+use AppBundle\Repository\HeaderRepository;
+use AppBundle\Repository\ItemRepository;
+use AppBundle\Repository\KeywordMediaRepository;
 
 /**
  *
@@ -59,267 +64,6 @@ use AppBundle\Database;
  */
 class ModuleController extends Controller
 {
-    /**
-     * Helper only - should remain the SAME function as the one in course controller.
-     *
-     * @param Request $request
-     * @param $id
-     * @return JsonResponse
-     */
-    public function getSong(Request $request, $id) {
-        $user = $this->get('security.token_storage')->getToken()->getUser();
-        $user_id = $user->getId();
-        $song_id = $id;
-
-        if (!is_numeric($song_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        // check if the course belongs to the designer
-        $conn = Database::getInstance();
-        $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('song.id', 'song.title', 'song.album', 'song.artist', 'song.description', 'song.lyrics', 'song.embed', 'song.weight', 'unit.id AS unit_id')
-            ->from('app_users', 'designers')->innerJoin('designers', 'courses', 'courses', 'designers.id = courses.user_id')
-            ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')
-            ->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')
-            ->where('designers.id = ?')->andWhere('song.id = ?')
-            ->setParameter(0, $user_id)->setParameter(1, $song_id)->execute()->fetchAll();
-        if (count($results) < 1) {
-            $jsr = new JsonResponse(array('error' => 'Song does not exist or does not belong to the currently authenticated user.'));
-            $jsr->setStatusCode(503);
-            return $jsr;
-        } else if (count($results) > 1) {
-            $jsr = new JsonResponse(array('error' => 'An error has occurred. Check for duplicate keys in the database.'));
-            $jsr->setStatusCode(500);
-            return $jsr;
-        }
-
-        return new JsonResponse($results[0]);
-    }
-
-    /**
-     * Another helper function only - should be the same method as the one in course controller
-     */
-    public function getMedia(Request $request, $id) {
-        $user = $this->get('security.token_storage')->getToken()->getUser();
-        $user_id = $user->getId();
-        $file_id = $id;
-
-        if (!is_numeric($file_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        // check if the file belongs to the designer
-        $conn = Database::getInstance();
-        $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('id', 'name', 'filename', 'file_type')
-            ->from('media')
-            ->where('user_id = ?')->andWhere('id = ?')
-            ->setParameter(0, $user_id)->setParameter(1, $file_id)->execute()->fetchAll();
-        if (count($results) < 1) {
-            $jsr = new JsonResponse(array('error' => 'File does not exist or does not belong to the currently authenticated user.'));
-            $jsr->setStatusCode(503);
-            return $jsr;
-        } else if (count($results) > 1) {
-            $jsr = new JsonResponse(array('error' => 'An error has occurred. Check for duplicate keys in the database.'));
-            $jsr->setStatusCode(500);
-            return $jsr;
-        }
-
-        return new JsonResponse($results[0]);
-    }
-
-    /**
-     * Generic function to return information of a specific module. NOT AN ENDPOINT.
-     */
-    public function getModuleFromDatabase($request, $moduleName, $song_id) {
-        $user = $this->get('security.token_storage')->getToken()->getUser();
-        $user_id = $user->getId();
-
-        if (!is_numeric($song_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        $conn = Database::getInstance();
-        $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('module.id', 'module.password', 'module.has_password', 'module.song_id', 'module.is_enabled', 'song.id AS song_id')
-            ->from('app_users', 'designers')->innerJoin('designers', 'courses', 'courses', 'designers.id = courses.user_id')
-            ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')
-            ->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')->innerJoin('song', $moduleName, 'module', 'song.id = module.song_id')
-            ->where('designers.id = ?')->andWhere('song.id = ?')
-            ->setParameter(0, $user_id)->setParameter(1, $song_id)->execute()->fetchAll();
-        if (count($results) < 1) {
-            $jsr = new JsonResponse(array('error' => 'Module does not exist or does not belong to the currently authenticated user.'));
-            $jsr->setStatusCode(503);
-            return $jsr;
-        } else if (count($results) > 1) {
-            $jsr = new JsonResponse(array('error' => 'An error has occurred. Check for duplicate keys in the database.'));
-            $jsr->setStatusCode(500);
-            return $jsr;
-        }
-
-        $results[0]['module_type'] = $moduleName;
-        return new JsonResponse($results[0]);
-    }
-
-    /**
-     * Generic function to create a new module. NOT AN ENDPOINT.
-     *
-     * Requires: song_id (passed in through URL), password, has_password, is_enabled
-     */
-    public function createModuleInDatabase($request, $moduleName, $song_id) {
-        if (!is_numeric($song_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric value specified for a numeric field.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        // check if song given belongs to the currently logged in user
-        $result = $this->getSong($request, $song_id);
-        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-            return $result;
-        }
-
-        // check to make sure the same module doesn't already exist for this song
-        $result = $this->getModuleFromDatabase($request, $moduleName, $song_id);
-        if ($result->getStatusCode() > 199 && $result->getStatusCode() < 300) {
-            $jsr = new JsonResponse(array('error' => 'A module of this type already exists for this song.'));
-            $jsr->setStatusCode(500);
-            return $jsr;
-        }
-
-        // check post parameters to make sure required fields exist
-        $post_parameters = $request->request->all();
-        if (array_key_exists('password', $post_parameters) && array_key_exists('has_password', $post_parameters) && array_key_exists('is_enabled', $post_parameters)) {
-            $password = $post_parameters['password'];
-            $has_password = $post_parameters['has_password'];
-            $is_enabled = $post_parameters['is_enabled'];
-
-            if ($has_password == 0 && ($password != '' || $password != null)) {
-                $jsr = new JsonResponse(array('error' => 'Specified a password but did not allow a password.'));
-                $jsr->setStatusCode(400);
-                return $jsr;
-            }
-
-            if ($has_password == 1 && ($password == '' || $password == null)) {
-                $jsr = new JsonResponse(array('error' => 'Forced a password but did not specify one.'));
-                $jsr->setStatusCode(400);
-                return $jsr;
-            }
-
-            if (strcmp($password, '') == 0) {
-                $password = null;
-            }
-
-            $conn = Database::getInstance();
-            $queryBuilder = $conn->createQueryBuilder();
-            $queryBuilder->insert($moduleName)
-                ->values(
-                    array(
-                        'song_id' => '?',
-                        'password' => '?',
-                        'has_password' => '?',
-                        'is_enabled' => '?'
-                    )
-                )
-                ->setParameter(0, $song_id)->setParameter(1, $password)->setParameter(2, $has_password)
-                ->setParameter(3, $is_enabled)->execute();
-
-            return $this->getModuleFromDatabase($request, $moduleName, $song_id);
-
-        } else {
-            $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-    }
-
-    /**
-     * Generic function to edit an existing module. NOT AN ENDPOINT.
-     *
-     * Requires: song_id (passed in through URL), password, has_password, is_enabled
-     */
-    public function editModuleInDatabase($request, $moduleName, $song_id) {
-        if (!is_numeric($song_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric value specified for a numeric field.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        // check if module given belongs to the currently logged in user
-        $result = $this->getModuleFromDatabase($request, $moduleName, $song_id);
-        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-            return $result;
-        }
-
-        // check post parameters to make sure required fields exist
-        $post_parameters = $request->request->all();
-        if (array_key_exists('password', $post_parameters) && array_key_exists('has_password', $post_parameters) && array_key_exists('is_enabled', $post_parameters)) {
-            $password = $post_parameters['password'];
-            $has_password = $post_parameters['has_password'];
-            $is_enabled = $post_parameters['is_enabled'];
-
-            if ($has_password == 0 && ($password != '' || $password != null)) {
-                $jsr = new JsonResponse(array('error' => 'Specified a password but did not allow a password.'));
-                $jsr->setStatusCode(400);
-                return $jsr;
-            }
-
-            if ($has_password == 1 && ($password == '' || $password == null)) {
-                $jsr = new JsonResponse(array('error' => 'Forced a password but did not specify one.'));
-                $jsr->setStatusCode(400);
-                return $jsr;
-            }
-
-            $conn = Database::getInstance();
-            $queryBuilder = $conn->createQueryBuilder();
-            $queryBuilder->update($moduleName)
-                ->set('password', '?')
-                ->set('has_password', '?')
-                ->set('is_enabled', '?')
-                ->where('song_id = ?')
-                ->setParameter(3, $song_id)->setParameter(0, $password)->setParameter(1, $has_password)->setParameter(2, $is_enabled)->execute();
-
-            return $this->getModuleFromDatabase($request, $moduleName, $song_id);
-
-        } else {
-            $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-    }
-
-    /**
-     * Generic function to delete a specific module. NOT AN ENDPOINT.
-     */
-    public function deleteModuleInDatabase($request, $moduleName, $song_id) {
-        $user = $this->get('security.token_storage')->getToken()->getUser();
-        $user_id = $user->getId();
-
-        if (!is_numeric($song_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        // check if module given belongs to the currently logged in user
-        $result = $this->getModuleFromDatabase($request, $moduleName, $song_id);
-        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-            return $result;
-        }
-
-        $conn = Database::getInstance();
-        $queryBuilder = $conn->createQueryBuilder();
-        $queryBuilder->delete($moduleName)->where('song_id = ?')->setParameter(0, $song_id)->execute();
-
-        return new Response();
-    }
 
     /**
      * Returns the CN module
@@ -328,7 +72,9 @@ class ModuleController extends Controller
      * @Method({"GET", "OPTIONS"})
      */
     public function getModuleCN(Request $request, $id) {
-        return $this->getModuleFromDatabase($request, 'module_cn', $id);
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return ModuleRepository::getModule($request, $user_id, 'designer', 'module_cn', $id);
     }
 
     /**
@@ -338,7 +84,9 @@ class ModuleController extends Controller
      * @Method({"POST", "OPTIONS"})
      */
     public function createModuleCN(Request $request, $id) {
-        return $this->createModuleInDatabase($request, 'module_cn', $id);
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return ModuleRepository::createModule($request, $user_id, 'designer', 'module_cn', $id);
     }
 
     /**
@@ -348,7 +96,9 @@ class ModuleController extends Controller
      * @Method({"POST", "OPTIONS"})
      */
     public function editModuleCN(Request $request, $id) {
-        return $this->editModuleInDatabase($request, 'module_cn', $id);
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return ModuleRepository::editModule($request, $user_id, 'designer', 'module_cn', $id);
     }
 
     /**
@@ -358,7 +108,9 @@ class ModuleController extends Controller
      * @Method({"DELETE", "OPTIONS"})
      */
     public function deleteModuleCN(Request $request, $id) {
-        return $this->deleteModuleInDatabase($request, 'module_cn', $id);
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return ModuleRepository::deleteModule($request, $user_id, 'designer', 'module_cn', $id);
     }
 
     /**
@@ -368,7 +120,9 @@ class ModuleController extends Controller
      * @Method({"GET", "OPTIONS"})
      */
     public function getModuleDW(Request $request, $id) {
-        return $this->getModuleFromDatabase($request, 'module_dw', $id);
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return ModuleRepository::getModule($request, $user_id, 'designer', 'module_dw', $id);
     }
 
     /**
@@ -378,7 +132,9 @@ class ModuleController extends Controller
      * @Method({"POST", "OPTIONS"})
      */
     public function createModuleDW(Request $request, $id) {
-        return $this->createModuleInDatabase($request, 'module_dw', $id);
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return ModuleRepository::createModule($request, $user_id, 'designer', 'module_dw', $id);
     }
 
     /**
@@ -388,7 +144,9 @@ class ModuleController extends Controller
      * @Method({"POST", "OPTIONS"})
      */
     public function editModuleDW(Request $request, $id) {
-        return $this->editModuleInDatabase($request, 'module_dw', $id);
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return ModuleRepository::editModule($request, $user_id, 'designer', 'module_dw', $id);
     }
 
     /**
@@ -398,7 +156,9 @@ class ModuleController extends Controller
      * @Method({"DELETE", "OPTIONS"})
      */
     public function deleteModuleDW(Request $request, $id) {
-        return $this->deleteModuleInDatabase($request, 'module_dw', $id);
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return ModuleRepository::deleteModule($request, $user_id, 'designer', 'module_dw', $id);
     }
 
     /**
@@ -408,7 +168,9 @@ class ModuleController extends Controller
      * @Method({"GET", "OPTIONS"})
      */
     public function getModuleGE(Request $request, $id) {
-        return $this->getModuleFromDatabase($request, 'module_ge', $id);
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return ModuleRepository::getModule($request, $user_id, 'designer', 'module_ge', $id);
     }
 
     /**
@@ -418,7 +180,9 @@ class ModuleController extends Controller
      * @Method({"POST", "OPTIONS"})
      */
     public function createModuleGE(Request $request, $id) {
-        return $this->createModuleInDatabase($request, 'module_ge', $id);
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return ModuleRepository::createModule($request, $user_id, 'designer', 'module_ge', $id);
     }
 
     /**
@@ -428,7 +192,9 @@ class ModuleController extends Controller
      * @Method({"POST", "OPTIONS"})
      */
     public function editModuleGE(Request $request, $id) {
-        return $this->editModuleInDatabase($request, 'module_ge', $id);
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return ModuleRepository::editModule($request, $user_id, 'designer', 'module_ge', $id);
     }
 
     /**
@@ -438,7 +204,9 @@ class ModuleController extends Controller
      * @Method({"DELETE", "OPTIONS"})
      */
     public function deleteModuleGE(Request $request, $id) {
-        return $this->deleteModuleInDatabase($request, 'module_ge', $id);
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return ModuleRepository::deleteModule($request, $user_id, 'designer', 'module_ge', $id);
     }
 
     /**
@@ -448,7 +216,9 @@ class ModuleController extends Controller
      * @Method({"GET", "OPTIONS"})
      */
     public function getModuleLS(Request $request, $id) {
-        return $this->getModuleFromDatabase($request, 'module_ls', $id);
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return ModuleRepository::getModule($request, $user_id, 'designer', 'module_ls', $id);
     }
 
     /**
@@ -458,7 +228,9 @@ class ModuleController extends Controller
      * @Method({"POST", "OPTIONS"})
      */
     public function createModuleLS(Request $request, $id) {
-        return $this->createModuleInDatabase($request, 'module_ls', $id);
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return ModuleRepository::createModule($request, $user_id, 'designer', 'module_ls', $id);
     }
 
     /**
@@ -468,7 +240,9 @@ class ModuleController extends Controller
      * @Method({"POST", "OPTIONS"})
      */
     public function editModuleLS(Request $request, $id) {
-        return $this->editModuleInDatabase($request, 'module_ls', $id);
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return ModuleRepository::editModule($request, $user_id, 'designer', 'module_ls', $id);
     }
 
     /**
@@ -478,7 +252,9 @@ class ModuleController extends Controller
      * @Method({"DELETE", "OPTIONS"})
      */
     public function deleteModuleLS(Request $request, $id) {
-        return $this->deleteModuleInDatabase($request, 'module_ls', $id);
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return ModuleRepository::deleteModule($request, $user_id, 'designer', 'module_ls', $id);
     }
 
     /**
@@ -488,7 +264,9 @@ class ModuleController extends Controller
      * @Method({"GET", "OPTIONS"})
      */
     public function getModuleLT(Request $request, $id) {
-        return $this->getModuleFromDatabase($request, 'module_lt', $id);
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return ModuleRepository::getModule($request, $user_id, 'designer', 'module_lt', $id);
     }
 
     /**
@@ -498,7 +276,9 @@ class ModuleController extends Controller
      * @Method({"POST", "OPTIONS"})
      */
     public function createModuleLT(Request $request, $id) {
-        return $this->createModuleInDatabase($request, 'module_lt', $id);
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return ModuleRepository::createModule($request, $user_id, 'designer', 'module_lt', $id);
     }
 
     /**
@@ -508,7 +288,9 @@ class ModuleController extends Controller
      * @Method({"POST", "OPTIONS"})
      */
     public function editModuleLT(Request $request, $id) {
-        return $this->editModuleInDatabase($request, 'module_lt', $id);
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return ModuleRepository::editModule($request, $user_id, 'designer', 'module_lt', $id);
     }
 
     /**
@@ -518,7 +300,9 @@ class ModuleController extends Controller
      * @Method({"DELETE", "OPTIONS"})
      */
     public function deleteModuleLT(Request $request, $id) {
-        return $this->deleteModuleInDatabase($request, 'module_lt', $id);
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return ModuleRepository::deleteModule($request, $user_id, 'designer', 'module_lt', $id);
     }
 
     /**
@@ -528,7 +312,9 @@ class ModuleController extends Controller
      * @Method({"GET", "OPTIONS"})
      */
     public function getModuleQU(Request $request, $id) {
-        return $this->getModuleFromDatabase($request, 'module_qu', $id);
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return ModuleRepository::getModule($request, $user_id, 'designer', 'module_qu', $id);
     }
 
     /**
@@ -538,7 +324,9 @@ class ModuleController extends Controller
      * @Method({"POST", "OPTIONS"})
      */
     public function createModuleQU(Request $request, $id) {
-        return $this->createModuleInDatabase($request, 'module_qu', $id);
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return ModuleRepository::createModule($request, $user_id, 'designer', 'module_qu', $id);
     }
 
     /**
@@ -548,7 +336,9 @@ class ModuleController extends Controller
      * @Method({"POST", "OPTIONS"})
      */
     public function editModuleQU(Request $request, $id) {
-        return $this->editModuleInDatabase($request, 'module_qu', $id);
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return ModuleRepository::editModule($request, $user_id, 'designer', 'module_qu', $id);
     }
 
     /**
@@ -558,7 +348,9 @@ class ModuleController extends Controller
      * @Method({"DELETE", "OPTIONS"})
      */
     public function deleteModuleQU(Request $request, $id) {
-        return $this->deleteModuleInDatabase($request, 'module_qu', $id);
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return ModuleRepository::deleteModule($request, $user_id, 'designer', 'module_qu', $id);
     }
 
     /**
@@ -608,31 +400,9 @@ class ModuleController extends Controller
      * @Method({"GET", "OPTIONS"})
      */
     public function getKeywords(Request $request, $id) {
-        $song_id = $id;
-
-        if (!is_numeric($song_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        // check if the module belongs to the designer
-        $result = $this->getModuleCN($request, $song_id);
-        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-            return $result;
-        }
-        $result = json_decode($result->getContent());
-        $module_id = $result->id;
-
-        $conn = Database::getInstance();
-        $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('id', 'phrase', 'description', 'link')
-            ->from('module_cn_keyword')->where('cn_id = ?')
-            ->setParameter(0, $module_id)->execute()->fetchAll();
-
-        $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));
-        $jsr->setStatusCode(200);
-        return $jsr;
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return KeywordRepository::getKeywords($request, $user_id, 'designer', $id);
     }
 
     /**
@@ -644,37 +414,7 @@ class ModuleController extends Controller
     public function getKeyword(Request $request, $id) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $user_id = $user->getId();
-        $keyword_id = $id;
-
-        if (!is_numeric($keyword_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        // do a whole bunch of joins to see if the currently registered designer has access to this keyword
-        $conn = Database::getInstance();
-        $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('mck.id', 'mck.phrase', 'mck.description', 'mck.link', 'song.id AS song_id')
-            ->from('app_users', 'designers')->innerJoin('designers', 'courses', 'courses', 'designers.id = courses.user_id')
-            ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')
-            ->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')->innerJoin('song', 'module_cn', 'module_cn', 'song.id = module_cn.song_id')
-            ->innerJoin('module_cn', 'module_cn_keyword', 'mck', 'module_cn.id = mck.cn_id')
-            ->where('designers.id = ?')->andWhere('mck.id = ?')
-            ->setParameter(0, $user_id)->setParameter(1, $keyword_id)->execute()->fetchAll();
-
-        if (count($results) < 1) {
-            $jsr = new JsonResponse(array('error' => 'Keyword does not exist or does not belong to the currently authenticated user.'));
-            $jsr->setStatusCode(503);
-            return $jsr;
-        } else if (count($results) > 1) {
-            $jsr = new JsonResponse(array('error' => 'An error has occurred. Check for duplicate keys in the database.'));
-            $jsr->setStatusCode(500);
-            return $jsr;
-        }
-
-        $results[0]['module_type'] = 'module_cn';
-        return new JsonResponse($results[0]);
+        return KeywordRepository::getKeyword($request, $user_id, 'designer', $id);
     }
 
     /**
@@ -690,59 +430,9 @@ class ModuleController extends Controller
      * @Method({"POST", "OPTIONS"})
      */
     public function createKeyword(Request $request) {
-        $post_parameters = $request->request->all();
-
-        if (array_key_exists('phrase', $post_parameters) && array_key_exists('song_id', $post_parameters)) {
-            $phrase = $post_parameters['phrase'];
-            $song_id = $post_parameters['song_id'];
-
-            if (!is_numeric($song_id)) {
-                $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-                $jsr->setStatusCode(400);
-                return $jsr;
-            }
-
-            // check if song + module cn given belongs to the currently logged in user
-            $result = $this->getModuleCN($request, $song_id);
-            if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-                return $result;
-            }
-            $result = json_decode($result->getContent());
-            $module_id = $result->id;
-
-            $description = null;
-            $link = null;
-
-            if (array_key_exists('description', $post_parameters)) {
-                $description = $post_parameters['description'];
-            }
-
-            if (array_key_exists('link', $post_parameters)) {
-                $link = $post_parameters['link'];
-            }
-
-            $conn = Database::getInstance();
-
-            $queryBuilder = $conn->createQueryBuilder();
-            $queryBuilder->insert('module_cn_keyword')
-                ->values(
-                    array(
-                        'phrase' => '?',
-                        'description' => '?',
-                        'link' => '?',
-                        'cn_id' => '?'
-                    )
-                )
-                ->setParameter(0, $phrase)->setParameter(1, $description)->setParameter(2, $link)->setParameter(3, $module_id)->execute();
-
-            $id = $conn->lastInsertId();
-            return $this->getKeyword($request, $id);
-
-        } else {
-            $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return KeywordRepository::createKeyword($request, $user_id, 'designer');
     }
 
     /**
@@ -757,53 +447,9 @@ class ModuleController extends Controller
      * @Method({"POST", "OPTIONS"})
      */
     public function editKeyword(Request $request, $id) {
-        $post_parameters = $request->request->all();
-        $keyword_id = $id;
-
-        if (array_key_exists('phrase', $post_parameters)) {
-            $phrase = $post_parameters['phrase'];
-
-            if (!is_numeric($keyword_id)) {
-                $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-                $jsr->setStatusCode(400);
-                return $jsr;
-            }
-
-            // check if keyword belongs to currently logged in user
-            $result = $this->getKeyword($request, $keyword_id);
-            if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-                return $result;
-            }
-
-            $description = null;
-            $link = null;
-
-            if (array_key_exists('description', $post_parameters)) {
-                $description = $post_parameters['description'];
-            }
-
-            if (array_key_exists('link', $post_parameters)) {
-                $link = $post_parameters['link'];
-            }
-
-
-            $conn = Database::getInstance();
-
-            $queryBuilder = $conn->createQueryBuilder();
-            $queryBuilder->update('module_cn_keyword')
-                ->set('phrase', '?')
-                ->set('description', '?')
-                ->set('link', '?')
-                ->where('id = ?')
-                ->setParameter(0, $phrase)->setParameter(1, $description)->setParameter(2, $link)->setParameter(3, $keyword_id)->execute();
-
-            return $this->getKeyword($request, $keyword_id);
-
-        } else {
-            $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return KeywordRepository::editKeyword($request, $user_id, 'designer', $id);
     }
 
     /**
@@ -813,26 +459,9 @@ class ModuleController extends Controller
      * @Method({"DELETE", "OPTIONS"})
      */
     public function deleteKeyword(Request $request, $id) {
-        $keyword_id = $id;
-
-        if (!is_numeric($keyword_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        // check if keyword belongs to currently logged in user
-        $result = $this->getKeyword($request, $keyword_id);
-        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-            return $result;
-        }
-
-        // if so, delete the keyword
-        $conn = Database::getInstance();
-        $queryBuilder = $conn->createQueryBuilder();
-        $queryBuilder->delete('module_cn_keyword')->where('id = ?')->setParameter(0, $keyword_id)->execute();
-
-        return new Response();
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return KeywordRepository::deleteKeyword($request, $user_id, 'designer', $id);
     }
 
     // ------------ methods below are for media linking for keywords - they should essentially be the SAME functions as the ones in course controller for song ----------
@@ -844,30 +473,9 @@ class ModuleController extends Controller
      * @Method({"GET", "OPTIONS"})
      */
     public function getKeywordMedia(Request $request, $id) {
-        $keyword_id = $id;
-
-        if (!is_numeric($keyword_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        // check if the keyword belongs to the designer
-        $result = $this->getKeyword($request, $keyword_id);
-        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-            return $result;
-        }
-
-        $conn = Database::getInstance();
-        $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('media.id', 'media.name', 'media.filename', 'media.file_type')
-            ->from('media')->innerJoin('media', 'module_cn_keywords_media', 'mck_media', 'media.id = mck_media.media_id')
-            ->innerJoin('mck_media', 'module_cn_keyword', 'mck', 'mck.id = mck_media.module_cn_keyword_id')->where('mck_media.module_cn_keyword_id = ?')
-            ->setParameter(0, $keyword_id)->execute()->fetchAll();
-
-        $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));
-        $jsr->setStatusCode(200);
-        return $jsr;
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return KeywordMediaRepository::getKeywordMedia($request, $user_id, 'designer', $id);
     }
 
     /**
@@ -877,30 +485,9 @@ class ModuleController extends Controller
      * @Method({"GET", "OPTIONS"})
      */
     public function getMediaKeywords(Request $request, $id) {
-        $media_id = $id;
-
-        if (!is_numeric($media_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        // check if the song belongs to the designer
-        $result = $this->getMedia($request, $media_id);
-        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-            return $result;
-        }
-
-        $conn = Database::getInstance();
-        $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('mck.id', 'mck.phrase', 'mck.description', 'mck.link')
-            ->from('media')->innerJoin('media', 'module_cn_keywords_media', 'mck_media', 'media.id = mck_media.media_id')
-            ->innerJoin('mck_media', 'module_cn_keyword', 'mck', 'mck.id = mck_media.module_cn_keyword_id')->where('mck_media.media_id = ?')
-            ->setParameter(0, $media_id)->execute()->fetchAll();
-
-        $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));
-        $jsr->setStatusCode(200);
-        return $jsr;
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return KeywordMediaRepository::getMediaKeywords($request, $user_id, 'designer', $id);
     }
 
     /**
@@ -912,31 +499,7 @@ class ModuleController extends Controller
     public function getKeywordMediaLink(Request $request, $keyword_id, $media_id) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $user_id = $user->getId();
-
-        if (!is_numeric($keyword_id) || !is_numeric($media_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        // get the media link
-        $conn = Database::getInstance();
-        $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('mck_media.module_cn_keyword_id', 'mck_media.media_id')
-            ->from('module_cn_keywords_media', 'mck_media')->innerJoin('mck_media', 'media', 'media', 'mck_media.media_id = media.id')
-            ->where('mck_media.module_cn_keyword_id = ?')->andWhere('mck_media.media_id = ?')->andWhere('media.user_id = ?')
-            ->setParameter(0, $keyword_id)->setParameter(1, $media_id)->setParameter(2, $user_id)->execute()->fetchAll();
-        if (count($results) < 1) {
-            $jsr = new JsonResponse(array('error' => 'Link does not exist or does not belong to the currently authenticated user.'));
-            $jsr->setStatusCode(503);
-            return $jsr;
-        } else if (count($results) > 1) {
-            $jsr = new JsonResponse(array('error' => 'An error has occurred. Check for duplicate keys in the database.'));
-            $jsr->setStatusCode(500);
-            return $jsr;
-        }
-
-        return new JsonResponse($results[0]);
+        return KeywordMediaRepository::getKeywordMediaLink($request, $user_id, 'designer', $keyword_id, $media_id);
     }
 
     /**
@@ -950,58 +513,9 @@ class ModuleController extends Controller
      * @Method({"POST", "OPTIONS"})
      */
     public function createKeywordMediaLink(Request $request) {
-        $post_parameters = $request->request->all();
-
-        if (array_key_exists('keyword_id', $post_parameters) && array_key_exists('media_id', $post_parameters)) {
-
-            $keyword_id = $post_parameters['keyword_id'];
-            $media_id = $post_parameters['media_id'];
-
-            if (!is_numeric($keyword_id) || !is_numeric($media_id)) {
-                $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-                $jsr->setStatusCode(400);
-                return $jsr;
-            }
-
-            // check if song given belongs to the currently logged in user
-            $result = $this->getKeyword($request, $keyword_id);
-            if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-                return $result;
-            }
-
-            // check if media given belongs to the currently logged in user
-            $result = $this->getMedia($request, $media_id);
-            if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-                return $result;
-            }
-
-            // check if this media link already exists
-            $result = $this->getKeywordMediaLink($request, $keyword_id, $media_id);
-            if ($result->getStatusCode() >= 200 && $result->getStatusCode() <= 299) {
-                $jsr = new JsonResponse(array('error' => 'The link already exists.'));
-                $jsr->setStatusCode(400);
-                return $jsr;
-            }
-
-            $conn = Database::getInstance();
-            $queryBuilder = $conn->createQueryBuilder();
-            $queryBuilder->insert('module_cn_keywords_media')
-                ->values(
-                    array(
-                        'module_cn_keyword_id' => '?',
-                        'media_id' => '?',
-                    )
-                )
-                ->setParameter(0, $keyword_id)->setParameter(1, $media_id)->execute();
-
-            $id = $conn->lastInsertId();
-            return $this->getKeywordMediaLink($request, $keyword_id, $media_id);
-
-        } else {
-            $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return KeywordMediaRepository::createKeywordMediaLink($request, $user_id, 'designer');
     }
 
     /**
@@ -1011,24 +525,9 @@ class ModuleController extends Controller
      * @Method({"DELETE", "OPTIONS"})
      */
     public function deleteKeywordMediaLink(Request $request, $keyword_id, $media_id) {
-        if (!is_numeric($keyword_id) || !is_numeric($media_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        // check if media link given belongs to currently logged in user
-        $result = $this->getKeywordMediaLink($request, $keyword_id, $media_id);
-        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-            return $result;
-        }
-
-        $conn = Database::getInstance();
-        $queryBuilder = $conn->createQueryBuilder();
-        $queryBuilder->delete('module_cn_keywords_media')->where('module_cn_keyword_id = ?')->andWhere('media_id = ?')
-            ->setParameter(0, $keyword_id)->setParameter(1, $media_id)->execute();
-
-        return new Response();
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return KeywordMediaRepository::deleteKeywordMediaLink($request, $user_id, 'designer', $keyword_id, $media_id);
     }
 
     // ------------ methods above are for media linking for keywords - they should essentially be the SAME functions as the ones in course controller for song ----------
@@ -1039,26 +538,7 @@ class ModuleController extends Controller
     public function getGenericHeaders($request, $moduleName, $module_id_name, $song_id) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $user_id = $user->getId();
-
-        if (!is_numeric($song_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        $conn = Database::getInstance();
-        $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('module_question_heading.id', 'module_question_heading.name')
-            ->from('app_users', 'designers')->innerJoin('designers', 'courses', 'courses', 'designers.id = courses.user_id')
-            ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')
-            ->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')->innerJoin('song', $moduleName, 'module', 'song.id = module.song_id')
-            ->innerJoin('module', 'module_question_heading', 'module_question_heading', 'module.id = module_question_heading.' . $module_id_name)
-            ->where('designers.id = ?')->andWhere('song.id = ?')
-            ->setParameter(0, $user_id)->setParameter(1, $song_id)->execute()->fetchAll();
-
-        $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));
-        $jsr->setStatusCode(200);
-        return $jsr;
+        return HeaderRepository::getHeaders($request, $user_id, 'designer', $moduleName, $module_id_name, $song_id);
     }
 
     /**
@@ -1070,74 +550,7 @@ class ModuleController extends Controller
     public function getHeading(Request $request, $id) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $user_id = $user->getId();
-        $heading_id = $id;
-
-        if (!is_numeric($heading_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        // do a whole bunch of joins to see if the currently registered designer has access to this keyword
-        $conn = Database::getInstance();
-
-        // first, find the heading that the user is looking for
-        $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('module_question_heading.id', 'module_question_heading.name', 'dw_id', 'ge_id', 'ls_id', 'lt_id', 'qu_id')
-            ->from('module_question_heading')->where('id = ?')->setParameter(0, $heading_id)->execute()->fetchAll();
-        if (count($results) < 1) {
-            $jsr = new JsonResponse(array('error' => 'Heading does not exist or does not belong to the currently authenticated user.'));
-            $jsr->setStatusCode(503);
-            return $jsr;
-        } else if (count($results) > 1) {
-            $jsr = new JsonResponse(array('error' => 'An error has occurred. Check for duplicate keys in the database.'));
-            $jsr->setStatusCode(500);
-            return $jsr;
-        }
-
-        // now, if it exists, find what module it belongs to
-        $hits = 0;
-        $moduleName = null;
-        $module_id_name = null;
-        $module_id_list = ['dw_id', 'ge_id', 'ls_id', 'lt_id', 'qu_id'];
-        $module_name_list = ['module_dw', 'module_ge', 'module_ls', 'module_lt', 'module_qu'];
-        // determine the module type so we know what to join on in the up-chain
-        for ($i = 0; $i < count($module_id_list); $i++) {
-            $check = $module_id_list[$i];
-            if ($results[0][$check] != null) {
-                $moduleName = $module_name_list[$i];
-                $module_id_name = $check;
-            }
-        }
-
-        if ($hits > 1) {
-            $jsr = new JsonResponse(array('error' => 'An error has occurred. Check for duplicate keys in the database.'));
-            $jsr->setStatusCode(500);
-            return $jsr;
-        }
-
-        // now, make sure the heading belongs to the user
-        $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('module_question_heading.id', 'module_question_heading.name', 'song.id AS song_id')
-            ->from('app_users', 'designers')->innerJoin('designers', 'courses', 'courses', 'designers.id = courses.user_id')
-            ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')
-            ->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')
-            ->innerJoin('song', $moduleName, 'module', 'song.id = module.song_id')
-            ->innerJoin('module', 'module_question_heading', 'module_question_heading', 'module.id = module_question_heading.' . $module_id_name)
-            ->where('designers.id = ?')->andWhere('module_question_heading.id = ?')
-            ->setParameter(0, $user_id)->setParameter(1, $heading_id)->execute()->fetchAll();
-
-        if (count($results) < 1) {
-            $jsr = new JsonResponse(array('error' => 'Heading does not exist or does not belong to the currently authenticated user.'));
-            $jsr->setStatusCode(503);
-            return $jsr;
-        } else if (count($results) > 1) {
-            $jsr = new JsonResponse(array('error' => 'An error has occurred. Check for duplicate keys in the database.'));
-            $jsr->setStatusCode(500);
-            return $jsr;
-        }
-        $results[0]['module_name'] = $moduleName;
-        return new JsonResponse($results[0]);
+        return HeaderRepository::getHeader($request, $user_id, 'designer', $id);
     }
 
     /**
@@ -1148,46 +561,9 @@ class ModuleController extends Controller
      *      "name" - name of the heading
      */
     public function createGenericHeader(Request $request, $moduleName, $module_id_name, $song_id) {
-        $post_parameters = $request->request->all();
-
-        if (array_key_exists('name', $post_parameters)) {
-            $name = $post_parameters['name'];
-
-            if (!is_numeric($song_id)) {
-                $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-                $jsr->setStatusCode(400);
-                return $jsr;
-            }
-
-            // check if module we're looking for exists and belongs to the currently logged in user
-            $result = $this->getModuleFromDatabase($request, $moduleName, $song_id);
-            if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-                return $result;
-            }
-
-            $result = json_decode($result->getContent());
-            $module_id = $result->id;
-
-            // if so, create the header
-            $conn = Database::getInstance();
-            $queryBuilder = $conn->createQueryBuilder();
-            $queryBuilder->insert('module_question_heading')
-                ->values(
-                    array(
-                        'name' => '?',
-                        $module_id_name => '?'
-                    )
-                )
-                ->setParameter(0, $name)->setParameter(1, $module_id)->execute();
-
-            $id = $conn->lastInsertId();
-            return $this->getHeading($request, $id);
-
-        } else {
-            $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return HeaderRepository::createHeader($request, $user_id, 'designer', $moduleName, $module_id_name, $song_id);
     }
 
     /**
@@ -1200,39 +576,9 @@ class ModuleController extends Controller
      * @Method({"POST", "OPTIONS"})
      */
     public function editHeader(Request $request, $id) {
-        $post_parameters = $request->request->all();
-        $heading_id = $id;
-
-        if (array_key_exists('name', $post_parameters)) {
-            $name = $post_parameters['name'];
-
-            if (!is_numeric($heading_id)) {
-                $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-                $jsr->setStatusCode(400);
-                return $jsr;
-            }
-
-            // check if keyword belongs to currently logged in user
-            $result = $this->getHeading($request, $heading_id);
-            if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-                return $result;
-            }
-
-            $conn = Database::getInstance();
-
-            $queryBuilder = $conn->createQueryBuilder();
-            $queryBuilder->update('module_question_heading')
-                ->set('name', '?')
-                ->where('id = ?')
-                ->setParameter(0, $name)->setParameter(1, $heading_id)->execute();
-
-            return $this->getHeading($request, $heading_id);
-
-        } else {
-            $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return HeaderRepository::editHeader($request, $user_id, 'designer', $id);
     }
 
     /**
@@ -1242,26 +588,9 @@ class ModuleController extends Controller
      * @Method({"DELETE", "OPTIONS"})
      */
     public function deleteHeading(Request $request, $id) {
-        $heading_id = $id;
-
-        if (!is_numeric($heading_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        // check if keyword belongs to currently logged in user
-        $result = $this->getHeading($request, $heading_id);
-        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-            return $result;
-        }
-
-        // if so, delete the keyword
-        $conn = Database::getInstance();
-        $queryBuilder = $conn->createQueryBuilder();
-        $queryBuilder->delete('module_question_heading')->where('id = ?')->setParameter(0, $heading_id)->execute();
-
-        return new Response();
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return HeaderRepository::deleteHeader($request, $user_id, 'designer', $id);
     }
 
     /**
@@ -1421,30 +750,9 @@ class ModuleController extends Controller
      * @Method({"GET", "OPTIONS"})
      */
     public function getItems(Request $request, $id) {
-        $heading_id = $id;
-        if (!is_numeric($heading_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        // check if keyword belongs to currently logged in user
-        $result = $this->getHeading($request, $heading_id);
-        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-            return $result;
-        }
-
-        $conn = Database::getInstance();
-        $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('module_question_item.id', 'module_question_item.content', 'module_question_item.type',
-            'module_question_item.weight', 'module_question_item.choices', 'module_question_item.answers')
-            ->from('module_question_item')
-            ->where('module_question_item.heading_id = ?')
-            ->setParameter(0, $heading_id)->execute()->fetchAll();
-
-        $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));
-        $jsr->setStatusCode(200);
-        return $jsr;
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return ItemRepository::getItems($request, $user_id, 'designer', $id);
     }
 
     /**
@@ -1456,42 +764,7 @@ class ModuleController extends Controller
     public function getItem(Request $request, $id) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $user_id = $user->getId();
-        $item_id = $id;
-
-        if (!is_numeric($item_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        // do a whole bunch of joins to see if the currently registered designer has access to this keyword
-        $conn = Database::getInstance();
-        $queryBuilder = $conn->createQueryBuilder();
-
-        // find the question item we're looking for by id
-        $results = $queryBuilder->select('module_question_item.id', 'module_question_item.content', 'module_question_item.type',
-            'module_question_item.weight', 'module_question_item.choices', 'module_question_item.answers', 'heading_id')
-            ->from('module_question_item')->where('id = ?')->setParameter(0, $item_id)->execute()->fetchAll();
-        if (count($results) < 1) {
-            $jsr = new JsonResponse(array('error' => 'Item does not exist or does not belong to the currently authenticated user.'));
-            $jsr->setStatusCode(503);
-            return $jsr;
-        } else if (count($results) > 1) {
-            $jsr = new JsonResponse(array('error' => 'An error has occurred. Check for duplicate keys in the database.'));
-            $jsr->setStatusCode(500);
-            return $jsr;
-        }
-
-        $heading_id = $results[0]['heading_id'];
-        // do upcall to make sure heading belongs to the current user
-        $result = $this->getHeading($request, $heading_id);
-        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-            $jsr = new JsonResponse(array('error' => 'Item does not exist or does not belong to the currently authenticated user.'));
-            $jsr->setStatusCode(503);
-            return $jsr;
-        }
-
-        return new JsonResponse($results[0]);
+        return ItemRepository::getItem($request, $user_id, 'designer', $id);
     }
 
     /**
@@ -1509,63 +782,9 @@ class ModuleController extends Controller
      * @Method({"POST", "OPTIONS"})
      */
     public function createItem(Request $request) {
-        $post_parameters = $request->request->all();
-
-        if (array_key_exists('heading_id', $post_parameters) && array_key_exists('content', $post_parameters) && array_key_exists('type', $post_parameters)
-            && array_key_exists('weight', $post_parameters)) {
-            $heading_id = $post_parameters['heading_id'];
-            $content = $post_parameters['content'];
-            $type = $post_parameters['type'];
-            $weight = $post_parameters['weight'];
-
-            if (!is_numeric($heading_id)) {
-                $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-                $jsr->setStatusCode(400);
-                return $jsr;
-            }
-
-            // check if header belongs to currently logged in user
-            $result = $this->getHeading($request, $heading_id);
-            if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-                return $result;
-            }
-
-            $choices = null;
-            $answers = null;
-
-            if (array_key_exists('choices', $post_parameters)) {
-                $choices = $post_parameters['choices'];
-            }
-
-            if (array_key_exists('answers', $post_parameters)) {
-                $answers = $post_parameters['answers'];
-            }
-
-            $conn = Database::getInstance();
-
-            $queryBuilder = $conn->createQueryBuilder();
-            $queryBuilder->insert('module_question_item')
-                ->values(
-                    array(
-                        'content' => '?',
-                        'type' => '?',
-                        'weight' => '?',
-                        'choices' => '?',
-                        'answers' => '?',
-                        'heading_id' => '?'
-                    )
-                )
-                ->setParameter(0, $content)->setParameter(1, $type)->setParameter(2, $weight)->setParameter(3, $choices)
-                ->setParameter(4, $answers)->setParameter(5, $heading_id)->execute();
-
-            $id = $conn->lastInsertId();
-            return $this->getItem($request, $id);
-
-        } else {
-            $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return ItemRepository::createItem($request, $user_id, 'designer');
     }
 
     /**
@@ -1582,59 +801,9 @@ class ModuleController extends Controller
      * @Method({"POST", "OPTIONS"})
      */
     public function editItem(Request $request, $id) {
-        $post_parameters = $request->request->all();
-        $item_id = $id;
-
-        if (array_key_exists('content', $post_parameters) && array_key_exists('type', $post_parameters)
-            && array_key_exists('weight', $post_parameters)) {
-            $content = $post_parameters['content'];
-            $type = $post_parameters['type'];
-            $weight = $post_parameters['weight'];
-
-            if (!is_numeric($item_id)) {
-                $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-                $jsr->setStatusCode(400);
-                return $jsr;
-            }
-
-            // check if keyword belongs to currently logged in user
-            $result = $this->getItem($request, $item_id);
-            if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-                return $result;
-            }
-
-            $choices = null;
-            $answers = null;
-
-            if (array_key_exists('choices', $post_parameters)) {
-                $choices = $post_parameters['choices'];
-            }
-
-            if (array_key_exists('answers', $post_parameters)) {
-                $answers = $post_parameters['answers'];
-            }
-
-
-            $conn = Database::getInstance();
-
-            $queryBuilder = $conn->createQueryBuilder();
-            $queryBuilder->update('module_question_item')
-                ->set('content', '?')
-                ->set('type', '?')
-                ->set('weight', '?')
-                ->set('choices', '?')
-                ->set('answers', '?')
-                ->where('id = ?')
-                ->setParameter(0, $content)->setParameter(1, $type)->setParameter(2, $weight)->setParameter(3, $choices)
-                ->setParameter(4, $answers)->setParameter(5, $item_id)->execute();
-
-            return $this->getItem($request, $item_id);
-
-        } else {
-            $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return ItemRepository::editItem($request, $user_id, 'designer', $id);
     }
 
     /**
@@ -1644,26 +813,9 @@ class ModuleController extends Controller
      * @Method({"DELETE", "OPTIONS"})
      */
     public function deleteItem(Request $request, $id) {
-        $item_id = $id;
-
-        if (!is_numeric($item_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        // check if keyword belongs to currently logged in user
-        $result = $this->getItem($request, $item_id);
-        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-            return $result;
-        }
-
-        // if so, delete the keyword
-        $conn = Database::getInstance();
-        $queryBuilder = $conn->createQueryBuilder();
-        $queryBuilder->delete('module_question_item')->where('id = ?')->setParameter(0, $item_id)->execute();
-
-        return new Response();
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return ItemRepository::deleteItem($request, $user_id, 'designer', $id);
     }
 
     /**
@@ -1672,33 +824,7 @@ class ModuleController extends Controller
     public function getGenericHeaderItemStructure($request, $moduleName, $module_id_name, $song_id) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $user_id = $user->getId();
-
-        $result = $this->getGenericHeaders($request, $moduleName, $module_id_name, $song_id);
-        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-            return $result;
-        }
-
-        $result = json_decode($result->getContent());
-        $headers = $result->data;
-
-        for ($i = 0; $i < count($headers); $i++) {
-            $header = $headers[$i];
-            $header_id = $header->id;
-            $result = $this->getItems($request, $header_id);
-            if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-                return $result;
-            }
-            $result = json_decode($result->getContent());
-            $header->items = $result->data;
-            $header->item_count = $result->size;
-        }
-
-        $jsr = new JsonResponse(array('size' => count($headers), 'data' => $headers));
-        $jsr->setStatusCode(200);
-        return $jsr;
+        return ItemRepository::getHeaderItemStructure($request, $user_id, 'designer', $moduleName, $module_id_name, $song_id);
     }
-
-
-
 
 }

@@ -5,6 +5,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use AppBundle\Database;
+use AppBundle\Repository\CourseRepository;
 
 /**
  * UnitRepository
@@ -22,22 +23,21 @@ class UnitRepository extends \Doctrine\ORM\EntityRepository
             return $jsr;
         }
 
+        // check if the course is accessible to the currently logged in user
+        $result = CourseRepository::getCourse($request, $user_id, $user_type, $course_id);
+        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+            return $result;
+        }
+
         // run query to get units that belong to the course
         $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
-        $results = null;
-        if (strcmp($user_type, 'designer') == 0) { // if designer, make sure the designer owns the course and units
-            $results = $queryBuilder->select('unit.name', 'unit.description', 'unit.id', 'unit.weight')
-                ->from('app_users', 'designers')->innerJoin('designers', 'courses', 'courses', 'designers.id = courses.user_id')
-                ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')->where('designers.id = ?')->andWhere('course_id = ?')
-                ->orderBy('unit.weight', 'ASC')
-                ->setParameter(0, $user_id)->setParameter(1, $course_id)->execute()->fetchAll();
-        } else {
-            $jsr = new JsonResponse(array('error' => 'Internal server error.'));
-            $jsr->setStatusCode(500);
-            return $jsr;
-        }
-        
+        $results = $queryBuilder->select('unit.name', 'unit.description', 'unit.id', 'unit.weight')
+            ->from('courses')
+            ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')->where('course_id = ?')
+            ->orderBy('unit.weight', 'ASC')
+            ->setParameter(0, $course_id)->execute()->fetchAll();
+
         $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));
         return $jsr;
     }

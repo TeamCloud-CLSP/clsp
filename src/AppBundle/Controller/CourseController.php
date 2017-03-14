@@ -12,6 +12,7 @@ use AppBundle\Repository\CourseRepository;
 use AppBundle\Repository\UnitRepository;
 use AppBundle\Repository\SongRepository;
 use AppBundle\Repository\MediaRepository;
+use AppBundle\Repository\SongMediaRepository;
 
 /**
  * Available functions:
@@ -358,29 +359,9 @@ class CourseController extends Controller
      * @Method({"GET", "OPTIONS"})
      */
     public function getSongMedia(Request $request, $id) {
-        $song_id = $id;
-
-        if (!is_numeric($song_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        // check if the song belongs to the designer
-        $result = $this->getSong($request, $song_id);
-        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-            return $result;
-        }
-
-        $conn = Database::getInstance();
-        $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('media.id', 'media.name', 'media.filename', 'media.file_type')
-            ->from('media')->innerJoin('media', 'songs_media', 'songs_media', 'media.id = songs_media.media_id')
-            ->innerJoin('songs_media', 'song', 'song', 'songs_media.song_id = song.id')->where('song.id = ?')
-            ->setParameter(0, $song_id)->execute()->fetchAll();
-
-        $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));
-        return $jsr;
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return SongMediaRepository::getSongMedia($request, $user_id, 'designer', $id);
     }
 
     /**
@@ -390,29 +371,9 @@ class CourseController extends Controller
      * @Method({"GET", "OPTIONS"})
      */
     public function getMediaSongs(Request $request, $id) {
-        $media_id = $id;
-
-        if (!is_numeric($media_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        // check if the song belongs to the designer
-        $result = $this->getMedia($request, $media_id);
-        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-            return $result;
-        }
-
-        $conn = Database::getInstance();
-        $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('song.id', 'song.unit_id', 'song.title', 'song.album', 'song.artist', 'song.description', 'song.lyrics', 'song.embed', 'song.weight')
-            ->from('media')->innerJoin('media', 'songs_media', 'songs_media', 'media.id = songs_media.media_id')
-            ->innerJoin('songs_media', 'song', 'song', 'songs_media.song_id = song.id')->where('media.id = ?')
-            ->setParameter(0, $media_id)->execute()->fetchAll();
-
-        $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));
-        return $jsr;
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return SongMediaRepository::getMediaSong($request, $user_id, 'designer', $id);
     }
 
     /**
@@ -424,31 +385,7 @@ class CourseController extends Controller
     public function getSongMediaLink(Request $request, $song_id, $media_id) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $user_id = $user->getId();
-
-        if (!is_numeric($song_id) || !is_numeric($media_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        // get the media link
-        $conn = Database::getInstance();
-        $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('songs_media.song_id', 'songs_media.media_id')
-            ->from('songs_media')->innerJoin('songs_media', 'media', 'media', 'songs_media.media_id = media.id')
-            ->where('songs_media.song_id = ?')->andWhere('songs_media.media_id = ?')->andWhere('media.user_id = ?')
-            ->setParameter(0, $song_id)->setParameter(1, $media_id)->setParameter(2, $user_id)->execute()->fetchAll();
-        if (count($results) < 1) {
-            $jsr = new JsonResponse(array('error' => 'Link does not exist or does not belong to the currently authenticated user.'));
-            $jsr->setStatusCode(503);
-            return $jsr;
-        } else if (count($results) > 1) {
-            $jsr = new JsonResponse(array('error' => 'An error has occurred. Check for duplicate keys in the database.'));
-            $jsr->setStatusCode(500);
-            return $jsr;
-        }
-
-        return new JsonResponse($results[0]);
+        return SongMediaRepository::getSongMediaLink($request, $user_id, 'designer', $song_id, $media_id);
     }
 
     /**
@@ -462,58 +399,9 @@ class CourseController extends Controller
      * @Method({"POST", "OPTIONS"})
      */
     public function createSongMediaLink(Request $request) {
-        $post_parameters = $request->request->all();
-
-        if (array_key_exists('song_id', $post_parameters) && array_key_exists('media_id', $post_parameters)) {
-
-            $song_id = $post_parameters['song_id'];
-            $media_id = $post_parameters['media_id'];
-
-            if (!is_numeric($song_id) || !is_numeric($media_id)) {
-                $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-                $jsr->setStatusCode(400);
-                return $jsr;
-            }
-
-            // check if song given belongs to the currently logged in user
-            $result = $this->getSong($request, $song_id);
-            if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-                return $result;
-            }
-
-            // check if media given belongs to the currently logged in user
-            $result = $this->getMedia($request, $media_id);
-            if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-                return $result;
-            }
-
-            // check if this media link already exists
-            $result = $this->getSongMediaLink($request, $song_id, $media_id);
-            if ($result->getStatusCode() >= 200 && $result->getStatusCode() <= 299) {
-                $jsr = new JsonResponse(array('error' => 'The link already exists.'));
-                $jsr->setStatusCode(400);
-                return $jsr;
-            }
-
-            $conn = Database::getInstance();
-            $queryBuilder = $conn->createQueryBuilder();
-            $queryBuilder->insert('songs_media')
-                ->values(
-                    array(
-                        'song_id' => '?',
-                        'media_id' => '?',
-                    )
-                )
-                ->setParameter(0, $song_id)->setParameter(1, $media_id)->execute();
-
-            $id = $conn->lastInsertId();
-            return $this->getSongMediaLink($request, $song_id, $media_id);
-
-        } else {
-            $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return SongMediaRepository::createSongMediaLink($request, $user_id, 'designer');
     }
 
     /**
@@ -523,24 +411,9 @@ class CourseController extends Controller
      * @Method({"DELETE", "OPTIONS"})
      */
     public function deleteSongMediaLink(Request $request, $song_id, $media_id) {
-        if (!is_numeric($song_id) || !is_numeric($media_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        // check if media link given belongs to currently logged in user
-        $result = $this->getSongMediaLink($request, $song_id, $media_id);
-        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-            return $result;
-        }
-
-        $conn = Database::getInstance();
-        $queryBuilder = $conn->createQueryBuilder();
-        $queryBuilder->delete('songs_media')->where('song_id = ?')->andWhere('media_id = ?')
-            ->setParameter(0, $song_id)->setParameter(1, $media_id)->execute();
-
-        return new Response();
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return SongMediaRepository::deleteSongMediaLink($request, $user_id, 'designer', $song_id, $media_id);
     }
 
 

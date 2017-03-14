@@ -21,7 +21,7 @@ class SongRepository extends \Doctrine\ORM\EntityRepository
             return $jsr;
         }
 
-        // check if the unit belongs to the designer
+        // check if the unit is accessible to the currently logged in user
         $result = UnitRepository::getUnit($request, $user_id, $user_type, $unit_id);
         if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
             return $result;
@@ -30,17 +30,10 @@ class SongRepository extends \Doctrine\ORM\EntityRepository
         // run query to get the songs that belong to the unit
         $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
-        $results = null;
-        if (strcmp($user_type, 'designer') == 0) { // if designer, make sure the designer owns the unit and songs
-            $results = $queryBuilder->select('song.id', 'song.title', 'song.album', 'song.artist', 'song.description', 'song.lyrics', 'song.embed', 'song.weight')
-                ->from('unit')->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')->where('unit_id = ?')
-                ->orderBy('song.weight', 'ASC')
-                ->setParameter(0, $unit_id)->execute()->fetchAll();
-        } else {
-            $jsr = new JsonResponse(array('error' => 'Internal server error.'));
-            $jsr->setStatusCode(500);
-            return $jsr;
-        }
+        $results = $queryBuilder->select('song.id', 'song.title', 'song.album', 'song.artist', 'song.description', 'song.lyrics', 'song.embed', 'song.weight')
+            ->from('unit')->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')->where('unit_id = ?')
+            ->orderBy('song.weight', 'ASC')
+            ->setParameter(0, $unit_id)->execute()->fetchAll();
 
         $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));
         return $jsr;
