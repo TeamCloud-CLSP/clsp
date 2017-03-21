@@ -90,6 +90,7 @@ class ModuleRepository extends \Doctrine\ORM\EntityRepository
             $password = $post_parameters['password'];
             $has_password = $post_parameters['has_password'];
             $is_enabled = $post_parameters['is_enabled'];
+            $name = null;
 
             // do some password logic checking (can't require a password but give no password, can't not have a password but set a password)
             if ($has_password == 0 && ($password != '' || $password != null)) {
@@ -108,6 +109,11 @@ class ModuleRepository extends \Doctrine\ORM\EntityRepository
                 $password = null;
             }
 
+            // check for optional parameters
+            if (array_key_exists('name', $post_parameters)) {
+                $name = $post_parameters['name'];
+            }
+
             // create the module
             $conn = Database::getInstance();
             $queryBuilder = $conn->createQueryBuilder();
@@ -117,11 +123,12 @@ class ModuleRepository extends \Doctrine\ORM\EntityRepository
                         'song_id' => '?',
                         'password' => '?',
                         'has_password' => '?',
-                        'is_enabled' => '?'
+                        'is_enabled' => '?',
+                        'name' => '?'
                     )
                 )
                 ->setParameter(0, $song_id)->setParameter(1, $password)->setParameter(2, $has_password)
-                ->setParameter(3, $is_enabled)->execute();
+                ->setParameter(3, $is_enabled)->setParameter(4, $name)->execute();
 
             // return the newly created module
             return ModuleRepository::getModule($request, $user_id, $user_type, $moduleName, $song_id);
@@ -160,6 +167,7 @@ class ModuleRepository extends \Doctrine\ORM\EntityRepository
             $password = $post_parameters['password'];
             $has_password = $post_parameters['has_password'];
             $is_enabled = $post_parameters['is_enabled'];
+            $name = null;
 
             // check password requirements/consistency
             if ($has_password == 0 && ($password != '' || $password != null)) {
@@ -173,6 +181,11 @@ class ModuleRepository extends \Doctrine\ORM\EntityRepository
                 return $jsr;
             }
 
+            // check for optional parameters
+            if (array_key_exists('name', $post_parameters)) {
+                $name = $post_parameters['name'];
+            }
+
             // update the module in the database
             $conn = Database::getInstance();
             $queryBuilder = $conn->createQueryBuilder();
@@ -180,8 +193,10 @@ class ModuleRepository extends \Doctrine\ORM\EntityRepository
                 ->set('password', '?')
                 ->set('has_password', '?')
                 ->set('is_enabled', '?')
+                ->set('name', '?')
                 ->where('song_id = ?')
-                ->setParameter(3, $song_id)->setParameter(0, $password)->setParameter(1, $has_password)->setParameter(2, $is_enabled)->execute();
+                ->setParameter(4, $song_id)->setParameter(0, $password)->setParameter(1, $has_password)
+                ->setParameter(3, $name)->setParameter(2, $is_enabled)->execute();
 
             // return the updated module information
             return ModuleRepository::getModule($request, $user_id, $user_type, $moduleName, $song_id);
