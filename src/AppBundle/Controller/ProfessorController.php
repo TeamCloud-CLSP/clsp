@@ -65,7 +65,7 @@ class ProfessorController extends Controller
         if (array_key_exists('name', $request_parameters)) {
             $name = '%' . $request_parameters['name'] . '%';
         }
-        $conn = $this->get('app.database')->getConn();
+        $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
         $result = $queryBuilder->select('courses.id', 'courses.name', 'courses.description', 'language.name AS language_name', 'language.id AS language_id', 'pr.date_start', 'pr.date_end')
             ->from('professor_registrations', 'pr')->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')->innerJoin('courses', 'language', 'language', 'courses.language_id = language.id')
@@ -88,7 +88,7 @@ class ProfessorController extends Controller
         $user_id = $user->getId();
         $request_parameters = $request->query->all();
 
-        $conn = $this->get('app.database')->getConn();
+        $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
         $result = $queryBuilder->select('pr.id', 'pr.date_created', 'pr.date_deleted', 'pr.date_start', 'pr.date_end', 'pr.signup_code',
             'designers.id AS designers', 'designers.username AS designers_username', 'designers.name AS designers_name',
@@ -119,7 +119,7 @@ class ProfessorController extends Controller
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $user_id = $user->getId();
 
-        $conn = $this->get('app.database')->getConn();
+        $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
         $professor_registrations = $queryBuilder->select('pr.id', 'pr.date_created', 'pr.date_deleted', 'pr.date_start', 'pr.date_end', 'pr.signup_code',
             'designers.id AS designers', 'designers.username AS designers_username', 'designers.name AS designers_name',
@@ -168,7 +168,7 @@ class ProfessorController extends Controller
             return $jsr;
         }
 
-        $conn = $this->get('app.database')->getConn();
+        $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
         $results = $queryBuilder->select('classes.id AS class_id', 'classes.name AS class_name',
             'sr.id AS student_registration_id', 'sr.date_start AS student_registration_date_start', 'sr.date_end AS student_registration_date_end')
@@ -211,7 +211,7 @@ class ProfessorController extends Controller
             return $jsr;
         }
 
-        $conn = $this->get('app.database')->getConn();
+        $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
         $results = $queryBuilder->select('classes.id AS class_id', 'classes.name AS class_name',
             'sr.id AS student_registration_id', 'sr.date_start AS student_registration_date_start', 'sr.date_end AS student_registration_date_end')
@@ -246,7 +246,7 @@ class ProfessorController extends Controller
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $user_id = $user->getId();
 
-        $conn = $this->get('app.database')->getConn();
+        $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
         $results = $queryBuilder->select('classes.id AS class_id', 'classes.name AS class_name',
             'sr.id AS student_registration_id', 'sr.date_start AS student_registration_date_start', 'sr.date_end AS student_registration_date_end')
@@ -289,7 +289,7 @@ class ProfessorController extends Controller
                 $jsr->setStatusCode(503);
                 return $jsr;
             }
-            $conn = $this->get('app.database')->getConn();
+            $conn = Database::getInstance();
 
             // check to make sure the class being paired with the student registration is valid, and professor has access to it
             $queryBuilder = $conn->createQueryBuilder();
@@ -368,7 +368,7 @@ class ProfessorController extends Controller
         }
 
         // check if the student registration belongs to the professor
-        $conn = $this->get('app.database')->getConn();
+        $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
         $results = $queryBuilder->select('sr.signup_code')->from('student_registrations', 'sr')
             ->innerJoin('sr', 'professor_registrations', 'pr', 'pr.id = sr.prof_registration_id')
@@ -429,7 +429,7 @@ class ProfessorController extends Controller
         }
 
         // make sure the student registration exists
-        $conn = $this->get('app.database')->getConn();
+        $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
         $results = $queryBuilder->select('sr.date_end AS student_registration_date_end')
             ->from('professor_registrations', 'pr')->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
@@ -470,7 +470,7 @@ class ProfessorController extends Controller
         if (array_key_exists('name', $request_parameters)) {
             $name = '%' . $request_parameters['name'] . '%';
         }
-        $conn = $this->get('app.database')->getConn();
+        $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
         $result = $queryBuilder->select('classes.id', 'classes.name')
             ->from('professor_registrations', 'pr')->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
@@ -502,7 +502,7 @@ class ProfessorController extends Controller
         }
         
         // runs query to get the class specified
-        $conn = $this->get('app.database')->getConn();
+        $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
         $results = $queryBuilder->select('classes.id', 'classes.name')
             ->from('professor_registrations', 'pr')->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
@@ -552,7 +552,7 @@ class ProfessorController extends Controller
                 return $jsr;
             }
             
-            $conn = $this->get('app.database')->getConn();
+            $conn = Database::getInstance();
             $queryBuilder = $conn->createQueryBuilder();
             
             // check to make sure that the professor has rights to create a class off of this course
@@ -621,7 +621,7 @@ class ProfessorController extends Controller
                 $jsr->setStatusCode(400);
                 return $jsr;
             }
-            $conn = $this->get('app.database')->getConn();
+            $conn = Database::getInstance();
 
             // make sure the class exists
             $queryBuilder = $conn->createQueryBuilder();
@@ -674,7 +674,7 @@ class ProfessorController extends Controller
         }
 
         // runs query to get the class specified
-        $conn = $this->get('app.database')->getConn();
+        $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
         $results = $queryBuilder->select('classes.id', 'classes.name')
             ->from('professor_registrations', 'pr')->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
@@ -730,7 +730,7 @@ class ProfessorController extends Controller
             $name = '%' . $request_parameters['name'] . '%';
         }
 
-        $conn = $this->get('app.database')->getConn();
+        $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
         $results = $queryBuilder->select('students.id', 'students.username', 'students.name')
             ->from('professor_registrations', 'pr')
@@ -765,7 +765,7 @@ class ProfessorController extends Controller
             return $jsr;
         }
 
-        $conn = $this->get('app.database')->getConn();
+        $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
         $results = $queryBuilder->select('students.id', 'students.username', 'students.name')
             ->from('professor_registrations', 'pr')

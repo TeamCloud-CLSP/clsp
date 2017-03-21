@@ -40,7 +40,7 @@ class StudentController extends Controller
         $user_id = $user->getId();
 
         // runs query to get the class specified
-        $conn = $this->get('app.database')->getConn();
+        $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
         $results = $queryBuilder->select('classes.id', 'classes.name')
             ->from('app_users', 'students')->innerJoin('students', 'student_registrations', 'sr', 'students.student_registration_id = sr.id')

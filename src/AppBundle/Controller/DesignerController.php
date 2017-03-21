@@ -37,7 +37,7 @@ class DesignerController extends Controller
      * @return JsonResponse
      */
     public function getLanguages(Request $request) {
-        $conn = $this->get('app.database')->getConn();
+        $conn = Database::getInstance();
 
         $queryBuilder = $conn->createQueryBuilder();
         $results = $queryBuilder->select('language.id', 'language.language_code', 'language.name')
@@ -64,7 +64,7 @@ class DesignerController extends Controller
             return $jsr;
         }
 
-        $conn = $this->get('app.database')->getConn();
+        $conn = Database::getInstance();
 
         $queryBuilder = $conn->createQueryBuilder();
         $result = $queryBuilder->select('sr.id', 'sr.name', 'sr.date_created', 'sr.date_deleted', 'sr.date_start', 'sr.date_end', 'sr.signup_code')
@@ -102,7 +102,7 @@ class DesignerController extends Controller
         if (array_key_exists('name', $request_parameters)) {
             $name = '%' . $request_parameters['name'] . '%';
         }
-        $conn = $this->get('app.database')->getConn();
+        $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
         $result = $queryBuilder->select('app_users.id', 'app_users.username', 'app_users.name')
             ->from('app_users')->where('app_users.is_professor = 1')->andWhere('app_users.username LIKE ?')->andWhere('app_users.name LIKE ?')
@@ -121,7 +121,7 @@ class DesignerController extends Controller
     public function getProfessorRegistrations(Request $request) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $user_id = $user->getId();
-        $conn = $this->get('app.database')->getConn();
+        $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
         $result = $queryBuilder->select('pr.id', 'pr.date_created', 'pr.date_deleted', 'pr.date_start', 'pr.date_end', 'pr.signup_code',
             'professors.id AS professor_id', 'professors.username AS professor_username', 'professors.name AS professor_name',
@@ -156,7 +156,7 @@ class DesignerController extends Controller
         }
 
 
-        $conn = $this->get('app.database')->getConn();
+        $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
         $result = $queryBuilder->select('pr.id', 'pr.date_created', 'pr.date_deleted', 'pr.date_start', 'pr.date_end', 'pr.signup_code',
             'professors.id AS professor_id', 'professors.username AS professor_username', 'professors.name AS professor_name',
@@ -191,7 +191,7 @@ class DesignerController extends Controller
         }
 
         // check if the registration belongs to the designer
-        $conn = $this->get('app.database')->getConn();
+        $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
         $results = $queryBuilder->select('pr.id', 'pr.date_created', 'pr.date_deleted', 'pr.date_start', 'pr.date_end', 'pr.signup_code',
                                 'professors.id AS professor_id', 'professors.username AS professor_username', 'professors.name AS professor_name',
@@ -239,7 +239,7 @@ class DesignerController extends Controller
         }
 
         // check if the registration belongs to the designer
-        $conn = $this->get('app.database')->getConn();
+        $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
         $results = $queryBuilder->select('pr.signup_code')->from('app_users', 'designers')
             ->innerJoin('designers', 'professor_registrations', 'pr', 'designers.id = pr.owner_id')
@@ -321,7 +321,7 @@ class DesignerController extends Controller
                 $jsr->setStatusCode(503);
                 return $jsr;
             }
-            $conn = $this->get('app.database')->getConn();
+            $conn = Database::getInstance();
 
             $queryBuilder = $conn->createQueryBuilder();
             $results = $queryBuilder->select('courses.id')->from('courses')->where('courses.id = ?')->andWhere('courses.user_id = ?')
@@ -399,7 +399,7 @@ class DesignerController extends Controller
         }
 
         // check if the course belongs to the designer
-        $conn = $this->get('app.database')->getConn();
+        $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
         $results = $queryBuilder->select('pr.id')->from('app_users', 'designers')
             ->innerJoin('designers', 'professor_registrations', 'pr', 'designers.id = pr.owner_id')

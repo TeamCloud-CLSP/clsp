@@ -47,7 +47,7 @@ class AdministratorController extends Controller
             $name = '%' . $request_parameters['name'] . '%';
         }
 
-        $conn = $this->get('app.database')->getConn();
+        $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
         $result = $queryBuilder->select('id', 'username', 'name', 'email', 'is_active', 'date_created', 'date_deleted', 'date_start', 'date_end', 'timezone', 'is_student', 'is_professor', 'is_designer', 'is_administrator')
             ->from('app_users', 'users')
@@ -74,7 +74,7 @@ class AdministratorController extends Controller
             return $jsr;
         }
 
-        $conn = $this->get('app.database')->getConn();
+        $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
         $result = $queryBuilder->select('id', 'username', 'name', 'email', 'is_active', 'date_created', 'date_deleted', 'date_start', 'date_end', 'timezone', 'is_student', 'is_professor', 'is_designer', 'is_administrator')
             ->from('app_users', 'users')
@@ -106,7 +106,7 @@ class AdministratorController extends Controller
             $jsr->setStatusCode(400);
             return $jsr;
         }
-        $conn = $this->get('app.database')->getConn();
+        $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
         $result = $queryBuilder->select('id', 'username', 'email', 'is_active', 'date_created', 'date_deleted', 'date_start', 'date_end', 'timezone', 'is_student', 'is_professor', 'is_designer', 'is_administrator')
             ->from('app_users', 'users')
@@ -140,7 +140,7 @@ class AdministratorController extends Controller
         $encoder = $this->container->get('security.password_encoder');
         $post_parameters = $request->request->all();
         if (array_key_exists('username', $post_parameters) && array_key_exists('password', $post_parameters) && array_key_exists('email', $post_parameters) && array_key_exists('name', $post_parameters)) {
-            $conn = $this->get('app.database')->getConn();
+            $conn = Database::getInstance();
             $username = $post_parameters['username'];
             $password = $post_parameters['password'];
             $email = $post_parameters['email'];

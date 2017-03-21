@@ -9,17 +9,20 @@ class Database {
     private static $instance;
     private $conn;
 
-    public function __construct($db_host, $db_port, $db_name, $db_user, $db_pw) {
+    private function __construct() {
         $this->conn = DriverManager::getConnection(array(
-            'dbname'    => $db_name,
-            'user'      => $db_user,
-            'password'  => $db_pw,
-            'host'      => $db_host,
-            'driver'    => 'pdo_mysql',
+            'dbname' => 'clsp',
+            'user' => 'homestead',
+            'password' => 'secret',
+            'host' => 'localhost',
+            'driver' => 'pdo_mysql',
         ));
     }
 
-    public function getConn() {
-        return $this->conn;
+    public static function getInstance() {
+        if(self::$instance === null) {
+            self::$instance = new Database();
+        }
+        return self::$instance->conn;
     }
 }
