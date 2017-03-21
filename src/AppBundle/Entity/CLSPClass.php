@@ -30,6 +30,11 @@ class CLSPClass
      */
     private $name;
 
+    /**
+     * @ORM\Column(name = "description", type = "string")
+     */
+    private $description;
+
 
     /**
      * @ORM\ManyToOne(targetEntity = "Course", inversedBy = "classes")
@@ -157,5 +162,29 @@ class CLSPClass
     public function getStudentRegistration()
     {
         return $this->student_registration;
+    }
+
+    /**
+     * Set description
+     *
+     * @param string $description
+     *
+     * @return CLSPClass
+     */
+    public function setDescription($description)
+    {
+        $this->description = $description;
+
+        return $this;
+    }
+
+    /**
+     * Get description
+     *
+     * @return string
+     */
+    public function getDescription()
+    {
+        return $this->description;
     }
 }
