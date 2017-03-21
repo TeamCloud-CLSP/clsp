@@ -52,7 +52,7 @@ class RegistrationController extends Controller
         $post_parameters = $request->request->all();
 
         if (array_key_exists('username', $post_parameters) && array_key_exists('password', $post_parameters) && array_key_exists('email', $post_parameters) && array_key_exists('signup_code', $post_parameters) && array_key_exists('name', $post_parameters)) {
-            $conn = Database::getInstance();
+            $conn = $this->get('app.database')->getConn();
             $signup_code = $post_parameters['signup_code'];
             $username = $post_parameters['username'];
             $password = $post_parameters['password'];

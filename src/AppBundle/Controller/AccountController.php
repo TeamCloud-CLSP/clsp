@@ -30,7 +30,7 @@ class AccountController extends Controller
 
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $user_id = $user->getId();
-        $conn = Database::getInstance();
+        $conn = $this->get('app.database')->getConn();
         $queryBuilder = $conn->createQueryBuilder();
         $result = $queryBuilder->select('id', 'username', 'name', 'email', 'is_active', 'date_created', 'date_deleted', 'date_start', 'date_end', 'timezone', 'is_student',
             'is_professor', 'is_designer', 'is_administrator')

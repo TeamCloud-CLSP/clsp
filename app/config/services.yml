@@ -19,3 +19,7 @@ services:
             class: AppBundle\Listener\JsonRequestTransformerListener
             tags:
                 - { name: kernel.event_listener, event: kernel.request, method: onKernelRequest }
+
+    app.database:
+        class:  AppBundle\Database
+        arguments:  ['%database_host%', '%database_port%', '%database_name%', '%database_user%', '%database_password%']
