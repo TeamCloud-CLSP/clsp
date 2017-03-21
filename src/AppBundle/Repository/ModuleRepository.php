@@ -28,7 +28,7 @@ class ModuleRepository extends \Doctrine\ORM\EntityRepository
         $queryBuilder = $conn->createQueryBuilder();
         $results = null;
         if (strcmp($user_type, 'designer') == 0) { // if designer, make sure that the designer owns the song and module being accessed
-            $results = $queryBuilder->select('module.id', 'module.password', 'module.has_password', 'module.song_id', 'module.is_enabled', 'song.id AS song_id')
+            $results = $queryBuilder->select('module.id', 'module.password', 'module.has_password', 'module.song_id', 'module.name', 'module.is_enabled', 'song.id AS song_id')
                 ->from('app_users', 'designers')->innerJoin('designers', 'courses', 'courses', 'designers.id = courses.user_id')
                 ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')
                 ->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')->innerJoin('song', $moduleName, 'module', 'song.id = module.song_id')
