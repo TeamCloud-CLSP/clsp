@@ -67,27 +67,7 @@ class DesignerController extends Controller
     public function getStudentRegistrations(Request $request, $id) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $user_id = $user->getId();
-        $pr_id = $id;
-
-        if (!is_numeric($pr_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        $conn = Database::getInstance();
-
-        $queryBuilder = $conn->createQueryBuilder();
-        $result = $queryBuilder->select('sr.id', 'sr.name', 'sr.date_created', 'sr.date_deleted', 'sr.date_start', 'sr.date_end', 'sr.signup_code')
-            ->from('app_users', 'designers')
-            ->innerJoin('designers', 'professor_registrations', 'pr', 'designers.id = pr.owner_id')
-            ->innerJoin('pr', 'student_registrations', 'sr', 'sr.prof_registration_id = pr.id')
-            ->where('designers.id = ?')->andWhere('pr.id = ?')
-            ->setParameter(0, $user_id)->setParameter(1, $pr_id)->execute()->fetchAll();
-
-        $jsr = new JsonResponse(array('size' => count($result), 'data' => $result));
-        $jsr->setStatusCode(200);
-        return $jsr;
+        return StudentRegistrationRepository::getStudentRegistrationsByProfessorRegistration($request, $user_id, 'designer', $id);
     }
 
     /**
