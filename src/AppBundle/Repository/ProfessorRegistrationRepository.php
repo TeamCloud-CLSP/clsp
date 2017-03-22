@@ -29,7 +29,7 @@ class ProfessorRegistrationRepository extends \Doctrine\ORM\EntityRepository
                 ->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')->innerJoin('courses', 'language', 'language', 'courses.language_id = language.id')
                 ->where('designers.id = ?')
                 ->setParameter(0, $user_id)->execute()->fetchAll();
-        } else if (strcmp($user_type, 'professor') == 0) {
+        } else if (strcmp($user_type, 'professor') == 0) { // for professor, also makes sure that the registration has not expired
             $results = $queryBuilder->select('pr.id', 'pr.date_created', 'pr.date_deleted', 'pr.date_start', 'pr.date_end', 'pr.signup_code',
                 'designers.id AS designers', 'designers.username AS designers_username', 'designers.name AS designers_name',
                 'courses.id AS course_id', 'courses.name AS course_name', 'courses.description AS course_description')
@@ -37,8 +37,8 @@ class ProfessorRegistrationRepository extends \Doctrine\ORM\EntityRepository
                 ->innerJoin('professors', 'professor_registrations', 'pr', 'professors.id = pr.professor_id')
                 ->innerJoin('pr', 'app_users', 'designers', 'pr.professor_id = designers.id')
                 ->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
-                ->where('professors.id = ?')
-                ->setParameter(0, $user_id)->execute()->fetchAll();
+                ->where('professors.id = ?')->andWhere('pr.date_start < ?')->andWhere('pr.date_end > ?')
+                ->setParameter(0, $user_id)->setParameter(1, time())->setParameter(2, time())->execute()->fetchAll();
         } else {
             $jsr = new JsonResponse(array('error' => 'Internal server error.'));
             $jsr->setStatusCode(500);
@@ -111,6 +111,16 @@ class ProfessorRegistrationRepository extends \Doctrine\ORM\EntityRepository
                 ->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')->innerJoin('courses', 'language', 'language', 'courses.language_id = language.id')
                 ->where('designers.id = ?')->andWhere('pr.id = ?')
                 ->setParameter(0, $user_id)->setParameter(1, $pr_id)->execute()->fetchAll();
+        } else if (strcmp($user_type, 'professor') == 0) {
+            $results = $queryBuilder->select('pr.id', 'pr.date_created', 'pr.date_deleted', 'pr.date_start', 'pr.date_end', 'pr.signup_code',
+                'designers.id AS designers', 'designers.username AS designers_username', 'designers.name AS designers_name',
+                'courses.id AS course_id', 'courses.name AS course_name', 'courses.description AS course_description')
+                ->from('app_users', 'professors')
+                ->innerJoin('professors', 'professor_registrations', 'pr', 'professors.id = pr.professor_id')
+                ->innerJoin('pr', 'app_users', 'designers', 'pr.professor_id = designers.id')
+                ->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
+                ->where('professors.id = ?')->andWhere('pr.date_start < ?')->andWhere('pr.date_end > ?')->andWhere('pr.id = ?')
+                ->setParameter(0, $user_id)->setParameter(1, time())->setParameter(2, time())->setParameter(3, $pr_id)->execute()->fetchAll();
         } else {
             $jsr = new JsonResponse(array('error' => 'Internal server error.'));
             $jsr->setStatusCode(500);

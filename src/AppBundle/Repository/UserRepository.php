@@ -97,8 +97,8 @@ class UserRepository extends EntityRepository
             ->innerJoin('professors', 'professor_registrations', 'pr', 'professors.id = pr.professor_id')
             ->innerJoin('pr', 'app_users', 'designers', 'pr.professor_id = designers.id')
             ->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
-            ->where('professors.id = ?')
-            ->setParameter(0, $user_id)->execute()->fetchAll();
+            ->where('professors.id = ?')->andWhere('pr.date_start < ?')->andWhere('pr.date_end > ?')
+            ->setParameter(0, $user_id)->setParameter(1, time())->setParameter(2, time())->execute()->fetchAll();
 
         // for each of the prof registrations, loop through and get the classes/student registrations associated with it
         for ($i = 0; $i < count($professor_registrations); $i++) {
@@ -117,5 +117,88 @@ class UserRepository extends EntityRepository
         $jsr = new JsonResponse(array('size' => count($professor_registrations), 'data' => $professor_registrations));
         $jsr->setStatusCode(200);
         return $jsr;
+    }
+
+    public static function getStudentsByRegistration(Request $request, $user_id, $user_type, $sr_id) {
+        // a user MUST be a professor to search students by registration
+        if (strcmp($user_type, 'professor') != 0) {
+            $jsr = new JsonResponse(array('error' => 'Permissions are invalid.'));
+            $jsr->setStatusCode(503);
+            return $jsr;
+        }
+
+        // makes sure that the student registration id is numeric
+        if (!is_numeric($sr_id)) {
+            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+            $jsr->setStatusCode(400);
+            return $jsr;
+        }
+
+        $request_parameters = $request->query->all();
+
+        // gets the name parameter from request parameters, or just leaves it as double wildcard
+        $username = "%%";
+        $name = "%%";
+        if (array_key_exists('username', $request_parameters)) {
+            $username = '%' . $request_parameters['username'] . '%';
+        }
+
+        if (array_key_exists('name', $request_parameters)) {
+            $name = '%' . $request_parameters['name'] . '%';
+        }
+
+        $conn = Database::getInstance();
+        $queryBuilder = $conn->createQueryBuilder();
+        $results = $queryBuilder->select('students.id', 'students.username', 'students.name')
+            ->from('professor_registrations', 'pr')
+            ->innerJoin('pr', 'classes', 'classes', 'pr.id = classes.registration_id')
+            ->innerJoin('pr', 'app_users', 'professors', 'pr.professor_id = professors.id')
+            ->innerJoin('classes', 'student_registrations', 'sr', 'sr.class_id = classes.id')
+            ->innerJoin('sr', 'app_users', 'students', 'students.student_registration_id = sr.id')
+            ->where('professors.id = ?')->andWhere('sr.id = ?')->andWhere('students.username LIKE ?')->andWhere('students.name LIKE ?')
+            ->setParameter(0, $user_id)->setParameter(1, $sr_id)->setParameter(2, $username)->setParameter(3, $name)->execute()->fetchAll();
+
+        $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));
+        $jsr->setStatusCode(200);
+        return $jsr;
+    }
+
+    public static function deleteStudent(Request $request, $user_id, $user_type, $student_id) {
+        // a user MUST be a professor to delete students in their classes
+        if (strcmp($user_type, 'professor') != 0) {
+            $jsr = new JsonResponse(array('error' => 'Permissions are invalid.'));
+            $jsr->setStatusCode(503);
+            return $jsr;
+        }
+
+        // makes sure that the class id is numeric
+        if (!is_numeric($student_id)) {
+            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+            $jsr->setStatusCode(400);
+            return $jsr;
+        }
+
+        $conn = Database::getInstance();
+        $queryBuilder = $conn->createQueryBuilder();
+        $results = $queryBuilder->select('students.id', 'students.username', 'students.name')
+            ->from('professor_registrations', 'pr')
+            ->innerJoin('pr', 'classes', 'classes', 'pr.id = classes.registration_id')
+            ->innerJoin('pr', 'app_users', 'professors', 'pr.professor_id = professors.id')
+            ->innerJoin('classes', 'student_registrations', 'sr', 'sr.class_id = classes.id')
+            ->innerJoin('sr', 'app_users', 'students', 'students.student_registration_id = sr.id')
+            ->where('professors.id = ?')->andWhere('students.id = ?')
+            ->setParameter(0, $user_id)->setParameter(1, $student_id)->execute()->fetchAll();
+
+        if (count($results) < 1) {
+            $jsr = new JsonResponse(array('error' => "Student does not exist, or does not belong to one of the professor's classes."));
+            $jsr->setStatusCode(503);
+            return $jsr;
+        }
+
+        $queryBuilder = $conn->createQueryBuilder();
+        $queryBuilder->delete('app_users')->where('app_users.id = ?')
+            ->setParameter(0, $student_id)->execute();
+
+        return new Response();
     }
 }

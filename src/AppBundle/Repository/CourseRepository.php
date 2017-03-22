@@ -6,7 +6,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use AppBundle\Database;
 /**
- * CouresRepository
+ * CourseRepository
  *
  * Database interaction methods for courses
  */
@@ -33,8 +33,8 @@ class CourseRepository extends \Doctrine\ORM\EntityRepository
         } else if (strcmp($user_type, 'professor') == 0) {
             $results = $queryBuilder->select('courses.id', 'courses.name', 'courses.description', 'language.name AS language_name', 'language.id AS language_id', 'pr.date_start', 'pr.date_end')
                 ->from('professor_registrations', 'pr')->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')->innerJoin('courses', 'language', 'language', 'courses.language_id = language.id')
-                ->where('pr.professor_id = ?')->andWhere('courses.name LIKE ?')
-                ->setParameter(0, $user_id)->setParameter(1, $name)->execute()->fetchAll();
+                ->where('pr.professor_id = ?')->andWhere('courses.name LIKE ?')->andWhere('pr.date_start < ?')->andWhere('pr.date_end > ?')
+                ->setParameter(0, $user_id)->setParameter(1, $name)->setParameter(2, time())->setParameter(3, time())->execute()->fetchAll();
         } else {
             $jsr = new JsonResponse(array('error' => 'Internal server error.'));
             $jsr->setStatusCode(500);

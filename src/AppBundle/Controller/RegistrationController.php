@@ -124,13 +124,27 @@ class RegistrationController extends Controller
 
             // otherwise, see if it belongs to a student registration
             $queryBuilder = $conn->createQueryBuilder();
-            $results = $queryBuilder->select('sr.id', 'sr.date_end')->from('student_registrations', 'sr')->where('sr.signup_code = ?')
+            $results = $queryBuilder->select('sr.id', 'sr.date_end', 'sr.max_registrations')->from('student_registrations', 'sr')->where('sr.signup_code = ?')
                 ->andWhere('sr.date_start < ?')->andWhere('sr.date_end > ?')
                 ->setParameter(0, $signup_code)->setParameter(1, time())->setParameter(2, time())->execute()->fetchAll();
             if (count($results) > 0) {
                 // its a student registration
                 $sr_id = $results[0]['id'];
                 $date_end = $results[0]['date_end'];
+                $max = $results[0]['max_registrations'];
+
+                $queryBuilder = $conn->createQueryBuilder();
+                // make sure registration limit has not been hit
+                $results = $queryBuilder->select('COUNT(sr.id) AS registrations')->from('student_registrations', 'sr')->
+                    innerJoin('sr', 'app_users', 'students', 'students.student_registration_id = sr.id')->where('sr.id = ?')
+                    ->groupBy('sr.id')->setParameter(0, $sr_id)->execute()->fetchAll();
+                $students = $results[0]['registrations'];
+
+                if ($students >= $max) {
+                    $jsr = new JsonResponse(array('error' => 'The registration limit of this class has been reached.'));
+                    $jsr->setStatusCode(500);
+                    return $jsr;
+                }
 
                 // create the professor account
                 $queryBuilder = $conn->createQueryBuilder();

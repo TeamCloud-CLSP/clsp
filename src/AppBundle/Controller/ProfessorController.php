@@ -21,6 +21,7 @@ use AppBundle\Repository\CourseRepository;
 use AppBundle\Repository\StudentRegistrationRepository;
 use AppBundle\Repository\ProfessorRegistrationRepository;
 use AppBundle\Repository\UserRepository;
+use AppBundle\Repository\ClassRepository;
 use AppBundle\Database;
 
 /**
@@ -28,6 +29,7 @@ use AppBundle\Database;
  *
  * getCourses - /api/professor/courses
  * getRegistrations - /api/professor/registrations/professor
+ * getRegistration - /api/professor/registrations/professor/{id}
  * getMainPageStructure - /api/professor/main - (told Yuanhan about this - this should be how he wants to set up the main professor page - see the function for more details)
  * getStudentRegistration - /api/professor/registrations/student/{id}
  * getStudentRegistrationByClass - /api/professor/classes/{id}/registrations/student
@@ -75,6 +77,18 @@ class ProfessorController extends Controller
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $user_id = $user->getId();
         return ProfessorRegistrationRepository::getProfessorRegistrations($request, $user_id, 'professor');
+    }
+
+    /**
+     * Gets all professor registrations that the professor has
+     *
+     * @Route("/api/professor/registrations/professor/{id}", name="getProfRegistrationAsProfessor")
+     * @Method({"GET", "OPTIONS"})
+     */
+    public function getRegistration(Request $request, $id) {
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return ProfessorRegistrationRepository::getProfessorRegistration($request, $user_id, 'professor', $id);
     }
 
     /**
@@ -185,24 +199,7 @@ class ProfessorController extends Controller
     public function getClasses(Request $request) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $user_id = $user->getId();
-        $request_parameters = $request->query->all();
-
-        // gets the name parameter from request parameters, or just leaves it as double wildcard
-        $name = "%%";
-        if (array_key_exists('name', $request_parameters)) {
-            $name = '%' . $request_parameters['name'] . '%';
-        }
-        $conn = Database::getInstance();
-        $queryBuilder = $conn->createQueryBuilder();
-        $result = $queryBuilder->select('classes.id', 'classes.name')
-            ->from('professor_registrations', 'pr')->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
-            ->innerJoin('pr', 'classes', 'classes', 'pr.id = classes.registration_id')
-            ->where('pr.professor_id = ?')->andWhere('classes.name LIKE ?')
-            ->setParameter(0, $user_id)->setParameter(1, $name)->execute()->fetchAll();
-
-        $jsr = new JsonResponse(array('size' => count($result), 'data' => $result));
-        $jsr->setStatusCode(200);
-        return $jsr;
+        return ClassRepository::getClasses($request, $user_id, 'professor');
     }
 
     /**
@@ -214,36 +211,7 @@ class ProfessorController extends Controller
     public function getClass(Request $request, $id) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $user_id = $user->getId();
-        $class_id = $id;
-        
-        // makes sure that the class id is numeric
-        if (!is_numeric($class_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-        
-        // runs query to get the class specified
-        $conn = Database::getInstance();
-        $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('classes.id', 'classes.name')
-            ->from('professor_registrations', 'pr')->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
-            ->innerJoin('pr', 'classes', 'classes', 'pr.id = classes.registration_id')
-            ->where('pr.professor_id = ?')->andWhere('classes.id = ?')
-            ->setParameter(0, $user_id)->setParameter(1, $class_id)->execute()->fetchAll();
-
-        // if nothing was returned, give error. if multiple results, also give error (each key should be unique)
-        if (count($results) < 1) {
-            $jsr = new JsonResponse(array('error' => 'Class does not exist or does not belong to the currently authenticated user.'));
-            $jsr->setStatusCode(503);
-            return $jsr;
-        } else if (count($results) > 1) {
-            $jsr = new JsonResponse(array('error' => 'An error has occurred. Check for duplicate keys in the database.'));
-            $jsr->setStatusCode(500);
-            return $jsr;
-        }
-
-        return new JsonResponse($results[0]);
+        return ClassRepository::getClass($request, $user_id, 'professor', $id);
     }
 
     /**
@@ -252,6 +220,7 @@ class ProfessorController extends Controller
      * Takes in:
      *      name - name of the class
      *      course_id - id of the course
+     *      description
      *
      * @Route("/api/professor/classes", name="createClass")
      * @Method({"POST", "OPTIONS"})
@@ -259,64 +228,7 @@ class ProfessorController extends Controller
     public function createClass(Request $request) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $user_id = $user->getId();
-
-        $post_parameters = $request->request->all();
-
-        // check for required parameters
-        if (array_key_exists('name', $post_parameters) && array_key_exists('course_id', $post_parameters)) {
-            $name = $post_parameters['name'];
-            $course_id = $post_parameters['course_id'];
-            
-            // make sure int values should be numeric
-            if (!is_numeric($course_id)) {
-                $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-                $jsr->setStatusCode(400);
-                return $jsr;
-            }
-            
-            $conn = Database::getInstance();
-            $queryBuilder = $conn->createQueryBuilder();
-            
-            // check to make sure that the professor has rights to create a class off of this course
-            // by checking his professor registrations
-            $results = $queryBuilder->select('pr.id', 'pr.date_start', 'pr.date_end')->from('professor_registrations', 'pr')->where('pr.professor_id = ?')
-                ->andWhere('pr.course_id = ?')
-                ->setParameter(0, $user_id)->setParameter(1, $course_id)->execute()->fetchAll();
-            if (count($results) < 1) {
-                $jsr = new JsonResponse(array('error' => 'Not allowed to create a class of this course.'));
-                $jsr->setStatusCode(503);
-                return $jsr;
-            }
-            
-            // get start and end dates of the course of the registration we have to make sure the course has not expired
-            $prof_reg_id = $results[0]['id'];
-            $today = time();
-            if ($today < $results[0]['date_start'] || $today > $results[0]['date_end']) {
-                $jsr = new JsonResponse(array('error' => 'The course has expired, or has not been activated yet.'));
-                $jsr->setStatusCode(400);
-                return $jsr;
-            }
-
-            $queryBuilder = $conn->createQueryBuilder();
-            $queryBuilder->insert('classes')
-                ->values(
-                    array(
-                        'name' => '?',
-                        'registration_id' => '?',
-                        'course_id' => '?'
-                    )
-                )
-                ->setParameter(0, $name)->setParameter(1, $prof_reg_id)->setParameter(2, $course_id)->execute();
-
-            $class_id = $conn->lastInsertId();
-
-            return $this->getClass($request, $class_id);
-
-        } else {
-            $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
+        return ClassRepository::createClass($request, $user_id, 'professor');
     }
 
 
@@ -325,6 +237,7 @@ class ProfessorController extends Controller
      *
      * Takes in:
      *      name - name of the course
+     *      description
      *
      * @Route("/api/professor/classes/{id}", name="editClass")
      * @Method({"POST", "OPTIONS"})
@@ -332,48 +245,7 @@ class ProfessorController extends Controller
     public function editClass(Request $request, $id) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $user_id = $user->getId();
-        $class_id = $id;
-
-        $post_parameters = $request->request->all();
-
-        if (array_key_exists('name', $post_parameters)) {
-            $name = $post_parameters['name'];
-            if (!is_numeric($class_id)) {
-                $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-                $jsr->setStatusCode(400);
-                return $jsr;
-            }
-            $conn = Database::getInstance();
-
-            // make sure the class exists
-            $queryBuilder = $conn->createQueryBuilder();
-            $results = $queryBuilder->select('pr.id', 'pr.date_start', 'pr.date_end')->from('classes')
-                ->innerJoin('classes', 'professor_registrations', 'pr', 'classes.registration_id = pr.id')
-                ->where('pr.professor_id = ?')->andWhere('classes.id = ?')
-                ->setParameter(0, $user_id)->setParameter(1, $class_id)->execute()->fetchAll();
-            if (count($results) < 1) {
-                $jsr = new JsonResponse(array('error' => 'Not allowed to edit this class.'));
-                $jsr->setStatusCode(400);
-                return $jsr;
-            }
-            $today = time();
-            if ($today < $results[0]['date_start'] || $today > $results[0]['date_end']) {
-                $jsr = new JsonResponse(array('error' => 'The course has expired, or has not been activated yet.'));
-                $jsr->setStatusCode(400);
-                return $jsr;
-            }
-
-            $queryBuilder = $conn->createQueryBuilder();
-            $queryBuilder->update('classes')->set('classes.name', '?')->where('classes.id = ?')
-                ->setParameter(0, $name)->setParameter(1, $class_id)->execute();
-
-            return $this->getClass($request, $class_id);
-
-        } else {
-            $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
+        return ClassRepository::editClass($request, $user_id, 'professor', $id);
     }
 
 
@@ -386,36 +258,7 @@ class ProfessorController extends Controller
     public function deleteClass(Request $request, $id) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $user_id = $user->getId();
-        $class_id = $id;
-
-        // makes sure that the class id is numeric
-        if (!is_numeric($class_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        // runs query to get the class specified
-        $conn = Database::getInstance();
-        $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('classes.id', 'classes.name')
-            ->from('professor_registrations', 'pr')->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
-            ->innerJoin('pr', 'classes', 'classes', 'pr.id = classes.registration_id')
-            ->where('pr.professor_id = ?')->andWhere('classes.id = ?')
-            ->setParameter(0, $user_id)->setParameter(1, $class_id)->execute()->fetchAll();
-
-        // if nothing was returned, give error. if multiple results, also give error (each key should be unique)
-        if (count($results) < 1) {
-            $jsr = new JsonResponse(array('error' => 'Class does not exist or does not belong to the currently authenticated user.'));
-            $jsr->setStatusCode(503);
-            return $jsr;
-        }
-
-        $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->delete('classes')->where('classes.id = ?')
-            ->setParameter(0, $class_id)->execute();
-
-        return new Response();
+        return ClassRepository::deleteClass($request, $user_id, 'professor', $id);
     }
 
     /**
@@ -429,43 +272,7 @@ class ProfessorController extends Controller
     public function getStudentsByRegistration(Request $request, $id) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $user_id = $user->getId();
-
-        $sr_id = $id;
-
-        // makes sure that the class id is numeric
-        if (!is_numeric($sr_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        $request_parameters = $request->query->all();
-
-        // gets the name parameter from request parameters, or just leaves it as double wildcard
-        $username = "%%";
-        $name = "%%";
-        if (array_key_exists('username', $request_parameters)) {
-            $username = '%' . $request_parameters['username'] . '%';
-        }
-
-        if (array_key_exists('name', $request_parameters)) {
-            $name = '%' . $request_parameters['name'] . '%';
-        }
-
-        $conn = Database::getInstance();
-        $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('students.id', 'students.username', 'students.name')
-            ->from('professor_registrations', 'pr')
-            ->innerJoin('pr', 'classes', 'classes', 'pr.id = classes.registration_id')
-            ->innerJoin('pr', 'app_users', 'professors', 'pr.professor_id = professors.id')
-            ->innerJoin('classes', 'student_registrations', 'sr', 'sr.class_id = classes.id')
-            ->innerJoin('sr', 'app_users', 'students', 'students.student_registration_id = sr.id')
-            ->where('professors.id = ?')->andWhere('sr.id = ?')->andWhere('students.username LIKE ?')->andWhere('students.name LIKE ?')
-            ->setParameter(0, $user_id)->setParameter(1, $sr_id)->setParameter(2, $username)->setParameter(3, $name)->execute()->fetchAll();
-
-        $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));
-        $jsr->setStatusCode(200);
-        return $jsr;
+        return UserRepository::getStudentsByRegistration($request, $user_id, 'professor', $id);
     }
 
     /**
@@ -478,37 +285,6 @@ class ProfessorController extends Controller
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $user_id = $user->getId();
 
-        $student_id = $id;
-
-        // makes sure that the class id is numeric
-        if (!is_numeric($student_id)) {
-            $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
-            $jsr->setStatusCode(400);
-            return $jsr;
-        }
-
-        $conn = Database::getInstance();
-        $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('students.id', 'students.username', 'students.name')
-            ->from('professor_registrations', 'pr')
-            ->innerJoin('pr', 'classes', 'classes', 'pr.id = classes.registration_id')
-            ->innerJoin('pr', 'app_users', 'professors', 'pr.professor_id = professors.id')
-            ->innerJoin('classes', 'student_registrations', 'sr', 'sr.class_id = classes.id')
-            ->innerJoin('sr', 'app_users', 'students', 'students.student_registration_id = sr.id')
-            ->where('professors.id = ?')->andWhere('students.id = ?')
-            ->setParameter(0, $user_id)->setParameter(1, $student_id)->execute()->fetchAll();
-
-        if (count($results) < 1) {
-            $jsr = new JsonResponse(array('error' => "Student does not exist, or does not belong to one of the professor's classes."));
-            $jsr->setStatusCode(503);
-            return $jsr;
-        }
-
-        $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->delete('app_users')->where('app_users.id = ?')
-            ->setParameter(0, $student_id)->execute();
-
-        return new Response();
     }
 
 }
