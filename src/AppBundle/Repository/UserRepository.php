@@ -97,8 +97,8 @@ class UserRepository extends EntityRepository
             ->innerJoin('professors', 'professor_registrations', 'pr', 'professors.id = pr.professor_id')
             ->innerJoin('pr', 'app_users', 'designers', 'pr.professor_id = designers.id')
             ->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
-            ->where('professors.id = ?')->andWhere('pr.date_start < ?')->andWhere('pr.date_end > ?')
-            ->setParameter(0, $user_id)->setParameter(1, time())->setParameter(2, time())->execute()->fetchAll();
+            ->where('professors.id = ?')
+            ->setParameter(0, $user_id)->execute()->fetchAll();
 
         // for each of the prof registrations, loop through and get the classes/student registrations associated with it
         for ($i = 0; $i < count($professor_registrations); $i++) {

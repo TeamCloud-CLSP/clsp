@@ -37,8 +37,8 @@ class ProfessorRegistrationRepository extends \Doctrine\ORM\EntityRepository
                 ->innerJoin('professors', 'professor_registrations', 'pr', 'professors.id = pr.professor_id')
                 ->innerJoin('pr', 'app_users', 'designers', 'pr.professor_id = designers.id')
                 ->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
-                ->where('professors.id = ?')->andWhere('pr.date_start < ?')->andWhere('pr.date_end > ?')
-                ->setParameter(0, $user_id)->setParameter(1, time())->setParameter(2, time())->execute()->fetchAll();
+                ->where('professors.id = ?')
+                ->setParameter(0, $user_id)->execute()->fetchAll();
         } else {
             $jsr = new JsonResponse(array('error' => 'Internal server error.'));
             $jsr->setStatusCode(500);
@@ -119,8 +119,8 @@ class ProfessorRegistrationRepository extends \Doctrine\ORM\EntityRepository
                 ->innerJoin('professors', 'professor_registrations', 'pr', 'professors.id = pr.professor_id')
                 ->innerJoin('pr', 'app_users', 'designers', 'pr.professor_id = designers.id')
                 ->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
-                ->where('professors.id = ?')->andWhere('pr.date_start < ?')->andWhere('pr.date_end > ?')->andWhere('pr.id = ?')
-                ->setParameter(0, $user_id)->setParameter(1, time())->setParameter(2, time())->setParameter(3, $pr_id)->execute()->fetchAll();
+                ->where('professors.id = ?')->andWhere('pr.id = ?')
+                ->setParameter(0, $user_id)->setParameter(1, $pr_id)->execute()->fetchAll();
         } else {
             $jsr = new JsonResponse(array('error' => 'Internal server error.'));
             $jsr->setStatusCode(500);
