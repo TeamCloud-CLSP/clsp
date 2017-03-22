@@ -78,4 +78,44 @@ class UserRepository extends EntityRepository
         $jsr->setStatusCode(200);
         return $jsr;
     }
+
+    public static function getProfessorDashboard(Request $request, $user_id, $user_type) {
+        // a user MUST be a professor to receive professor dashboard information
+        if (strcmp($user_type, 'professor') != 0) {
+            $jsr = new JsonResponse(array('error' => 'Permissions are invalid.'));
+            $jsr->setStatusCode(503);
+            return $jsr;
+        }
+
+        // gets the professor registration information (along with course information too)
+        $conn = Database::getInstance();
+        $queryBuilder = $conn->createQueryBuilder();
+        $professor_registrations = $queryBuilder->select('pr.id', 'pr.date_created', 'pr.date_deleted', 'pr.date_start', 'pr.date_end', 'pr.signup_code',
+            'designers.id AS designers', 'designers.username AS designers_username', 'designers.name AS designers_name',
+            'courses.id AS course_id', 'courses.name AS course_name', 'courses.description AS course_description')
+            ->from('app_users', 'professors')
+            ->innerJoin('professors', 'professor_registrations', 'pr', 'professors.id = pr.professor_id')
+            ->innerJoin('pr', 'app_users', 'designers', 'pr.professor_id = designers.id')
+            ->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
+            ->where('professors.id = ?')
+            ->setParameter(0, $user_id)->execute()->fetchAll();
+
+        // for each of the prof registrations, loop through and get the classes/student registrations associated with it
+        for ($i = 0; $i < count($professor_registrations); $i++) {
+            $pr_id = $professor_registrations[$i]['id'];
+            $queryBuilder = $conn->createQueryBuilder();
+            $results = $queryBuilder->select('classes.id AS class_id', 'classes.name AS class_name', 'classes.description AS class_description',
+                'sr.id AS student_registration_id', 'sr.date_start AS student_registration_date_start', 'sr.date_end AS student_registration_date_end', 'sr.max_registrations AS student_registration_max_registrations')
+                ->from('professor_registrations', 'pr')->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
+                ->innerJoin('pr', 'classes', 'classes', 'pr.id = classes.registration_id')
+                ->leftJoin('classes', 'student_registrations', 'sr', 'sr.class_id = classes.id')
+                ->where('pr.id = ?')
+                ->setParameter(0, $pr_id)->execute()->fetchAll();
+            $professor_registrations[$i]['classes'] = $results;
+            $professor_registrations[$i]['number_of_classes'] = count($results);
+        }
+        $jsr = new JsonResponse(array('size' => count($professor_registrations), 'data' => $professor_registrations));
+        $jsr->setStatusCode(200);
+        return $jsr;
+    }
 }

@@ -30,6 +30,11 @@ class CourseRepository extends \Doctrine\ORM\EntityRepository
                 ->from('app_users')->innerJoin('app_users', 'courses', 'courses', 'app_users.id = courses.user_id')
                 ->innerJoin('courses', 'language', 'language', 'courses.language_id = language.id')->where('app_users.id = ?')->andWhere('courses.name LIKE ?')
                 ->setParameter(0, $user_id)->setParameter(1, $name)->execute()->fetchAll();
+        } else if (strcmp($user_type, 'professor') == 0) {
+            $results = $queryBuilder->select('courses.id', 'courses.name', 'courses.description', 'language.name AS language_name', 'language.id AS language_id', 'pr.date_start', 'pr.date_end')
+                ->from('professor_registrations', 'pr')->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')->innerJoin('courses', 'language', 'language', 'courses.language_id = language.id')
+                ->where('pr.professor_id = ?')->andWhere('courses.name LIKE ?')
+                ->setParameter(0, $user_id)->setParameter(1, $name)->execute()->fetchAll();
         } else {
             $jsr = new JsonResponse(array('error' => 'Internal server error.'));
             $jsr->setStatusCode(500);

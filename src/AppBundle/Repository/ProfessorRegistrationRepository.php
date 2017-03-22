@@ -29,6 +29,16 @@ class ProfessorRegistrationRepository extends \Doctrine\ORM\EntityRepository
                 ->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')->innerJoin('courses', 'language', 'language', 'courses.language_id = language.id')
                 ->where('designers.id = ?')
                 ->setParameter(0, $user_id)->execute()->fetchAll();
+        } else if (strcmp($user_type, 'professor') == 0) {
+            $results = $queryBuilder->select('pr.id', 'pr.date_created', 'pr.date_deleted', 'pr.date_start', 'pr.date_end', 'pr.signup_code',
+                'designers.id AS designers', 'designers.username AS designers_username', 'designers.name AS designers_name',
+                'courses.id AS course_id', 'courses.name AS course_name', 'courses.description AS course_description')
+                ->from('app_users', 'professors')
+                ->innerJoin('professors', 'professor_registrations', 'pr', 'professors.id = pr.professor_id')
+                ->innerJoin('pr', 'app_users', 'designers', 'pr.professor_id = designers.id')
+                ->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
+                ->where('professors.id = ?')
+                ->setParameter(0, $user_id)->execute()->fetchAll();
         } else {
             $jsr = new JsonResponse(array('error' => 'Internal server error.'));
             $jsr->setStatusCode(500);
@@ -165,6 +175,18 @@ class ProfessorRegistrationRepository extends \Doctrine\ORM\EntityRepository
             $queryBuilder = $conn->createQueryBuilder();
             $queryBuilder->update('professor_registrations')->set('date_start', '?')->set('date_end', '?')->where('id = ?')
                 ->setParameter(0, $date_start)->setParameter(1, $date_end)->setParameter(2, $pr_id)->execute();
+
+            // now, need to go through all student registrations created from this professor registration
+            // and make sure that student registration end dates are not after the prof registration's new end date
+            // and same constraints for start
+            $queryBuilder = $conn->createQueryBuilder();
+            $queryBuilder->update('student_registrations', 'sr')->set('date_end', '?')
+                ->where('sr.prof_registration_id = ?')->andWhere('sr.date_end > ?')->setParameter(0, $date_end)
+                ->setParameter(1, $pr_id)->setParameter(2, $date_end)->execute();
+            $queryBuilder = $conn->createQueryBuilder();
+            $queryBuilder->update('student_registrations', 'sr')->from('student_registrations', 'sr')->set('date_start', '?')
+                ->where('sr.prof_registration_id = ?')->andWhere('sr.date_start < ?')->setParameter(0, $date_start)
+                ->setParameter(1, $pr_id)->setParameter(2, $date_start)->execute();
 
             return ProfessorRegistrationRepository::getProfessorRegistration($request, $user_id, $user_type, $pr_id);
         } else {
