@@ -61,10 +61,20 @@ class KeywordRepository extends \Doctrine\ORM\EntityRepository
             $results = $queryBuilder->select('mck.id', 'mck.phrase', 'mck.description', 'mck.link', 'song.id AS song_id')
                 ->from('app_users', 'designers')->innerJoin('designers', 'courses', 'courses', 'designers.id = courses.user_id')
                 ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')
-                ->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')->innerJoin('song', 'module_cn', 'module_cn', 'song.id = module_cn.song_id')
+                ->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')
+                ->innerJoin('song', 'module_cn', 'module_cn', 'song.id = module_cn.song_id')
                 ->innerJoin('module_cn', 'module_cn_keyword', 'mck', 'module_cn.id = mck.cn_id')
                 ->where('designers.id = ?')->andWhere('mck.id = ?')
                 ->setParameter(0, $user_id)->setParameter(1, $keyword_id)->execute()->fetchAll();
+        } else if (strcmp($user_type, 'professor') == 0) {
+            $results = $queryBuilder->select('mck.id', 'mck.phrase', 'mck.description', 'mck.link', 'song.id AS song_id')
+                ->from('professor_registrations', 'pr')->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
+                ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')
+                ->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')
+                ->innerJoin('song', 'module_cn', 'module_cn', 'song.id = module_cn.song_id')
+                ->innerJoin('module_cn', 'module_cn_keyword', 'mck', 'module_cn.id = mck.cn_id')
+                ->where('pr.professor_id = ?')->andWhere('pr.date_start < ?')->andWhere('pr.date_end > ?')->andWhere('mck.id = ?')
+                ->setParameter(0, $user_id)->setParameter(1, time())->setParameter(2, time())->setParameter(3, $keyword_id)->execute()->fetchAll();
         } else {
             $jsr = new JsonResponse(array('error' => 'Internal server error.'));
             $jsr->setStatusCode(500);

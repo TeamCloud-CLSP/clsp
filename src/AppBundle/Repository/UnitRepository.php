@@ -60,6 +60,12 @@ class UnitRepository extends \Doctrine\ORM\EntityRepository
                 ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')->where('designers.id = ?')->andWhere('unit.id = ?')
                 ->orderBy('unit.weight', 'ASC')
                 ->setParameter(0, $user_id)->setParameter(1, $unit_id)->execute()->fetchAll();
+        } else if (strcmp($user_type, 'professor') == 0) {
+            $results = $queryBuilder->select('unit.name', 'unit.description', 'unit.id', 'unit.weight', 'courses.id AS course_id')
+                ->from('professor_registrations', 'pr')->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
+                ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')
+                ->where('pr.professor_id = ?')->andWhere('pr.date_start < ?')->andWhere('pr.date_end > ?')->andWhere('unit.id = ?')
+                ->setParameter(0, $user_id)->setParameter(1, time())->setParameter(2, time())->setParameter(3, $unit_id)->execute()->fetchAll();
         } else {
             $jsr = new JsonResponse(array('error' => 'Internal server error.'));
             $jsr->setStatusCode(500);

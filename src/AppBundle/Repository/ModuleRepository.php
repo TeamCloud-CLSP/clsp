@@ -31,9 +31,18 @@ class ModuleRepository extends \Doctrine\ORM\EntityRepository
             $results = $queryBuilder->select('module.id', 'module.password', 'module.has_password', 'module.song_id', 'module.name', 'module.is_enabled', 'song.id AS song_id')
                 ->from('app_users', 'designers')->innerJoin('designers', 'courses', 'courses', 'designers.id = courses.user_id')
                 ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')
-                ->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')->innerJoin('song', $moduleName, 'module', 'song.id = module.song_id')
+                ->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')
+                ->innerJoin('song', $moduleName, 'module', 'song.id = module.song_id')
                 ->where('designers.id = ?')->andWhere('song.id = ?')
                 ->setParameter(0, $user_id)->setParameter(1, $song_id)->execute()->fetchAll();
+        } else if (strcmp($user_type, 'professor') == 0) {
+            $results = $queryBuilder->select('module.id', 'module.password', 'module.has_password', 'module.song_id', 'module.name', 'module.is_enabled', 'song.id AS song_id')
+                ->from('professor_registrations', 'pr')->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
+                ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')
+                ->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')
+                ->innerJoin('song', $moduleName, 'module', 'song.id = module.song_id')
+                ->where('pr.professor_id = ?')->andWhere('pr.date_start < ?')->andWhere('pr.date_end > ?')->andWhere('song.id = ?')
+                ->setParameter(0, $user_id)->setParameter(1, time())->setParameter(2, time())->setParameter(3, $song_id)->execute()->fetchAll();
         } else {
             $jsr = new JsonResponse(array('error' => 'Internal server error.'));
             $jsr->setStatusCode(500);

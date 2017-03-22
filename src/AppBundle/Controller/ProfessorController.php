@@ -27,7 +27,6 @@ use AppBundle\Database;
 /**
  * Available functions:
  *
- * getCourses - /api/professor/courses
  * getRegistrations - /api/professor/registrations/professor
  * getRegistration - /api/professor/registrations/professor/{id}
  * getMainPageStructure - /api/professor/main - (told Yuanhan about this - this should be how he wants to set up the main professor page - see the function for more details)
@@ -52,21 +51,6 @@ use AppBundle\Database;
  */
 class ProfessorController extends Controller
 {
-
-    /**
-     * Gets all courses that the professor can view and use
-     *
-     * Can filter by name
-     *
-     * @Route("/api/professor/courses", name="getCoursesAsProfessor")
-     * @Method({"GET", "OPTIONS"})
-     */
-    public function getCourses(Request $request) {
-        $user = $this->get('security.token_storage')->getToken()->getUser();
-        $user_id = $user->getId();
-        return CourseRepository::getCourses($request, $user_id, 'professor');
-    }
-
     /**
      * Gets all professor registrations that the professor has
      *

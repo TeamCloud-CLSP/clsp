@@ -100,6 +100,15 @@ class HeaderRepository extends \Doctrine\ORM\EntityRepository
                 ->innerJoin('module', 'module_question_heading', 'module_question_heading', 'module.id = module_question_heading.' . $module_id_name)
                 ->where('designers.id = ?')->andWhere('module_question_heading.id = ?')
                 ->setParameter(0, $user_id)->setParameter(1, $heading_id)->execute()->fetchAll();
+        } else if (strcmp($user_type, 'professor') == 0) {
+            $results = $queryBuilder->select('module_question_heading.id', 'module_question_heading.name', 'song.id AS song_id')
+                ->from('professor_registrations', 'pr')->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
+                ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')
+                ->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')
+                ->innerJoin('song', $moduleName, 'module', 'song.id = module.song_id')
+                ->innerJoin('module', 'module_question_heading', 'module_question_heading', 'module.id = module_question_heading.' . $module_id_name)
+                ->where('pr.professor_id = ?')->andWhere('pr.date_start < ?')->andWhere('pr.date_end > ?')->andWhere('module_question_heading.id = ?')
+                ->setParameter(0, $user_id)->setParameter(1, time())->setParameter(2, time())->setParameter(3, $heading_id)->execute()->fetchAll();
         } else {
             $jsr = new JsonResponse(array('error' => 'Internal server error.'));
             $jsr->setStatusCode(500);

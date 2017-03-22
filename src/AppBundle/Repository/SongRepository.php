@@ -58,6 +58,13 @@ class SongRepository extends \Doctrine\ORM\EntityRepository
                 ->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')
                 ->where('designers.id = ?')->andWhere('song.id = ?')
                 ->setParameter(0, $user_id)->setParameter(1, $song_id)->execute()->fetchAll();
+        } else if (strcmp($user_type, 'professor') == 0) {
+            $results = $queryBuilder->select('song.id', 'song.title', 'song.album', 'song.artist', 'song.description', 'song.lyrics', 'song.embed', 'song.weight', 'unit.id AS unit_id')
+                ->from('professor_registrations', 'pr')->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
+                ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')
+                ->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')
+                ->where('pr.professor_id = ?')->andWhere('pr.date_start < ?')->andWhere('pr.date_end > ?')->andWhere('song.id = ?')
+                ->setParameter(0, $user_id)->setParameter(1, time())->setParameter(2, time())->setParameter(3, $song_id)->execute()->fetchAll();
         } else {
             $jsr = new JsonResponse(array('error' => 'Internal server error.'));
             $jsr->setStatusCode(500);
