@@ -268,7 +268,7 @@ class ProfessorController extends Controller
     public function deleteStudent(Request $request, $id) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $user_id = $user->getId();
-
+        return UserRepository::deleteStudent($request, $user_id, 'professor', $id);
     }
 
 }
