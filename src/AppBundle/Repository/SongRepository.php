@@ -65,6 +65,15 @@ class SongRepository extends \Doctrine\ORM\EntityRepository
                 ->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')
                 ->where('pr.professor_id = ?')->andWhere('pr.date_start < ?')->andWhere('pr.date_end > ?')->andWhere('song.id = ?')
                 ->setParameter(0, $user_id)->setParameter(1, time())->setParameter(2, time())->setParameter(3, $song_id)->execute()->fetchAll();
+        } else if (strcmp($user_type, 'student') == 0) {
+            $results = $queryBuilder->select('song.id', 'song.title', 'song.album', 'song.artist', 'song.description', 'song.lyrics', 'song.embed', 'song.weight', 'unit.id AS unit_id')
+                ->from('app_users', 'students')->innerJoin('students', 'student_registrations', 'sr', 'students.student_registration_id = sr.id')
+                ->innerJoin('sr', 'classes', 'classes', 'sr.class_id = classes.id')
+                ->innerJoin('classes', 'courses', 'courses', 'classes.course_id = courses.id')
+                ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')
+                ->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')
+                ->where('students.id = ?')->andWhere('sr.date_start < ?')->andWhere('sr.date_end > ?')->andWhere('song.id = ?')
+                ->setParameter(0, $user_id)->setParameter(1, time())->setParameter(2, time())->setParameter(3, $song_id)->execute()->fetchAll();
         } else {
             $jsr = new JsonResponse(array('error' => 'Internal server error.'));
             $jsr->setStatusCode(500);

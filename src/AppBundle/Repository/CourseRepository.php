@@ -69,6 +69,14 @@ class CourseRepository extends \Doctrine\ORM\EntityRepository
                 ->from('professor_registrations', 'pr')->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')->innerJoin('courses', 'language', 'language', 'courses.language_id = language.id')
                 ->where('pr.professor_id = ?')->andWhere('pr.date_start < ?')->andWhere('pr.date_end > ?')->andWhere('courses.id = ?')
                 ->setParameter(0, $user_id)->setParameter(1, time())->setParameter(2, time())->setParameter(3, $course_id)->execute()->fetchAll();
+        } else if (strcmp($user_type, 'student') == 0) {
+            $results = $queryBuilder->select('courses.id', 'courses.name', 'courses.description', 'language.name AS language_name', 'language.id AS language_id', 'sr.date_start', 'sr.date_end')
+                ->from('app_users', 'students')->innerJoin('students', 'student_registrations', 'sr', 'students.student_registration_id = sr.id')
+                ->innerJoin('sr', 'classes', 'classes', 'sr.class_id = classes.id')
+                ->innerJoin('classes', 'courses', 'courses', 'classes.course_id = courses.id')
+                ->innerJoin('courses', 'language', 'language', 'courses.language_id = language.id')
+                ->where('students.id = ?')->andWhere('sr.date_start < ?')->andWhere('sr.date_end > ?')->andWhere('courses.id = ?')
+                ->setParameter(0, $user_id)->setParameter(1, time())->setParameter(2, time())->setParameter(3, $course_id)->execute()->fetchAll();
         } else {
             $jsr = new JsonResponse(array('error' => 'Internal server error.'));
             $jsr->setStatusCode(500);

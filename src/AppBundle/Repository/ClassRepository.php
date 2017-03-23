@@ -29,7 +29,7 @@ class ClassRepository extends \Doctrine\ORM\EntityRepository
         }
         $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('classes.id', 'classes.name', 'classes.description')
+        $results = $queryBuilder->select('classes.id', 'classes.name', 'classes.description', 'classes.course_id', 'classes.registration_id')
             ->from('professor_registrations', 'pr')->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
             ->innerJoin('pr', 'classes', 'classes', 'pr.id = classes.registration_id')
             ->where('pr.professor_id = ?')->andWhere('classes.name LIKE ?')
@@ -53,11 +53,17 @@ class ClassRepository extends \Doctrine\ORM\EntityRepository
         $queryBuilder = $conn->createQueryBuilder();
         $results = null;
         if (strcmp($user_type, 'professor') == 0) {
-            $results = $queryBuilder->select('classes.id', 'classes.name', 'classes.description')
+            $results = $queryBuilder->select('classes.id', 'classes.name', 'classes.description', 'classes.course_id', 'classes.registration_id')
                 ->from('professor_registrations', 'pr')->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
                 ->innerJoin('pr', 'classes', 'classes', 'pr.id = classes.registration_id')
                 ->where('pr.professor_id = ?')->andWhere('classes.id = ?')
                 ->setParameter(0, $user_id)->setParameter(1, $class_id)->execute()->fetchAll();
+        } else if (strcmp($user_type, 'student') == 0) {
+            $results = $queryBuilder->select('classes.id', 'classes.name', 'classes.description', 'sr.date_start', 'sr.date_end', 'classes.course_id', 'classes.registration_id')
+                ->from('app_users', 'students')->innerJoin('students', 'student_registrations', 'sr', 'students.student_registration_id = sr.id')
+                ->innerJoin('sr', 'classes', 'classes', 'sr.class_id = classes.id')
+                ->where('students.id = ?')->andWhere('sr.date_start < ?')->andWhere('sr.date_end > ?')
+                ->setParameter(0, $user_id)->setParameter(1, time())->setParameter(2, time())->execute()->fetchAll();
         } else {
             $jsr = new JsonResponse(array('error' => 'Internal server error.'));
             $jsr->setStatusCode(500);

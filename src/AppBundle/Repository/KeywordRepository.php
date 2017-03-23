@@ -28,10 +28,27 @@ class KeywordRepository extends \Doctrine\ORM\EntityRepository
         if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
             return $result;
         }
-        
+
         // decode result to get the module id
         $result = json_decode($result->getContent());
         $module_id = $result->id;
+        $module_password = $result->password;
+
+
+        // if its a student and the module has a password, we need to authenticate
+        if (strcmp($user_type, 'student') == 0 && ($module_password != null || strcmp($module_password, '') != 0)) {
+            $request_parameters = $request->query->all();
+            $password = "";
+            if (array_key_exists('password', $request_parameters)) {
+                $password = $request_parameters['password'];
+            }
+            // check the password
+            if (strcmp($password, $module_password) != 0) {
+                $jsr = new JsonResponse(array('error' => 'Password is incorrect.'));
+                $jsr->setStatusCode(400);
+                return $jsr;
+            }
+        }
 
         // query to get the keywords that belong to the module
         $conn = Database::getInstance();
@@ -39,10 +56,10 @@ class KeywordRepository extends \Doctrine\ORM\EntityRepository
         $results = $queryBuilder->select('id', 'phrase', 'description', 'link')
             ->from('module_cn_keyword')->where('cn_id = ?')
             ->setParameter(0, $module_id)->execute()->fetchAll();
-
         $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));
         $jsr->setStatusCode(200);
         return $jsr;
+
     }
 
     public static function getKeyword(Request $request, $user_id, $user_type, $keyword_id) {
@@ -75,6 +92,17 @@ class KeywordRepository extends \Doctrine\ORM\EntityRepository
                 ->innerJoin('module_cn', 'module_cn_keyword', 'mck', 'module_cn.id = mck.cn_id')
                 ->where('pr.professor_id = ?')->andWhere('pr.date_start < ?')->andWhere('pr.date_end > ?')->andWhere('mck.id = ?')
                 ->setParameter(0, $user_id)->setParameter(1, time())->setParameter(2, time())->setParameter(3, $keyword_id)->execute()->fetchAll();
+        } else if (strcmp($user_type, 'student') == 0) {
+            $results = $queryBuilder->select('mck.id', 'mck.phrase', 'mck.description', 'mck.link', 'song.id AS song_id')
+                ->from('app_users', 'students')->innerJoin('students', 'student_registrations', 'sr', 'students.student_registration_id = sr.id')
+                ->innerJoin('sr', 'classes', 'classes', 'sr.class_id = classes.id')
+                ->innerJoin('classes', 'courses', 'courses', 'classes.course_id = courses.id')
+                ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')
+                ->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')
+                ->innerJoin('song', 'module_cn', 'module_cn', 'song.id = module_cn.song_id')
+                ->innerJoin('module_cn', 'module_cn_keyword', 'mck', 'module_cn.id = mck.cn_id')
+                ->where('students.id = ?')->andWhere('sr.date_start < ?')->andWhere('sr.date_end > ?')->andWhere('mck.id = ?')
+                ->setParameter(0, $user_id)->setParameter(1, time())->setParameter(2, time())->setParameter(3, $keyword_id)->execute()->fetchAll();
         } else {
             $jsr = new JsonResponse(array('error' => 'Internal server error.'));
             $jsr->setStatusCode(500);
@@ -92,6 +120,33 @@ class KeywordRepository extends \Doctrine\ORM\EntityRepository
             return $jsr;
         }
 
+        // for a student, we need to check that the password given matches
+        if (strcmp($user_type, 'student') == 0) {
+            // get the module_cn information
+            $result = ModuleRepository::getModule($request, $user_id, $user_type, 'module_cn', $results[0]['song_id']);
+            if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+                return $result;
+            }
+
+            // decode result to get the module id
+            $result = json_decode($result->getContent());
+            $module_password = $result->password;
+
+            // if its a student and the module has a password, we need to authenticate
+            if (strcmp($user_type, 'student') == 0 && ($module_password != null || strcmp($module_password, '') != 0)) {
+                $request_parameters = $request->query->all();
+                $password = "";
+                if (array_key_exists('password', $request_parameters)) {
+                    $password = $request_parameters['password'];
+                }
+                // check the password
+                if (strcmp($password, $module_password) != 0) {
+                    $jsr = new JsonResponse(array('error' => 'Password is incorrect.'));
+                    $jsr->setStatusCode(400);
+                    return $jsr;
+                }
+            }
+        }
         $results[0]['module_type'] = 'module_cn';
         return new JsonResponse($results[0]);
     }
