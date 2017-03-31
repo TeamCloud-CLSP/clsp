@@ -640,7 +640,7 @@ class ModuleController extends Controller
      * @Method({"POST", "OPTIONS"})
      */
     public function createModuleGEHeaders(Request $request, $id) {
-        return $this->createGenericHeader($request, 'module_ge', 'dw_ge', $id);
+        return $this->createGenericHeader($request, 'module_ge', 'ge_id', $id);
     }
 
     /**
@@ -670,7 +670,7 @@ class ModuleController extends Controller
      * @Method({"POST", "OPTIONS"})
      */
     public function createModuleLSHeaders(Request $request, $id) {
-        return $this->createGenericHeader($request, 'module_ls', 'dw_ls', $id);
+        return $this->createGenericHeader($request, 'module_ls', 'ls_id', $id);
     }
 
     /**
