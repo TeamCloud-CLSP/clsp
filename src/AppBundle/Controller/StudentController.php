@@ -32,7 +32,7 @@ use AppBundle\Repository\ClassRepository;
 
 /**
  * Available functions:
- * 
+ *
  * getClass - /api/student/class
  *
  * getCourses - /api/student/courses - get courses
@@ -62,7 +62,7 @@ use AppBundle\Repository\ClassRepository;
  *
  * getItems - /api/student/header/{id}/items - get items that belong to an item
  * getItem - /api/student/item/{id}
- * 
+ *
  * Class StudentController
  * @package AppBundle\Controller
  */
@@ -459,7 +459,7 @@ class StudentController extends Controller
      * Checks answer to a specific item (key must be "answer")
      *
      * @Route("/api/student/item/{id}/check", name="checkItemAsStudent")
-     * @Method({"GET", "OPTIONS"})
+     * @Method({"POST", "OPTIONS"})
      */
     public function checkAnswer(Request $request, $id) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
@@ -471,7 +471,7 @@ class StudentController extends Controller
      * Checks answers to a list of items (key must be id of the item to check)
      *
      * @Route("/api/student/checkitems", name="checkItemsAsStudent")
-     * @Method({"GET", "OPTIONS"})
+     * @Method({"POST", "OPTIONS"})
      */
     public function checkAnswers(Request $request) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
