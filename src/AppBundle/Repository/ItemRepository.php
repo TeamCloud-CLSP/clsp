@@ -270,4 +270,141 @@ class ItemRepository extends \Doctrine\ORM\EntityRepository
         $jsr->setStatusCode(200);
         return $jsr;
     }
+
+    public static function checkAnswer(Request $request, $user_id, $user_type, $item_id) {
+        // a user MUST be a student to check an answer to a question
+        if (strcmp($user_type, 'student') != 0) {
+            $jsr = new JsonResponse(array('error' => 'Permissions are invalid.'));
+            $jsr->setStatusCode(503);
+            return $jsr;
+        }
+
+        // check for student's answer
+        $request_parameters = $request->query->all();
+        $student_answers = "";
+        if (array_key_exists('answer', $request_parameters)) {
+            $student_answers = $request_parameters['answer'];
+        } else {
+            $jsr = new JsonResponse(array('error' => 'Student did not provide an answer.'));
+            $jsr->setStatusCode(400);
+            return $jsr;
+        }
+        $student_answers = json_decode($student_answers);
+        if (count($student_answers) < 1) {
+            $jsr = new JsonResponse(array('error' => 'Student did not provide an answer.'));
+            $jsr->setStatusCode(400);
+            return $jsr;
+        }
+
+        // check if item we're looking for exists and belongs to the currently logged in user
+        $result = ItemRepository::getItem($request, $user_id, $user_type, $item_id);
+        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+            return $result;
+        }
+
+        // get the item information out from the result
+        $result = json_decode($result->getContent());
+        $type = $result->type;
+        $answers = $result->answers;
+
+        // make sure the item has answers to check against
+        $result = null;
+        if ($answers == null || $answers == "") {
+            $result = 'None';
+        } else {
+            $answers = json_decode($answers);
+            // multiple choice question = multiple answer choices, one answer
+            if (strcmp($type, 'multiple-choice') == 0) {
+                // check if answer matches the student answer
+                if (strcmp($student_answers[0]->choice, $answers[0]->choice) == 0) {
+                    $result = true;
+                } else {
+                    $result = false;
+                }
+            } else if (strcmp($type, 'multiple-select') == 0) {
+                // checkbox question = multiple answer choices, multiple answers possible
+                // first check if number of answers given is the same
+                if (count($student_answers) != count($answers)) {
+                    $result = false;
+                } else {
+                    $result = true;
+                    // loop through all correct answers and make sure they're present in the student answers
+                    for ($i = 0; $i < count($answers); $i++) {
+                        $found = false;
+                        for ($j = 0; $j < count($student_answers); $j++) {
+                            if (strcmp($student_answers[$j]->choice, $answers[$i]->choice) == 0) {
+                                $found = true;
+                                break;
+                            }
+                        }
+                        if ($found == false) {
+                            $result = false;
+                            break;
+                        }
+                    }
+                }
+            } else if (strcmp($type, 'fill-blank') == 0) {
+                // fill in the blank question = infinite answer choices, answer number varies
+                // first check if number of answers given is the same
+                if (count($student_answers) != count($answers)) {
+                    $result = false;
+                } else {
+                    $result = true;
+                    // check answers in order, accounting for multiple answers
+                    for ($i = 0; $i < count($answers); $i++) {
+                        $answer = $answers[$i]->choice;
+                        $student_answer = $student_answers[$i]->choice;
+                        $split_answers = explode(':', $answer);
+                        $found = false;
+                        for ($j = 0; $j < count($split_answers); $j++) {
+                            $current = $split_answers[$j];
+                            if (strcasecmp($current, $student_answer) == 0) {
+                                $found = true;
+                                break;
+                            }
+                        }
+                        if ($found == false) {
+                            $result = false;
+                            break;
+                        }
+                    }
+                }
+
+            } else {
+                $jsr = new JsonResponse(array('error' => 'Invalid question type.'));
+                $jsr->setStatusCode(500);
+                return $jsr;
+            }
+        }
+
+        $jsr = new JsonResponse(array('id' => $item_id, 'result' => $result));
+        $jsr->setStatusCode(200);
+        return $jsr;
+
+    }
+
+    public static function checkAnswers(Request $request, $user_id, $user_type) {
+        // a user MUST be a student to check answers to a questions
+        if (strcmp($user_type, 'student') != 0) {
+            $jsr = new JsonResponse(array('error' => 'Permissions are invalid.'));
+            $jsr->setStatusCode(503);
+            return $jsr;
+        }
+
+        $request_parameters = $request->query->all();
+        $results = array();
+        foreach ($request_parameters as $key => $value) {
+            if (is_numeric($key)) {
+                $item_id = intval($key);
+                $request->query->set('answer', $value);
+                $result = ItemRepository::checkAnswer($request, $user_id, $user_type, $item_id);
+                if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+                    return $result;
+                }
+                array_push($results, json_decode($result->getContent()));
+            }
+        }
+
+        return new JsonResponse(array('size' => count($results), 'data' => $results));
+    }
 }

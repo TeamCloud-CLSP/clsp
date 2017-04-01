@@ -448,9 +448,34 @@ class StudentController extends Controller
     /**
      * Generic function that returns question headers and items with it for a given module of a song
      */
-    public function getGenericHeaderItemStructure($request, $moduleName, $module_id_name, $song_id) {
+    public function getGenericHeaderItemStructure(Request $request, $moduleName, $module_id_name, $song_id) {
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $user_id = $user->getId();
         return ItemRepository::getHeaderItemStructure($request, $user_id, 'student', $moduleName, $module_id_name, $song_id);
+
+    }
+
+    /**
+     * Checks answer to a specific item (key must be "answer")
+     *
+     * @Route("/api/student/item/{id}/check", name="checkItemAsStudent")
+     * @Method({"GET", "OPTIONS"})
+     */
+    public function checkAnswer(Request $request, $id) {
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return ItemRepository::checkAnswer($request, $user_id, 'student', $id);
+    }
+
+    /**
+     * Checks answers to a list of items (key must be id of the item to check)
+     *
+     * @Route("/api/student/checkitems", name="checkItemsAsStudent")
+     * @Method({"GET", "OPTIONS"})
+     */
+    public function checkAnswers(Request $request) {
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return ItemRepository::checkAnswers($request, $user_id, 'student');
     }
 }
