@@ -244,7 +244,7 @@ class ItemRepository extends \Doctrine\ORM\EntityRepository
 
         return new Response();
     }
-    
+
     public static function getHeaderItemStructure(Request $request, $user_id, $user_type, $moduleName, $module_id_name, $song_id) {
         $result = HeaderRepository::getHeaders($request, $user_id, $user_type, $moduleName, $module_id_name, $song_id);
         if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
@@ -280,7 +280,7 @@ class ItemRepository extends \Doctrine\ORM\EntityRepository
         }
 
         // check for student's answer
-        $request_parameters = $request->query->all();
+        $request_parameters = $request->request->all();
         $student_answers = "";
         if (array_key_exists('answer', $request_parameters)) {
             $student_answers = $request_parameters['answer'];
@@ -288,6 +288,9 @@ class ItemRepository extends \Doctrine\ORM\EntityRepository
             $jsr = new JsonResponse(array('error' => 'Student did not provide an answer.'));
             $jsr->setStatusCode(400);
             return $jsr;
+        }
+        if (is_array($student_answers)) {
+            $student_answers = json_encode($student_answers);
         }
         $student_answers = json_decode($student_answers);
         if (count($student_answers) < 1) {
@@ -391,12 +394,12 @@ class ItemRepository extends \Doctrine\ORM\EntityRepository
             return $jsr;
         }
 
-        $request_parameters = $request->query->all();
+        $request_parameters = $request->request->all();
         $results = array();
         foreach ($request_parameters as $key => $value) {
             if (is_numeric($key)) {
                 $item_id = intval($key);
-                $request->query->set('answer', $value);
+                $request->request->set('answer', $value);
                 $result = ItemRepository::checkAnswer($request, $user_id, $user_type, $item_id);
                 if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
                     return $result;
