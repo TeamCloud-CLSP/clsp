@@ -20,18 +20,18 @@ security:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
 
-        main:
-            pattern: ^/
-            http_basic: ~
-            provider: clspdb_provider
-            anonymous: ~
-            form_login:
-                login_path: login
-                check_path: login
-                default_target_path: dashboardIndex
-            logout:
-                path: /logout
-                target: /login
+#        main:
+#            pattern: ^/
+#            http_basic: ~
+#            provider: clspdb_provider
+#            anonymous: ~
+#            form_login:
+#                login_path: login
+#                check_path: login
+#                default_target_path: dashboardIndex
+#            logout:
+#                path: /logout
+#                target: /login
             # activate different ways to authenticate
 
             # http_basic: ~
@@ -40,15 +40,47 @@ security:
             # form_login: ~
             # http://symfony.com/doc/current/cookbook/security/form_login_setup.html
 
+#        login:
+#            pattern:  ^/api/login
+#            stateless: true
+#            anonymous: true
+#            form_login:
+#                check_path:               /api/login_check
+#                success_handler:          lexik_jwt_authentication.handler.authentication_success
+#                failure_handler:          lexik_jwt_authentication.handler.authentication_failure
+#                require_previous_session: false
+
+        login:
+            pattern:  ^/api/security/loginToken
+            stateless: true
+            anonymous: true
+#            form_login:
+#                check_path:               /api/login_check
+#                success_handler:          lexik_jwt_authentication.handler.authentication_success
+#                failure_handler:          lexik_jwt_authentication.handler.authentication_failure
+#                require_previous_session: false
+
+
+
+        api:
+            pattern:   ^/api
+            stateless: true
+            guard:
+                authenticators:
+                    - lexik_jwt_authentication.jwt_token_authenticator
+
     access_control:
+        #- { path: ^/api/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        #- { path: ^/api/security/loginToken, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        #- { path: ^/api,       roles: IS_AUTHENTICATED_FULLY }
         # require ROLE_STUDENT for /student*
-        - { path: ^/api/student, roles: ROLE_STUDENT, methods:[GET, POST, PUT, DELETE, HEAD] }
+        #- { path: ^/api/student, roles: ROLE_STUDENT, methods:[GET, POST, PUT, DELETE, HEAD] }
 
         # require ROLE_PROFESSOR for /professor*
-        - { path: ^/api/professor, roles: ROLE_PROFESSOR, methods:[GET, POST, PUT, DELETE, HEAD]}
+        #- { path: ^/api/professor, roles: ROLE_PROFESSOR, methods:[GET, POST, PUT, DELETE, HEAD]}
 
         # require ROLE_DESIGNER for /designer*
-        - { path: ^/api/designer, roles: ROLE_DESIGNER, methods:[GET, POST, PUT, DELETE, HEAD] }
+        #- { path: ^/api/designer, roles: ROLE_DESIGNER, methods:[GET, POST, PUT, DELETE, HEAD] }
 
         # require ROLE_ADMIN for /admin*
-        - { path: ^/api/admin, roles: ROLE_ADMIN, methods:[GET, POST, PUT, DELETE, HEAD] }
+        #- { path: ^/api/admin, roles: ROLE_ADMIN, methods:[GET, POST, PUT, DELETE, HEAD] }

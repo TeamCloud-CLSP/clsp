@@ -5,7 +5,9 @@ namespace AppBundle\Controller;
 use AppBundle\Form\UserType;
 use AppBundle\Entity\User;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
@@ -171,6 +173,75 @@ class SecurityController extends Controller
         }
         return $randString;
 
+    }
+
+    /**
+     * Tries to login a user with the given credentials
+     * returns a valid JWT on success, error message on failure
+     *
+     * Takes in:
+     *      "username" - attempted user's username
+     *      "password" - attempted user's password
+     *
+     * @Route("/api/security/loginToken", name="getLoginToken")
+     * @Method({"POST", "OPTIONS"})
+     */
+    public function getLoginToken(Request $request) {
+
+        $post_parameters = $request->request->all();
+
+        if ( array_key_exists('username', $post_parameters) && array_key_exists('password', $post_parameters) ) {
+            $username = $post_parameters['username'];
+            $password = $post_parameters['password'];
+
+            if($this->testUserCredentials($username, $password)) {
+                $user = $this->getUserFromUsername($username);
+                return new JsonResponse([
+                    "token" => $this->container->get('lexik_jwt_authentication.jwt_manager')->create($user),
+                    "user_info" => [
+                        "id" => $user->getId(),
+                        "name" => $user->getName(),
+                        "username" => $user->getUsername(),
+                        "email" => $user->getEmail(),
+                        "is_active" => $user->getIsActive(),
+                        "date_created" => $user->getDateCreated(),
+                        "date_deleted" => $user->getDateDeleted(),
+                        "date_start" => $user->getDateStart(),
+                        "date_end" => $user->getDateEnd(),
+                        "timezone" => $user->getTimezone(),
+                        "is_student" => $user->getIsStudent(),
+                        "is_professor" => $user->getIsProfessor(),
+                        "is_designer" => $user->getIsDesigner(),
+                        "is_administrator" => $user->getIsAdministrator(),
+                        "password" => ""
+                    ]
+                ]);
+            } else {
+                return new JsonResponse(["error" => "Could not authenticate with the given credentials"]);
+            }
+
+        } else {
+            return new JsonResponse(['error' => 'Required fields are missing.']);
+        }
+
+    }
+
+    private function testUserCredentials(String $username, String $password): bool {
+        $user = $this->getUserFromUsername($username);
+
+        if($user == null) {
+            return false;
+        }
+
+        return $this->container->get('security.password_encoder')->isPasswordValid($user, $password);
+    }
+
+    private function getUserFromUsername(String $username) {
+        $repository = $this->getDoctrine()->getRepository("AppBundle:User");
+        $user = $repository->findOneBy(
+            array('username' => $username)
+        );
+        return $user;
     }
 
 

@@ -67,10 +67,21 @@ collation-server     = utf8_unicode_ci
 character-set-server = utf8           
 ```
 
-
-
-
 More information in the "Setting up the Database to be UTF8" section of the Symfony doctrine documentation
 
 http://symfony.com/doc/current/doctrine.html
+
+# Generating keys for JWT
+
+You MUST generate keys for authentication - and by extension this application - to work
+
+The instructions below assume that you're one a Linux system. Modify the instructions appropriately if you're on a Windows or Mac system
+
+```
+mkdir var/jwt-keys
+openssl genrsa -out var/jwt-keys/private.pem -aes256 4096
+openssl rsa -pubout -in var/jwt-keys/private.pem -out var/jwt-keys/public.pem
+```
+
+
 

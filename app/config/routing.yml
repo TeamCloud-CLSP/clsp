@@ -2,9 +2,12 @@ app:
     resource: "@AppBundle/Controller/"
     type:     annotation
 
-login:
-    path:     /login
-    defaults: { _controller: AppBundle:Security:login }
+#login:
+#    path:     /login
+#    defaults: { _controller: AppBundle:Security:login }
+#
+#logout:
+#    path: /logout
 
-logout:
-    path: /logout
+api_login_check:
+    path: /api/login_check
