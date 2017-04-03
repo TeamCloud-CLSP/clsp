@@ -3,10 +3,11 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Mar 22, 2017 at 09:04 PM
--- Server version: 5.7.12-0ubuntu1.1
+-- Generation Time: Apr 03, 2017 at 12:08 AM
+-- Server version: 5.7.17-0ubuntu0.16.04.1
 -- PHP Version: 7.0.8-2+deb.sury.org~xenial+1
 
+SET FOREIGN_KEY_CHECKS=0;
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
 
@@ -182,17 +183,23 @@ INSERT INTO `module_question_heading` (`id`, `qu_id`, `lt_id`, `ge_id`, `dw_id`,
 (1, 1, NULL, NULL, NULL, NULL, 'Intro'),
 (2, 1, NULL, NULL, NULL, NULL, 'Characters'),
 (3, 2, NULL, NULL, NULL, NULL, 'Not 4361'),
-(4, NULL, NULL, NULL, 1, NULL, 'Stuff');
+(4, NULL, NULL, NULL, 1, NULL, 'Stuff'),
+(5, 1, NULL, NULL, NULL, NULL, 'asdfasdfs'),
+(6, NULL, 1, NULL, NULL, NULL, 'asdfasdfs'),
+(7, NULL, NULL, NULL, NULL, 1, 'asdfasdfs'),
+(8, NULL, NULL, NULL, NULL, 1, 'LSLSLSLS'),
+(9, 1, NULL, NULL, NULL, NULL, 'asdfasdfs');
 
 --
 -- Dumping data for table `module_question_item`
 --
 
 INSERT INTO `module_question_item` (`id`, `heading_id`, `content`, `type`, `weight`, `choices`, `answers`) VALUES
-(1, 1, 'test-meu', 'test', 1, NULL, NULL),
-(2, 1, 'test-meu-2', 'test', 2, NULL, NULL),
+(1, 1, 'Which is a member of Coconatsu?', 'multiple-choice', 1, '[{"choice":"Ibuki"},{"choice":"Meu"},{"choice":"Natsuhi"},{"choice":"Grace"}]', '[{"choice":"Natsuhi"}]'),
+(2, 1, 'Which are members of Coconatsu?', 'multiple-select', 2, '[{"choice":"Ibuki"},{"choice":"Meu"},{"choice":"Natsuhi"},{"choice":"Cocona"}]', '[{"choice":"Natsuhi"},{"choice":"Cocona"}]'),
 (3, 3, 'test-not-meu', 'test', 3, NULL, NULL),
-(4, 2, 'test-meu-3, heading 2', 'test', 1, NULL, 'answer1,answer2');
+(4, 2, 'test-meu-3, heading 2', 'multiple-choice', 1, NULL, ''),
+(5, 1, 'Ibuki Izumi of Hinabita plays the _, while Meu plays the _.', 'fill-blank', 2, '', '[{"choice":"bass"},{"choice":"drums:drum:percussion"}]');
 
 --
 -- Dumping data for table `professor_registrations`
@@ -244,6 +251,7 @@ INSERT INTO `unit` (`id`, `course_id`, `name`, `description`, `weight`) VALUES
 (3, 3, 'Unit 2 - 4361', 'Historic Japan', 2),
 (4, 1, 'Unit 1 - CHINESE 3002', 'THIS DOES NOT BELONG TO 4361', 10),
 (6, 3, 'Unit 1 - 4361', 'Introduction to Syllabus', 1);
+SET FOREIGN_KEY_CHECKS=1;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
