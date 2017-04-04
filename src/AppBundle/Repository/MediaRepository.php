@@ -46,7 +46,7 @@ class MediaRepository extends \Doctrine\ORM\EntityRepository
             ->andWhere('file_type LIKE ?')
             ->setParameter(0, $user_id)->setParameter(1, $name)->setParameter(2, $file_type)->execute()->fetchAll();
 
-        return new JsonResponse($results);
+        return new JsonResponse(array('size' => count($results), 'data' => $results));
     }
 
     public static function getMedia(Request $request, $user_id, $user_type, $file_id) {
