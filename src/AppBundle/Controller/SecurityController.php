@@ -221,7 +221,9 @@ class SecurityController extends Controller
             }
 
         } else {
-            return new JsonResponse(['error' => 'Required fields are missing.']);
+            $jsr = new JsonResponse(['error' => 'Required fields are missing.']);
+            $jsr->setStatusCode(400);
+            return $jsr;
         }
 
     }
