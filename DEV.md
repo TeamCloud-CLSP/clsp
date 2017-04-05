@@ -1,6 +1,9 @@
 # Dev Readme
 
-### Useful Commands
+## Useful Commands
+
+### For normal setup, follow the steps below:
+
 To install all dependencies:
 
 ```
@@ -17,14 +20,14 @@ drop the database
 php bin/console doctrine:database:drop --force
 ```
 
-create databse
+create database
 ```
 php bin/console doctrine:database:create
 ```
 
-run the seeder
+update database schema
 ```
-php bin/console doctrine:fixtures:load
+php bin/console doctrine:schema:update --force
 ```
 
 validate database schema
@@ -32,9 +35,15 @@ validate database schema
 php bin/console doctrine:schema:validate
 ```
 
-update database schema
+import database information by importing the clsp.sql file in the project root directory into the database, untick "enable foreign key checks"
+
+update database.php in AppBundle directory so that the parameters match your database credentials and information
+
+### Additional Commands
+
+run the seeder
 ```
-php bin/console doctrine:schema:update --force
+php bin/console doctrine:fixtures:load
 ```
 
 clear all caches

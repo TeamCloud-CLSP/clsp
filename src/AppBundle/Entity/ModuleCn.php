@@ -30,6 +30,13 @@ class ModuleCn
     private $password;
 
     /**
+     * @var string
+     *
+     * @ORM\Column(type="string", length=64, nullable = True)
+     */
+    private $name;
+
+    /**
      * @var boolean
      *
      * @ORM\Column(type="boolean")
@@ -46,7 +53,7 @@ class ModuleCn
     /**
      * One ModuleCn has One Song
      * @ORM\OneToOne(targetEntity="Song", inversedBy="moduleCn")
-     * @ORM\JoinColumn(name="song_id", referencedColumnName="id")
+     * @ORM\JoinColumn(name="song_id", referencedColumnName="id", onDelete="CASCADE")
      */
     private $song;
 
@@ -100,6 +107,30 @@ class ModuleCn
     public function getPassword()
     {
         return $this->password;
+    }
+
+    /**
+     * Set name
+     *
+     * @param string $name
+     *
+     * @return ModuleCn
+     */
+    public function setName($name)
+    {
+        $this->name = $name;
+
+        return $this;
+    }
+
+    /**
+     * Get name
+     *
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->name;
     }
 
     /**

@@ -3,11 +3,10 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Mar 02, 2017 at 03:42 AM
+-- Generation Time: Mar 22, 2017 at 09:04 PM
 -- Server version: 5.7.12-0ubuntu1.1
 -- PHP Version: 7.0.8-2+deb.sury.org~xenial+1
 
-SET FOREIGN_KEY_CHECKS=0;
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
 
@@ -41,19 +40,20 @@ INSERT INTO `app_users` (`id`, `student_registration_id`, `username`, `name`, `p
 (13, 3, 'testStudent7', 'Student 7', '$2y$13$bWxOpKZM08RKTRjtdBSPBOO2uj0BDw3VzHH0O022wwk1FwMv1S6EC', 'testStudent7@test.com', 1, 1488417871, NULL, 0, 1519953871, 'America/New_York', 1, 0, 0, NULL, NULL, 0),
 (14, 4, 'testStudent8', 'Student 8', '$2y$13$Nr3y2M.x9hvImtqP.yopoeAObGoBFOA9qzcaH2JRJF7yd7jNvd0Cq', 'testStudent8@test.com', 1, 1488417871, NULL, 0, 1519953871, 'America/New_York', 1, 0, 0, NULL, NULL, 0),
 (15, 5, 'testStudent9', 'Student 9', '$2y$13$hwzZOrjipur661YfjiU/X.arFV2csiZxHkXreGUjs4hq//JcVnHIm', 'testStudent9@test.com', 1, 1488417871, NULL, 0, 1519953871, 'America/New_York', 1, 0, 0, NULL, NULL, 0),
-(16, 6, 'testStudent10', 'Student 10', '$2y$13$a4TmxNffHTKi8JQOYtUphOrMr1J0SLt2vRNjOFfZd7L7QBAmfAr/y', 'testStudent10@test.com', 1, 1488417872, NULL, 0, 1519953872, 'America/New_York', 1, 0, 0, NULL, NULL, 0);
+(16, 6, 'testStudent10', 'Student 10', '$2y$13$a4TmxNffHTKi8JQOYtUphOrMr1J0SLt2vRNjOFfZd7L7QBAmfAr/y', 'testStudent10@test.com', 1, 1488417872, NULL, 0, 1519953872, 'America/New_York', 1, 0, 0, NULL, NULL, 0),
+(17, 1, 'asdf', 'asdf', '$2y$13$yXwV0fFzXBHjnc2cHyN/Ou6UpcrDgO6ghmaHSF7tf.rtbuHiM7K6.', 'asdf', 1, 1490213206, NULL, 1490213206, 1497057872, 'UTC', 1, 0, 0, NULL, NULL, 0);
 
 --
 -- Dumping data for table `classes`
 --
 
-INSERT INTO `classes` (`id`, `course_id`, `registration_id`, `name`) VALUES
-(1, 1, 1, 'CHIN 3002 A'),
-(2, 1, 1, 'CHIN 3002 B'),
-(3, 1, 2, 'CHIN 3002 C'),
-(4, 2, 3, 'JAPN 3001 A'),
-(5, 2, 3, 'JAPN 3001 B'),
-(6, 3, 4, 'JAPN 4361 A');
+INSERT INTO `classes` (`id`, `course_id`, `registration_id`, `name`, `description`) VALUES
+(1, 1, 1, 'CHIN 3002 A', ''),
+(2, 1, 1, 'CHIN 3002 B', ''),
+(3, 1, 2, 'CHIN 3002 C', ''),
+(4, 2, 3, 'JAPN 3001 A', ''),
+(5, 2, 3, 'JAPN 3001 B', ''),
+(6, 3, 4, 'JAPN 4361 A', '');
 
 --
 -- Dumping data for table `courses`
@@ -92,10 +92,12 @@ INSERT INTO `media` (`id`, `user_id`, `name`, `filename`, `file_type`) VALUES
 -- Dumping data for table `module_cn`
 --
 
-INSERT INTO `module_cn` (`id`, `song_id`, `password`, `has_password`, `is_enabled`) VALUES
-(1, 1, 'meumeumeu', 1, 1),
-(2, 2, NULL, 0, 1),
-(3, 3, NULL, 0, 1);
+INSERT INTO `module_cn` (`id`, `song_id`, `password`, `name`, `has_password`, `is_enabled`) VALUES
+(1, 1, 'meumeumeu', NULL, 1, 1),
+(2, 2, NULL, NULL, 0, 1),
+(3, 3, NULL, NULL, 0, 1),
+(4, 4, '', NULL, 0, 0),
+(5, 5, '', NULL, 0, 0);
 
 --
 -- Dumping data for table `module_cn_keyword`
@@ -106,7 +108,8 @@ INSERT INTO `module_cn_keyword` (`id`, `cn_id`, `phrase`, `description`, `link`)
 (2, 1, 'めう', NULL, NULL),
 (3, 1, 'ぺったん', 'pettan', NULL),
 (5, 2, 'ちくパ', 'chikuwa parfait', 'https://remywiki.com/Chikuwa_parfait_da_yo_CKP'),
-(6, 2, 'ちくわ', 'fish cake roll', NULL);
+(6, 2, 'ちくわ', 'fish cake roll', NULL),
+(7, 2, 'ちくわ', 'test', NULL);
 
 --
 -- Dumping data for table `module_cn_keywords_media`
@@ -120,37 +123,76 @@ INSERT INTO `module_cn_keywords_media` (`module_cn_keyword_id`, `media_id`) VALU
 -- Dumping data for table `module_dw`
 --
 
-INSERT INTO `module_dw` (`id`, `song_id`, `password`, `has_password`, `is_enabled`) VALUES
-(1, 1, 'meumeumeu-dw', 1, 1),
-(2, 2, 'chikuwaparfait-dw', 1, 1);
+INSERT INTO `module_dw` (`id`, `song_id`, `password`, `name`, `has_password`, `is_enabled`) VALUES
+(1, 1, 'meumeumeu-dw', NULL, 1, 1),
+(2, 2, 'chikuwaparfait-dw', NULL, 1, 1),
+(3, 3, 'not 4361', NULL, 1, 1),
+(4, 4, '', NULL, 0, 0),
+(5, 5, '', NULL, 0, 0);
 
 --
 -- Dumping data for table `module_ge`
 --
 
-INSERT INTO `module_ge` (`id`, `song_id`, `password`, `has_password`, `is_enabled`) VALUES
-(1, 1, 'meumeumeu-ge', 1, 1);
+INSERT INTO `module_ge` (`id`, `song_id`, `password`, `name`, `has_password`, `is_enabled`) VALUES
+(1, 1, 'meumeumeu-ge', NULL, 1, 1),
+(2, 4, '', NULL, 0, 0),
+(3, 5, '', NULL, 0, 0),
+(4, 2, NULL, NULL, 0, 0),
+(5, 3, NULL, NULL, 0, 0);
 
 --
 -- Dumping data for table `module_ls`
 --
 
-INSERT INTO `module_ls` (`id`, `song_id`, `password`, `has_password`, `is_enabled`) VALUES
-(1, 1, 'meumeumeu-ls', 1, 1);
+INSERT INTO `module_ls` (`id`, `song_id`, `password`, `name`, `has_password`, `is_enabled`) VALUES
+(1, 1, 'meumeumeu-ls', 'Listening Suggestions-meu!', 1, 1),
+(2, 4, '', NULL, 0, 0),
+(3, 5, '', NULL, 0, 0),
+(4, 2, NULL, NULL, 0, 0),
+(5, 3, NULL, NULL, 0, 0);
 
 --
 -- Dumping data for table `module_lt`
 --
 
-INSERT INTO `module_lt` (`id`, `song_id`, `password`, `has_password`, `is_enabled`) VALUES
-(1, 1, 'meumeumeu-lt', 1, 1);
+INSERT INTO `module_lt` (`id`, `song_id`, `password`, `name`, `has_password`, `is_enabled`) VALUES
+(1, 1, 'meumeumeu-lt', NULL, 1, 1),
+(2, 4, '', NULL, 0, 0),
+(3, 5, '', NULL, 0, 0),
+(4, 2, NULL, NULL, 0, 0),
+(5, 3, NULL, NULL, 0, 0);
 
 --
 -- Dumping data for table `module_qu`
 --
 
-INSERT INTO `module_qu` (`id`, `song_id`, `password`, `has_password`, `is_enabled`) VALUES
-(1, 1, 'meumeumeu-qu', 1, 1);
+INSERT INTO `module_qu` (`id`, `song_id`, `password`, `name`, `has_password`, `is_enabled`) VALUES
+(1, 1, 'meumeumeu-qu', NULL, 1, 1),
+(2, 3, 'not 4361 - qu', NULL, 1, 1),
+(3, 4, '', NULL, 0, 0),
+(4, 5, '', NULL, 0, 0),
+(6, 2, 'chikupa-qu', NULL, 1, 0);
+
+--
+-- Dumping data for table `module_question_heading`
+--
+
+INSERT INTO `module_question_heading` (`id`, `qu_id`, `lt_id`, `ge_id`, `dw_id`, `ls_id`, `name`) VALUES
+(1, 1, NULL, NULL, NULL, NULL, 'Intro'),
+(2, 1, NULL, NULL, NULL, NULL, 'Characters'),
+(3, 2, NULL, NULL, NULL, NULL, 'Not 4361'),
+(4, NULL, NULL, NULL, 1, NULL, 'Stuff');
+
+--
+-- Dumping data for table `module_question_item`
+--
+
+INSERT INTO `module_question_item` (`id`, `heading_id`, `content`, `type`, `weight`, `choices`, `answers`) VALUES
+(1, 1, 'test-meu', 'test', 1, NULL, NULL),
+(2, 1, 'test-meu-2', 'test', 2, NULL, NULL),
+(3, 3, 'test-not-meu', 'test', 3, NULL, NULL),
+(4, 2, 'test-meu-3, heading 2', 'test', 1, NULL, 'answer1,answer2');
 
 --
 -- Dumping data for table `professor_registrations`
@@ -159,7 +201,7 @@ INSERT INTO `module_qu` (`id`, `song_id`, `password`, `has_password`, `is_enable
 INSERT INTO `professor_registrations` (`id`, `owner_id`, `professor_id`, `course_id`, `date_created`, `date_deleted`, `date_start`, `date_end`, `signup_code`) VALUES
 (1, 5, 2, 1, 1488417868, NULL, 0, 1519953868, 'professorregistration1-58339'),
 (2, 5, 3, 1, 1488417868, NULL, 0, 1519953868, 'professorregistration2-928AB'),
-(3, 6, 4, 2, 1488417868, NULL, 0, 1519953868, 'professorregistration3-CA87D'),
+(3, 6, 4, 2, 1488417868, NULL, 100000, 111111, 'professorregistration3-CA87D'),
 (4, 6, 4, 3, 1488417868, NULL, 0, 1519953868, 'professorregistration4-38581');
 
 --
@@ -169,7 +211,9 @@ INSERT INTO `professor_registrations` (`id`, `owner_id`, `professor_id`, `course
 INSERT INTO `song` (`id`, `unit_id`, `title`, `weight`, `album`, `artist`, `description`, `lyrics`, `embed`) VALUES
 (1, 3, 'めうめうぺったんたん!!', 1, 'Bitter Sweet Girls', '日向美ビタースイーツ♪', 'meu meu', 'ワールドワイドな荒波ザッバー  商店街はひなびてらぁな 約束手形何万枚だ  ぺったんぺったんぺったんたーん 押して押されて押しも押されぬ  押し問答  こーなりゃ一肌脱いでやらぁにゃ  商店街から萌えおこしーな 可愛いキャララー　ハンコでホワワー  ぺったんぺったんぺったんたーん 押せばお先に推して知るべし　(せーの!!)  押さえどころ  甘くてゆるくてあざとい仕草に  萌えろよ萌えろよ　ハンコをぺったん 赤くてプニくてしっとり濡れてる  やわらかやわらか　朱肉だよ  萌えるハンコは正義のしるし!! ひれつな悪をうちくだくっ!!  めめめめめめめめうめう  めめめめうめう ぺったんぺったんぺったんぺったん  大好き めめめめうめう　めめめめうめう  ハンコで世界中しあわせ!! めめめめうめう　めめめめうめう ぺったんぺったんぺったんぺったん  大好き 合言葉は　萌えおこし　萌えおこし (M・O・K・S!! M・O・K・S!!) ぺたっとぺたっとぺたりこー!!  わふー!!　(わー!!)  ははははは!!　(オイ!!) んんんんん!!　(オイ!!) こここここ!!　(オイ!!)  ハンコ大好きー!!', 'test stuff'),
 (2, 3, 'ちくわパフェだよ☆CKP', 2, 'Bitter Sweet Girls', '日向美ビタースイーツ♪', 'chikuwa parfait', 'ちくパちくパ  ちくわのパフェなんだよ！ ちくパちくパ  おいしいめう  おしゃれめう！ ちくパちくパ  CKPCKP  ちくパちくパ  ちくパ最高ーッ！  わぁー！  生クリーム  バニラのアイスに  イチゴとバナナと メインはもちろん（もちろん）  ちくわめう！（ちくわ！） とろけたチョコをかければ完成  ちくパで大丈夫だよ  絶対  大丈夫だよっ！  ｢んきゅーッ！？悪のスイーツ大魔王が現れためう！｣ ｢落ち着いて！このちくわステッキで魔法ちくわ少女に変身するんだよっ！｣ ｢そそそそんな設定聞いてないめう！｣ ｢大丈夫だよ！絶対、大丈夫だよっ！｣  ちくパちくパ  まりまり  ちくパちくパ  もりもり ちくパちくパ  めうめう  ちくパちくパ  めりめり ちくちわ  ちくちくわ  ちくちくちわ  ちくちくちくわ  ちくちくちくちわ  ｢めうーっ！ちくわが折れたぁ！｣ ｢大丈夫！必殺・ちくわの穴から生クリーム光線だよっ！｣ （ドグシャァ　バリバリドッカー　チチクワァ） ｢こうして町に平和が訪れためう｣ ｢ちくわのおかげだねっ！｣  ちくパの味は似ているね  パパパウーパールーパー（違うめう！） みんな笑顔  やぶれかぶれ  無敵のハーモニー ちくパの歯ごたえ  お手前  パパパグーパーチョキパー（勝負めう！） ちくわの穴のぞけば  ほら  キラキラ光る  未来が見える  おーっ！ ちくパちくパ  CKPCKP  ちくパちくパ  ちくパ最高ーッ！                     ｢せーの！｣                        ｢｢ちくパ！｣｣', NULL),
-(3, 4, 'NOT 4361 UNIT 3', 3, 'NOT 4361 UNIT 3', 'NOT 4361 UNIT 3', 'NOT 4361 UNIT 3', 'NOT 4361 UNIT 3', NULL);
+(3, 4, 'NOT 4361 UNIT 3', 3, 'NOT 4361 UNIT 3', 'NOT 4361 UNIT 3', 'NOT 4361 UNIT 3', 'NOT 4361 UNIT 3', NULL),
+(4, 3, 'NEW! ちくわパフェだよ☆CKP', 2, 'Bitter Sweet Girls', '日向美ビタースイーツ♪', 'chikuwa parfait', 'ちくパちくパ  ちくわのパフェなんだよ！ ちくパちくパ  おいしいめう  おしゃれめう！ ちくパちくパ  CKPCKP  ちくパちくパ  ちくパ最高ーッ！  わぁー！  生クリーム  バニラのアイスに  イチゴとバナナと メインはもちろん（もちろん）  ちくわめう！（ちくわ！） とろけたチョコをかければ完成  ちくパで大丈夫だよ  絶対  大丈夫だよっ！  ｢んきゅーッ！？悪のスイーツ大魔王が現れためう！｣ ｢落ち着いて！このちくわステッキで魔法ちくわ少女に変身するんだよっ！｣ ｢そそそそんな設定聞いてないめう！｣ ｢大丈夫だよ！絶対、大丈夫だよっ！｣  ちくパちくパ  まりまり  ちくパちくパ  もりもり ちくパちくパ  めうめう  ちくパちくパ  めりめり ちくちわ  ちくちくわ  ちくちくちわ  ちくちくちくわ  ちくちくちくちわ  ｢めうーっ！ちくわが折れたぁ！｣ ｢大丈夫！必殺・ちくわの穴から生クリーム光線だよっ！｣ （ドグシャァ　バリバリドッカー　チチクワァ） ｢こうして町に平和が訪れためう｣ ｢ちくわのおかげだねっ！｣  ちくパの味は似ているね  パパパウーパールーパー（違うめう！） みんな笑顔  やぶれかぶれ  無敵のハーモニー ちくパの歯ごたえ  お手前  パパパグーパーチョキパー（勝負めう！） ちくわの穴のぞけば  ほら  キラキラ光る  未来が見える  おーっ！ ちくパちくパ  CKPCKP  ちくパちくパ  ちくパ最高ーッ！                     ｢せーの！｣                        ｢｢ちくパ！｣｣', NULL),
+(5, 3, 'NEWEST! ちくわパフェだよ☆CKP', 2, 'Bitter Sweet Girls', '日向美ビタースイーツ♪', 'chikuwa parfait', 'ちくパちくパ  ちくわのパフェなんだよ！ ちくパちくパ  おいしいめう  おしゃれめう！ ちくパちくパ  CKPCKP  ちくパちくパ  ちくパ最高ーッ！  わぁー！  生クリーム  バニラのアイスに  イチゴとバナナと メインはもちろん（もちろん）  ちくわめう！（ちくわ！） とろけたチョコをかければ完成  ちくパで大丈夫だよ  絶対  大丈夫だよっ！  ｢んきゅーッ！？悪のスイーツ大魔王が現れためう！｣ ｢落ち着いて！このちくわステッキで魔法ちくわ少女に変身するんだよっ！｣ ｢そそそそんな設定聞いてないめう！｣ ｢大丈夫だよ！絶対、大丈夫だよっ！｣  ちくパちくパ  まりまり  ちくパちくパ  もりもり ちくパちくパ  めうめう  ちくパちくパ  めりめり ちくちわ  ちくちくわ  ちくちくちわ  ちくちくちくわ  ちくちくちくちわ  ｢めうーっ！ちくわが折れたぁ！｣ ｢大丈夫！必殺・ちくわの穴から生クリーム光線だよっ！｣ （ドグシャァ　バリバリドッカー　チチクワァ） ｢こうして町に平和が訪れためう｣ ｢ちくわのおかげだねっ！｣  ちくパの味は似ているね  パパパウーパールーパー（違うめう！） みんな笑顔  やぶれかぶれ  無敵のハーモニー ちくパの歯ごたえ  お手前  パパパグーパーチョキパー（勝負めう！） ちくわの穴のぞけば  ほら  キラキラ光る  未来が見える  おーっ！ ちくパちくパ  CKPCKP  ちくパちくパ  ちくパ最高ーッ！                     ｢せーの！｣                        ｢｢ちくパ！｣｣', NULL);
 
 --
 -- Dumping data for table `songs_media`
@@ -183,24 +227,23 @@ INSERT INTO `songs_media` (`song_id`, `media_id`) VALUES
 -- Dumping data for table `student_registrations`
 --
 
-INSERT INTO `student_registrations` (`id`, `designer_id`, `class_id`, `prof_registration_id`, `name`, `date_created`, `date_deleted`, `date_start`, `date_end`, `signup_code`) VALUES
-(1, 5, 1, 1, 'CHIN 3002 A', 1488417872, NULL, 0, 1497057872, 'studentregistration1-XK783'),
-(2, 5, 2, 1, 'CHIN 3002 B', 1488417872, NULL, 0, 1497057872, 'studentregistration2-9UIO3'),
-(3, 5, 3, 2, 'CHIN 3002 C', 1488417872, NULL, 0, 1497057872, 'studentregistration3-AKFIU'),
-(4, 6, 4, 3, 'JAPN 3001 A', 1488417872, NULL, 0, 1497057872, 'studentregistration4-A143U'),
-(5, 6, 5, 3, 'JAPN 3001 B', 1488417872, NULL, 0, 1497057872, 'studentregistration5-93FSD'),
-(6, 6, 6, 4, 'JAPN 4361 A', 1488417872, NULL, 0, 1497057872, 'studentregistration5-93FSD');
+INSERT INTO `student_registrations` (`id`, `designer_id`, `class_id`, `prof_registration_id`, `name`, `date_created`, `date_deleted`, `date_start`, `date_end`, `signup_code`, `max_registrations`) VALUES
+(1, 5, 1, 1, 'CHIN 3002 A', 1488417872, NULL, 0, 1497057872, 'studentregistration1-XK783', 2),
+(2, 5, 2, 1, 'CHIN 3002 B', 1488417872, NULL, 0, 1497057872, 'studentregistration2-9UIO3', 40),
+(3, 5, 3, 2, 'CHIN 3002 C', 1488417872, NULL, 0, 1497057872, 'studentregistration3-AKFIU', 30),
+(4, 6, 4, 3, 'JAPN 3001 A', 1488417872, NULL, 100000, 111111, 'studentregistration4-A143U', 4),
+(5, 6, 5, 3, 'JAPN 3001 B', 1488417872, NULL, 100000, 111111, 'studentregistration5-93FSD', 3),
+(6, 6, 6, 4, 'JAPN 4361 A', 1488417872, NULL, 0, 1497057872, 'studentregistration5-93FSD', 1);
 
 --
 -- Dumping data for table `unit`
 --
 
 INSERT INTO `unit` (`id`, `course_id`, `name`, `description`, `weight`) VALUES
-(1, 3, 'Unit 1 - 4361', 'Introduction to Syllabus', 1),
 (2, 3, 'Unit 3 - 4361', 'Modern Japan', 3),
 (3, 3, 'Unit 2 - 4361', 'Historic Japan', 2),
-(4, 1, 'Unit 1 - CHINESE 3002', 'THIS DOES NOT BELONG TO 4361', 10);
-SET FOREIGN_KEY_CHECKS=1;
+(4, 1, 'Unit 1 - CHINESE 3002', 'THIS DOES NOT BELONG TO 4361', 10),
+(6, 3, 'Unit 1 - 4361', 'Introduction to Syllabus', 1);
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
