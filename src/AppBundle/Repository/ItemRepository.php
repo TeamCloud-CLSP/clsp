@@ -348,29 +348,38 @@ class ItemRepository extends \Doctrine\ORM\EntityRepository
                 }
             } else if (strcmp($type, 'fill-blank') == 0) {
                 // fill in the blank question = infinite answer choices, answer number varies
-                // first check if number of answers given is the same
-                if (count($student_answers) != count($answers)) {
-                    $result = false;
-                } else {
-                    $result = true;
-                    // check answers in order, accounting for multiple answers
-                    for ($i = 0; $i < count($answers); $i++) {
-                        $answer = $answers[$i]->choice;
-                        $student_answer = $student_answers[$i]->choice;
-                        $split_answers = explode(':', $answer);
-                        $found = false;
-                        for ($j = 0; $j < count($split_answers); $j++) {
-                            $current = $split_answers[$j];
-                            if (strcasecmp($current, $student_answer) == 0) {
-                                $found = true;
-                                break;
-                            }
-                        }
-                        if ($found == false) {
-                            $result = false;
+                // need to return true/false for each blank
+                $result = array();
+                for ($i = 0; $i < count($answers) && $i < count($student_answers); $i++) {
+                    $answer = $answers[$i]->choice;
+                    $student_answer = $student_answers[$i]->choice;
+                    $split_answers = explode(':', $answer);
+                    $found = false;
+                    for ($j = 0; $j < count($split_answers); $j++) {
+                        $current = $split_answers[$j];
+                        if (strcasecmp($current, $student_answer) == 0) {
+                            $found = true;
                             break;
                         }
                     }
+                    if ($found == false) {
+                        array_push($result, false);
+                    } else {
+                        array_push($result, true);
+                    }
+                }
+
+                if (count($student_answers) != count($answers)) {
+                    if (count($answers) > count($student_answers)) {
+                        for ($k = 0; $k < count($answers) - count($result); $k++) {
+                            array_push($result, false);
+                        }
+                    } else {
+                        for ($k = 0; $k < count($student_answers) - count($result); $k++) {
+                            array_push($result, false);
+                        }
+                    }
+
                 }
 
             } else {
