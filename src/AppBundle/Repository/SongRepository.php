@@ -175,11 +175,12 @@ class SongRepository extends \Doctrine\ORM\EntityRepository
                             'song_id' => '?',
                             'password' => '?',
                             'has_password' => '?',
-                            'is_enabled' => '?'
+                            'is_enabled' => '?',
+                            'song_enabled' => '?'
                         )
                     )
                     ->setParameter(0, $song_id)->setParameter(1, '')->setParameter(2, 0)
-                    ->setParameter(3, 0)->execute();
+                    ->setParameter(3, 0)->setParameter(4, 0)->execute();
             }
 
             // return the info of the newly created song

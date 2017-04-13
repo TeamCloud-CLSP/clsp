@@ -28,7 +28,7 @@ class ModuleRepository extends \Doctrine\ORM\EntityRepository
         $queryBuilder = $conn->createQueryBuilder();
         $results = null;
         if (strcmp($user_type, 'designer') == 0) { // if designer, make sure that the designer owns the song and module being accessed
-            $results = $queryBuilder->select('module.id', 'module.password', 'module.has_password', 'module.song_id', 'module.name', 'module.is_enabled', 'song.id AS song_id')
+            $results = $queryBuilder->select('module.id', 'module.password', 'module.has_password', 'module.song_id', 'module.name', 'module.is_enabled', 'module.song_enabled', 'song.id AS song_id')
                 ->from('app_users', 'designers')->innerJoin('designers', 'courses', 'courses', 'designers.id = courses.user_id')
                 ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')
                 ->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')
@@ -36,7 +36,7 @@ class ModuleRepository extends \Doctrine\ORM\EntityRepository
                 ->where('designers.id = ?')->andWhere('song.id = ?')
                 ->setParameter(0, $user_id)->setParameter(1, $song_id)->execute()->fetchAll();
         } else if (strcmp($user_type, 'professor') == 0) {
-            $results = $queryBuilder->select('module.id', 'module.password', 'module.has_password', 'module.song_id', 'module.name', 'module.is_enabled', 'song.id AS song_id')
+            $results = $queryBuilder->select('module.id', 'module.password', 'module.has_password', 'module.song_id', 'module.name', 'module.is_enabled', 'module.song_enabled', 'song.id AS song_id')
                 ->from('professor_registrations', 'pr')->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
                 ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')
                 ->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')
@@ -44,7 +44,7 @@ class ModuleRepository extends \Doctrine\ORM\EntityRepository
                 ->where('pr.professor_id = ?')->andWhere('pr.date_start < ?')->andWhere('pr.date_end > ?')->andWhere('song.id = ?')
                 ->setParameter(0, $user_id)->setParameter(1, time())->setParameter(2, time())->setParameter(3, $song_id)->execute()->fetchAll();
         } else if (strcmp($user_type, 'student') == 0) {
-            $results = $queryBuilder->select('module.id', 'module.password', 'module.has_password', 'module.song_id', 'module.name', 'module.is_enabled', 'song.id AS song_id')
+            $results = $queryBuilder->select('module.id', 'module.password', 'module.has_password', 'module.song_id', 'module.name', 'module.is_enabled', 'module.song_enabled', 'song.id AS song_id')
                 ->from('app_users', 'students')->innerJoin('students', 'student_registrations', 'sr', 'students.student_registration_id = sr.id')
                 ->innerJoin('sr', 'classes', 'classes', 'sr.class_id = classes.id')
                 ->innerJoin('classes', 'courses', 'courses', 'classes.course_id = courses.id')
@@ -106,10 +106,12 @@ class ModuleRepository extends \Doctrine\ORM\EntityRepository
 
         // check post parameters to make sure required fields exist
         $post_parameters = $request->request->all();
-        if (array_key_exists('password', $post_parameters) && array_key_exists('has_password', $post_parameters) && array_key_exists('is_enabled', $post_parameters)) {
+        if (array_key_exists('password', $post_parameters) && array_key_exists('has_password', $post_parameters) && array_key_exists('is_enabled', $post_parameters)
+            && array_key_exists('song_enabled', $post_parameters)) {
             $password = $post_parameters['password'];
             $has_password = $post_parameters['has_password'];
             $is_enabled = $post_parameters['is_enabled'];
+            $song_enabled = $post_parameters['song_enabled'];
             $name = null;
 
             // do some password logic checking (can't require a password but give no password, can't not have a password but set a password)
@@ -129,6 +131,13 @@ class ModuleRepository extends \Doctrine\ORM\EntityRepository
                 $password = null;
             }
 
+            // makes sure numeric fields are numeric
+            if (!is_numeric($is_enabled) || !is_numeric($song_enabled)) {
+                $jsr = new JsonResponse(array('error' => 'Expected a numeric value.'));
+                $jsr->setStatusCode(400);
+                return $jsr;
+            }
+
             // check for optional parameters
             if (array_key_exists('name', $post_parameters)) {
                 $name = $post_parameters['name'];
@@ -144,11 +153,12 @@ class ModuleRepository extends \Doctrine\ORM\EntityRepository
                         'password' => '?',
                         'has_password' => '?',
                         'is_enabled' => '?',
-                        'name' => '?'
+                        'name' => '?',
+                        'song_enabled' => '?'
                     )
                 )
                 ->setParameter(0, $song_id)->setParameter(1, $password)->setParameter(2, $has_password)
-                ->setParameter(3, $is_enabled)->setParameter(4, $name)->execute();
+                ->setParameter(3, $is_enabled)->setParameter(4, $name)->setParameter(5, $song_enabled)->execute();
 
             // return the newly created module
             return ModuleRepository::getModule($request, $user_id, $user_type, $moduleName, $song_id);
@@ -183,10 +193,12 @@ class ModuleRepository extends \Doctrine\ORM\EntityRepository
 
         // check post parameters to make sure required fields exist
         $post_parameters = $request->request->all();
-        if (array_key_exists('password', $post_parameters) && array_key_exists('has_password', $post_parameters) && array_key_exists('is_enabled', $post_parameters)) {
+        if (array_key_exists('password', $post_parameters) && array_key_exists('has_password', $post_parameters) && array_key_exists('is_enabled', $post_parameters)
+            && array_key_exists('song_enabled', $post_parameters)) {
             $password = $post_parameters['password'];
             $has_password = $post_parameters['has_password'];
             $is_enabled = $post_parameters['is_enabled'];
+            $song_enabled = $post_parameters['song_enabled'];
             $name = null;
 
             // check password requirements/consistency
@@ -197,6 +209,13 @@ class ModuleRepository extends \Doctrine\ORM\EntityRepository
             }
             if ($has_password == 1 && ($password == '' || $password == null)) {
                 $jsr = new JsonResponse(array('error' => 'Forced a password but did not specify one.'));
+                $jsr->setStatusCode(400);
+                return $jsr;
+            }
+
+            // makes sure numeric fields are numeric
+            if (!is_numeric($is_enabled) || !is_numeric($song_enabled)) {
+                $jsr = new JsonResponse(array('error' => 'Expected a numeric value.'));
                 $jsr->setStatusCode(400);
                 return $jsr;
             }
@@ -214,9 +233,10 @@ class ModuleRepository extends \Doctrine\ORM\EntityRepository
                 ->set('has_password', '?')
                 ->set('is_enabled', '?')
                 ->set('name', '?')
+                ->set('song_enabled', '?')
                 ->where('song_id = ?')
-                ->setParameter(4, $song_id)->setParameter(0, $password)->setParameter(1, $has_password)
-                ->setParameter(3, $name)->setParameter(2, $is_enabled)->execute();
+                ->setParameter(5, $song_id)->setParameter(0, $password)->setParameter(1, $has_password)
+                ->setParameter(3, $name)->setParameter(2, $is_enabled)->setParameter(4, $song_enabled)->execute();
 
             // return the updated module information
             return ModuleRepository::getModule($request, $user_id, $user_type, $moduleName, $song_id);
