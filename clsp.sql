@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Apr 03, 2017 at 12:08 AM
+-- Generation Time: Apr 12, 2017 at 11:40 PM
 -- Server version: 5.7.17-0ubuntu0.16.04.1
 -- PHP Version: 7.0.8-2+deb.sury.org~xenial+1
 
@@ -93,12 +93,12 @@ INSERT INTO `media` (`id`, `user_id`, `name`, `filename`, `file_type`) VALUES
 -- Dumping data for table `module_cn`
 --
 
-INSERT INTO `module_cn` (`id`, `song_id`, `password`, `name`, `has_password`, `is_enabled`) VALUES
-(1, 1, 'meumeumeu', NULL, 1, 1),
-(2, 2, NULL, NULL, 0, 1),
-(3, 3, NULL, NULL, 0, 1),
-(4, 4, '', NULL, 0, 0),
-(5, 5, '', NULL, 0, 0);
+INSERT INTO `module_cn` (`id`, `song_id`, `password`, `name`, `has_password`, `is_enabled`, `song_enabled`) VALUES
+(1, 1, 'meumeumeu', NULL, 1, 1, 0),
+(2, 2, NULL, NULL, 0, 1, 0),
+(3, 3, NULL, NULL, 0, 1, 0),
+(4, 4, '', NULL, 0, 0, 0),
+(5, 5, '', NULL, 0, 0, 0);
 
 --
 -- Dumping data for table `module_cn_keyword`
@@ -124,56 +124,56 @@ INSERT INTO `module_cn_keywords_media` (`module_cn_keyword_id`, `media_id`) VALU
 -- Dumping data for table `module_dw`
 --
 
-INSERT INTO `module_dw` (`id`, `song_id`, `password`, `name`, `has_password`, `is_enabled`) VALUES
-(1, 1, 'meumeumeu-dw', NULL, 1, 1),
-(2, 2, 'chikuwaparfait-dw', NULL, 1, 1),
-(3, 3, 'not 4361', NULL, 1, 1),
-(4, 4, '', NULL, 0, 0),
-(5, 5, '', NULL, 0, 0);
+INSERT INTO `module_dw` (`id`, `song_id`, `password`, `name`, `has_password`, `is_enabled`, `song_enabled`) VALUES
+(1, 1, 'meumeumeu-dw', NULL, 1, 1, 0),
+(2, 2, 'chikuwaparfait-dw', NULL, 1, 1, 0),
+(3, 3, 'not 4361', NULL, 1, 1, 0),
+(4, 4, '', NULL, 0, 0, 0),
+(5, 5, '', NULL, 0, 0, 0);
 
 --
 -- Dumping data for table `module_ge`
 --
 
-INSERT INTO `module_ge` (`id`, `song_id`, `password`, `name`, `has_password`, `is_enabled`) VALUES
-(1, 1, 'meumeumeu-ge', NULL, 1, 1),
-(2, 4, '', NULL, 0, 0),
-(3, 5, '', NULL, 0, 0),
-(4, 2, NULL, NULL, 0, 0),
-(5, 3, NULL, NULL, 0, 0);
+INSERT INTO `module_ge` (`id`, `song_id`, `password`, `name`, `has_password`, `is_enabled`, `song_enabled`) VALUES
+(1, 1, 'meumeumeu-ge', NULL, 1, 1, 0),
+(2, 4, '', NULL, 0, 0, 0),
+(3, 5, '', NULL, 0, 0, 0),
+(4, 2, NULL, NULL, 0, 0, 0),
+(5, 3, NULL, NULL, 0, 0, 0);
 
 --
 -- Dumping data for table `module_ls`
 --
 
-INSERT INTO `module_ls` (`id`, `song_id`, `password`, `name`, `has_password`, `is_enabled`) VALUES
-(1, 1, 'meumeumeu-ls', 'Listening Suggestions-meu!', 1, 1),
-(2, 4, '', NULL, 0, 0),
-(3, 5, '', NULL, 0, 0),
-(4, 2, NULL, NULL, 0, 0),
-(5, 3, NULL, NULL, 0, 0);
+INSERT INTO `module_ls` (`id`, `song_id`, `password`, `name`, `has_password`, `is_enabled`, `song_enabled`) VALUES
+(1, 1, 'meumeumeu-ls', 'Listening Suggestions-meu!', 1, 1, 0),
+(2, 4, '', NULL, 0, 0, 0),
+(3, 5, '', NULL, 0, 0, 0),
+(4, 2, NULL, NULL, 0, 0, 0),
+(5, 3, NULL, NULL, 0, 0, 0);
 
 --
 -- Dumping data for table `module_lt`
 --
 
-INSERT INTO `module_lt` (`id`, `song_id`, `password`, `name`, `has_password`, `is_enabled`) VALUES
-(1, 1, 'meumeumeu-lt', NULL, 1, 1),
-(2, 4, '', NULL, 0, 0),
-(3, 5, '', NULL, 0, 0),
-(4, 2, NULL, NULL, 0, 0),
-(5, 3, NULL, NULL, 0, 0);
+INSERT INTO `module_lt` (`id`, `song_id`, `password`, `name`, `has_password`, `is_enabled`, `song_enabled`) VALUES
+(1, 1, 'meumeumeu-lt', NULL, 1, 1, 0),
+(2, 4, '', NULL, 0, 0, 0),
+(3, 5, '', NULL, 0, 0, 0),
+(4, 2, NULL, NULL, 0, 0, 0),
+(5, 3, NULL, NULL, 0, 0, 0);
 
 --
 -- Dumping data for table `module_qu`
 --
 
-INSERT INTO `module_qu` (`id`, `song_id`, `password`, `name`, `has_password`, `is_enabled`) VALUES
-(1, 1, 'meumeumeu-qu', NULL, 1, 1),
-(2, 3, 'not 4361 - qu', NULL, 1, 1),
-(3, 4, '', NULL, 0, 0),
-(4, 5, '', NULL, 0, 0),
-(6, 2, 'chikupa-qu', NULL, 1, 0);
+INSERT INTO `module_qu` (`id`, `song_id`, `password`, `name`, `has_password`, `is_enabled`, `song_enabled`) VALUES
+(1, 1, 'meumeumeu-qu', NULL, 1, 1, 0),
+(2, 3, 'not 4361 - qu', NULL, 1, 1, 0),
+(3, 4, '', NULL, 0, 0, 0),
+(4, 5, '', NULL, 0, 0, 0),
+(6, 2, 'chikupa-qu', NULL, 1, 0, 0);
 
 --
 -- Dumping data for table `module_question_heading`

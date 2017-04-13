@@ -52,6 +52,13 @@ class ModuleDw
     private $isEnabled;
 
     /**
+     * @var boolean
+     *
+     * @ORM\Column(name="song_enabled", type="boolean")
+     */
+    private $songEnabled;
+
+    /**
      * One ModuleDw has One Song
      * @ORM\OneToOne(targetEntity="Song", inversedBy="moduleDw")
      * @ORM\JoinColumn(name="song_id", referencedColumnName="id", onDelete="CASCADE")
@@ -238,5 +245,29 @@ class ModuleDw
     public function getHeadings()
     {
         return $this->headings;
+    }
+
+    /**
+     * Set songEnabled
+     *
+     * @param boolean $songEnabled
+     *
+     * @return ModuleDw
+     */
+    public function setSongEnabled($songEnabled)
+    {
+        $this->songEnabled = $songEnabled;
+
+        return $this;
+    }
+
+    /**
+     * Get songEnabled
+     *
+     * @return boolean
+     */
+    public function getSongEnabled()
+    {
+        return $this->songEnabled;
     }
 }
