@@ -49,7 +49,7 @@ use AppBundle\Repository\KeywordMediaRepository;
  *
  * getModuleXXHeaders - /api/designer/song/{id}/module_xx/structure - get just the headers associated with a specific module
  * getHeading - /api/designer/header/{id}
- * createModuleXXHeaders - /api/designer/song/{id}/module_ge/headers (POST) - takes name; song_id given through URL
+ * createModuleXXHeaders - /api/designer/song/{id}/module_xx/headers (POST) - takes name and weight; song_id given through URL
  * editHeader - /api/designer/header/{id} (POST) - takes name
  * deleteHeading - /api/designer/header/{id} (DELETE)
  *
