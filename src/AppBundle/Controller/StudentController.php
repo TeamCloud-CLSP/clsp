@@ -50,7 +50,7 @@ use AppBundle\Repository\ClassRepository;
  * getModules - /api/student/song/{id}/modules - get ALL modules that a song has
  *
  * KEYWORD FUNCTIONS BELOW: if the module_cn requires a password, a password parameter must be sent with the request to authenticate.
- * getKeywords - /api/student/song/{id}/keywords - get keywords that a song has - song must have a CN module for this to work
+ * getKeywords - /api/student/song/{id}/keywords - get keywords that a song has - can filter by phrase
  * getKeyword - /api/student/keyword/{id}
  *
  * getKeywordMedia - /api/student/keyword/{id}/media - get all media that belongs to a keyword
