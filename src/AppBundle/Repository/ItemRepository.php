@@ -39,7 +39,61 @@ class ItemRepository extends \Doctrine\ORM\EntityRepository
             ->orderBy('module_question_item.weight', 'ASC')->addOrderBy('module_question_item.id', 'ASC')
             ->setParameter(0, $heading_id)->execute()->fetchAll();
 
-        $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));
+        // get the header, so we know what module it belongs to
+        $result = HeaderRepository::getHeader($request, $user_id, $user_type, $heading_id);
+        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+            return $result;
+        }
+        $header = json_decode($result->getContent());
+        $module_name = $header->module_name;
+        $song_id = $header->song_id;
+
+        // determine the id name of the module
+        $module_id_list = ['dw_id', 'ge_id', 'ls_id', 'lt_id', 'qu_id'];
+        $module_name_list = ['module_dw', 'module_ge', 'module_ls', 'module_lt', 'module_qu'];
+        $index = array_search($module_name, $module_name_list);
+
+        if ($index === false) {
+            $jsr = new JsonResponse(array('error' => 'Bad module name.'));
+            $jsr->setStatusCode(500);
+            return $jsr;
+        }
+
+        $module_id_name = $module_id_list[$index];
+
+        // get all headers
+        $result = HeaderRepository::getHeaders($request, $user_id, $user_type, $module_name, $module_id_name, $song_id);
+        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+            return $result;
+        }
+        $headers = json_decode($result->getContent())->data;
+
+        // search for the current header in the list
+        $index = -1;
+        for ($i = 0; $i < count($headers); $i++) {
+            if ($headers[$i]->id == $heading_id) {
+                $index = $i;
+                break;
+            }
+        }
+
+        if ($index == -1) {
+            $jsr = new JsonResponse(array('error' => 'Corrupted data.'));
+            $jsr->setStatusCode(500);
+            return $jsr;
+        }
+
+        $prev_id = null;
+        $next_id = null;
+        if ($index != 0) {
+            $prev_id = $headers[$index-1]->id;
+        }
+        if ($index < count($headers) - 1) {
+            $next_id = $headers[$index+1]->id;
+        }
+
+
+        $jsr = new JsonResponse(array('size' => count($results), 'prev_id' => $prev_id, 'next_id' => $next_id, 'data' => $results));
         $jsr->setStatusCode(200);
         return $jsr;
     }
