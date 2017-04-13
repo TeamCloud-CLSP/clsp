@@ -49,6 +49,41 @@ class MediaRepository extends \Doctrine\ORM\EntityRepository
         return new JsonResponse(array('size' => count($results), 'data' => $results));
     }
 
+    public static function getAudioVideoMedia(Request $request, $user_id, $user_type) {
+        // a user MUST be a designer to have media that belongs to them
+        if (strcmp($user_type, 'designer') != 0) {
+            $jsr = new JsonResponse(array('error' => 'Permissions are invalid.'));
+            $jsr->setStatusCode(503);
+            return $jsr;
+        }
+
+        // get request parameters
+        $request_parameters = $request->query->all();
+
+        // check for optional parameters
+        $name = "%%";
+        $file_type = "%%";
+        if (array_key_exists('name', $request_parameters)) {
+            $name = '%' . $request_parameters['name'] . '%';
+        }
+        if (array_key_exists('file_type', $request_parameters)) {
+            $file_type = '%' . $request_parameters['file_type'] . '%';
+        }
+
+        // get media that belongs to the user
+        $conn = Database::getInstance();
+        $queryBuilder = $conn->createQueryBuilder();
+        $results = $queryBuilder->select('id', 'name', 'filename', 'file_type')
+            ->from('media')
+            ->where('user_id = ?')
+            ->andWhere('name LIKE ?')
+            ->andWhere('file_type LIKE ?')
+            ->andWhere("file_type LIKE 'mp3' OR file_type LIKE 'mp4' OR file_type LIKE 'aac' OR file_type LIKE 'wav' OR file_type LIKE 'webm' OR file_type LIKE 'ogg'")
+            ->setParameter(0, $user_id)->setParameter(1, $name)->setParameter(2, $file_type)->execute()->fetchAll();
+
+        return new JsonResponse(array('size' => count($results), 'data' => $results));
+    }
+
     public static function getMedia(Request $request, $user_id, $user_type, $file_id) {
         // a user MUST be a designer to have media that belongs to them
         if (strcmp($user_type, 'designer') != 0) {

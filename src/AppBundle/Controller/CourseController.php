@@ -36,6 +36,7 @@ use AppBundle\Repository\SongMediaRepository;
  * deleteSong - /api/designer/song/{id} (DELETE)
  *
  * getAllMedia - /api/designer/media - gets all files the designer owns; can filter by name and file_type
+ * getAudioVideoMedia - /api/designer/avmedia - same as above, but only returns audio and video files supported by the HTML5 player
  * getMedia - /api/designer/media/{id}
  * createMedia - /api/designer/media (POST) - takes file (the actual file) | optional: name
  * editMedia - /api/designer/media/{id} (POST) - takes name
@@ -289,7 +290,20 @@ class CourseController extends Controller
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $user_id = $user->getId();
         return MediaRepository::getAllMedia($request, $user_id, 'designer');
-        
+    }
+
+    /**
+     * Gets all audio/video files supported by the HTML5 player a designer has
+     *
+     * Can filter by name and file_type
+     *
+     * @Route("/api/designer/avmedia", name="getAudioVideoFilesAsDesigner")
+     * @Method({"GET", "OPTIONS"})
+     */
+    public function getAudioVideoMedia(Request $request) {
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $user_id = $user->getId();
+        return MediaRepository::getAudioVideoMedia($request, $user_id, 'designer');
     }
 
     /**
