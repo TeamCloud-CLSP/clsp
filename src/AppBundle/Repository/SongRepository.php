@@ -32,7 +32,7 @@ class SongRepository extends \Doctrine\ORM\EntityRepository
         $queryBuilder = $conn->createQueryBuilder();
         $results = $queryBuilder->select('song.id', 'song.title', 'song.album', 'song.artist', 'song.description', 'song.lyrics', 'song.embed', 'song.weight')
             ->from('unit')->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')->where('unit_id = ?')
-            ->orderBy('song.weight', 'ASC')
+            ->orderBy('song.weight', 'ASC')->addOrderBy('song.id', 'ASC')
             ->setParameter(0, $unit_id)->execute()->fetchAll();
 
         $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));

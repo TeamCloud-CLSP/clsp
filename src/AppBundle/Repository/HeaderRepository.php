@@ -31,10 +31,10 @@ class HeaderRepository extends \Doctrine\ORM\EntityRepository
 
         $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('module_question_heading.id', 'module_question_heading.name')
+        $results = $queryBuilder->select('module_question_heading.id', 'module_question_heading.name', 'module_question_heading.weight')
             ->from('song')->innerJoin('song', $moduleName, 'module', 'song.id = module.song_id')
             ->innerJoin('module', 'module_question_heading', 'module_question_heading', 'module.id = module_question_heading.' . $module_id_name)
-            ->where('song.id = ?')
+            ->where('song.id = ?')->orderBy('module_question_heading.weight')->addOrderBy('module_question_heading.id')
             ->setParameter(0, $song_id)->execute()->fetchAll();
 
         $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));

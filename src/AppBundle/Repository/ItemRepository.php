@@ -36,6 +36,7 @@ class ItemRepository extends \Doctrine\ORM\EntityRepository
             'module_question_item.weight', 'module_question_item.choices', 'module_question_item.answers')
             ->from('module_question_item')
             ->where('module_question_item.heading_id = ?')
+            ->orderBy('module_question_item.weight', 'ASC')->addOrderBy('module_question_item.id', 'ASC')
             ->setParameter(0, $heading_id)->execute()->fetchAll();
 
         $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));
