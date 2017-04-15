@@ -11,9 +11,9 @@ class Database {
 
     private function __construct() {
         $this->conn = DriverManager::getConnection(array(
-            'dbname' => 'clsp',
-            'user' => 'homestead',
-            'password' => 'secret',
+            'dbname' => 'symfony',
+            'user' => 'root',
+            'password' => null,
             'host' => 'localhost',
             'driver' => 'pdo_mysql',
         ));

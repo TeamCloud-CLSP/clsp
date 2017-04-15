@@ -217,7 +217,9 @@ class SecurityController extends Controller
                     ]
                 ]);
             } else {
-                return new JsonResponse(["error" => "Could not authenticate with the given credentials"]);
+                $jsr = new JsonResponse(["error" => "Could not authenticate with the given credentials"]);
+                $jsr->setStatusCode(400);
+                return $jsr;
             }
 
         } else {
