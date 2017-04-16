@@ -32,7 +32,7 @@ class SongRepository extends \Doctrine\ORM\EntityRepository
         $queryBuilder = $conn->createQueryBuilder();
         $results = $queryBuilder->select('song.id', 'song.title', 'song.album', 'song.artist', 'song.description', 'song.lyrics', 'song.embed', 'song.weight')
             ->from('unit')->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')->where('unit_id = ?')
-            ->orderBy('song.weight', 'ASC')
+            ->orderBy('song.weight', 'ASC')->addOrderBy('song.id', 'ASC')
             ->setParameter(0, $unit_id)->execute()->fetchAll();
 
         $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));
@@ -175,11 +175,12 @@ class SongRepository extends \Doctrine\ORM\EntityRepository
                             'song_id' => '?',
                             'password' => '?',
                             'has_password' => '?',
-                            'is_enabled' => '?'
+                            'is_enabled' => '?',
+                            'song_enabled' => '?'
                         )
                     )
                     ->setParameter(0, $song_id)->setParameter(1, '')->setParameter(2, 0)
-                    ->setParameter(3, 0)->execute();
+                    ->setParameter(3, 0)->setParameter(4, 0)->execute();
             }
 
             // return the info of the newly created song

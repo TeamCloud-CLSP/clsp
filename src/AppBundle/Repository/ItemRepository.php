@@ -36,9 +36,64 @@ class ItemRepository extends \Doctrine\ORM\EntityRepository
             'module_question_item.weight', 'module_question_item.choices', 'module_question_item.answers')
             ->from('module_question_item')
             ->where('module_question_item.heading_id = ?')
+            ->orderBy('module_question_item.weight', 'ASC')->addOrderBy('module_question_item.id', 'ASC')
             ->setParameter(0, $heading_id)->execute()->fetchAll();
 
-        $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));
+        // get the header, so we know what module it belongs to
+        $result = HeaderRepository::getHeader($request, $user_id, $user_type, $heading_id);
+        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+            return $result;
+        }
+        $header = json_decode($result->getContent());
+        $module_name = $header->module_name;
+        $song_id = $header->song_id;
+
+        // determine the id name of the module
+        $module_id_list = ['dw_id', 'ge_id', 'ls_id', 'lt_id', 'qu_id'];
+        $module_name_list = ['module_dw', 'module_ge', 'module_ls', 'module_lt', 'module_qu'];
+        $index = array_search($module_name, $module_name_list);
+
+        if ($index === false) {
+            $jsr = new JsonResponse(array('error' => 'Bad module name.'));
+            $jsr->setStatusCode(500);
+            return $jsr;
+        }
+
+        $module_id_name = $module_id_list[$index];
+
+        // get all headers
+        $result = HeaderRepository::getHeaders($request, $user_id, $user_type, $module_name, $module_id_name, $song_id);
+        if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+            return $result;
+        }
+        $headers = json_decode($result->getContent())->data;
+
+        // search for the current header in the list
+        $index = -1;
+        for ($i = 0; $i < count($headers); $i++) {
+            if ($headers[$i]->id == $heading_id) {
+                $index = $i;
+                break;
+            }
+        }
+
+        if ($index == -1) {
+            $jsr = new JsonResponse(array('error' => 'Corrupted data.'));
+            $jsr->setStatusCode(500);
+            return $jsr;
+        }
+
+        $prev_id = null;
+        $next_id = null;
+        if ($index != 0) {
+            $prev_id = $headers[$index-1]->id;
+        }
+        if ($index < count($headers) - 1) {
+            $next_id = $headers[$index+1]->id;
+        }
+
+
+        $jsr = new JsonResponse(array('size' => count($results), 'prev_id' => $prev_id, 'next_id' => $next_id, 'data' => $results));
         $jsr->setStatusCode(200);
         return $jsr;
     }
@@ -244,7 +299,7 @@ class ItemRepository extends \Doctrine\ORM\EntityRepository
 
         return new Response();
     }
-    
+
     public static function getHeaderItemStructure(Request $request, $user_id, $user_type, $moduleName, $module_id_name, $song_id) {
         $result = HeaderRepository::getHeaders($request, $user_id, $user_type, $moduleName, $module_id_name, $song_id);
         if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
@@ -280,7 +335,7 @@ class ItemRepository extends \Doctrine\ORM\EntityRepository
         }
 
         // check for student's answer
-        $request_parameters = $request->query->all();
+        $request_parameters = $request->request->all();
         $student_answers = "";
         if (array_key_exists('answer', $request_parameters)) {
             $student_answers = $request_parameters['answer'];
@@ -288,6 +343,9 @@ class ItemRepository extends \Doctrine\ORM\EntityRepository
             $jsr = new JsonResponse(array('error' => 'Student did not provide an answer.'));
             $jsr->setStatusCode(400);
             return $jsr;
+        }
+        if (is_array($student_answers)) {
+            $student_answers = json_encode($student_answers);
         }
         $student_answers = json_decode($student_answers);
         if (count($student_answers) < 1) {
@@ -345,29 +403,38 @@ class ItemRepository extends \Doctrine\ORM\EntityRepository
                 }
             } else if (strcmp($type, 'fill-blank') == 0) {
                 // fill in the blank question = infinite answer choices, answer number varies
-                // first check if number of answers given is the same
-                if (count($student_answers) != count($answers)) {
-                    $result = false;
-                } else {
-                    $result = true;
-                    // check answers in order, accounting for multiple answers
-                    for ($i = 0; $i < count($answers); $i++) {
-                        $answer = $answers[$i]->choice;
-                        $student_answer = $student_answers[$i]->choice;
-                        $split_answers = explode(':', $answer);
-                        $found = false;
-                        for ($j = 0; $j < count($split_answers); $j++) {
-                            $current = $split_answers[$j];
-                            if (strcasecmp($current, $student_answer) == 0) {
-                                $found = true;
-                                break;
-                            }
-                        }
-                        if ($found == false) {
-                            $result = false;
+                // need to return true/false for each blank
+                $result = array();
+                for ($i = 0; $i < count($answers) && $i < count($student_answers); $i++) {
+                    $answer = $answers[$i]->choice;
+                    $student_answer = $student_answers[$i]->choice;
+                    $split_answers = explode(':', $answer);
+                    $found = false;
+                    for ($j = 0; $j < count($split_answers); $j++) {
+                        $current = $split_answers[$j];
+                        if (strcasecmp($current, $student_answer) == 0) {
+                            $found = true;
                             break;
                         }
                     }
+                    if ($found == false) {
+                        array_push($result, false);
+                    } else {
+                        array_push($result, true);
+                    }
+                }
+
+                if (count($student_answers) != count($answers)) {
+                    if (count($answers) > count($student_answers)) {
+                        for ($k = 0; $k < count($answers) - count($result); $k++) {
+                            array_push($result, false);
+                        }
+                    } else {
+                        for ($k = 0; $k < count($student_answers) - count($result); $k++) {
+                            array_push($result, false);
+                        }
+                    }
+
                 }
 
             } else {
@@ -391,12 +458,12 @@ class ItemRepository extends \Doctrine\ORM\EntityRepository
             return $jsr;
         }
 
-        $request_parameters = $request->query->all();
+        $request_parameters = $request->request->all();
         $results = array();
         foreach ($request_parameters as $key => $value) {
             if (is_numeric($key)) {
                 $item_id = intval($key);
-                $request->query->set('answer', $value);
+                $request->request->set('answer', $value);
                 $result = ItemRepository::checkAnswer($request, $user_id, $user_type, $item_id);
                 if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
                     return $result;

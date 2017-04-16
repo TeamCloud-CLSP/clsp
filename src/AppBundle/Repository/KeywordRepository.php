@@ -50,12 +50,21 @@ class KeywordRepository extends \Doctrine\ORM\EntityRepository
             }
         }
 
+        // get request parameters
+        $request_parameters = $request->query->all();
+
+        // check for optional parameters
+        $name = "%%";
+        if (array_key_exists('phrase', $request_parameters)) {
+            $name = '%' . $request_parameters['phrase'] . '%';
+        }
+
         // query to get the keywords that belong to the module
         $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
         $results = $queryBuilder->select('id', 'phrase', 'description', 'link')
-            ->from('module_cn_keyword')->where('cn_id = ?')
-            ->setParameter(0, $module_id)->execute()->fetchAll();
+            ->from('module_cn_keyword')->where('cn_id = ?')->andWhere('phrase LIKE ?')
+            ->setParameter(0, $module_id)->setParameter(1, $name)->execute()->fetchAll();
         $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));
         $jsr->setStatusCode(200);
         return $jsr;

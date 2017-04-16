@@ -31,10 +31,10 @@ class HeaderRepository extends \Doctrine\ORM\EntityRepository
 
         $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
-        $results = $queryBuilder->select('module_question_heading.id', 'module_question_heading.name')
+        $results = $queryBuilder->select('module_question_heading.id', 'module_question_heading.name', 'module_question_heading.weight')
             ->from('song')->innerJoin('song', $moduleName, 'module', 'song.id = module.song_id')
             ->innerJoin('module', 'module_question_heading', 'module_question_heading', 'module.id = module_question_heading.' . $module_id_name)
-            ->where('song.id = ?')
+            ->where('song.id = ?')->orderBy('module_question_heading.weight')->addOrderBy('module_question_heading.id')
             ->setParameter(0, $song_id)->execute()->fetchAll();
 
         $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));
@@ -92,7 +92,7 @@ class HeaderRepository extends \Doctrine\ORM\EntityRepository
         $queryBuilder = $conn->createQueryBuilder();
         $results = null;
         if (strcmp($user_type, 'designer') == 0) { // if designer, make sure that the designer owns the heading
-            $results = $queryBuilder->select('module_question_heading.id', 'module_question_heading.name', 'song.id AS song_id')
+            $results = $queryBuilder->select('module_question_heading.id', 'module_question_heading.name', 'module_question_heading.weight', 'song.id AS song_id')
                 ->from('app_users', 'designers')->innerJoin('designers', 'courses', 'courses', 'designers.id = courses.user_id')
                 ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')
                 ->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')
@@ -101,7 +101,7 @@ class HeaderRepository extends \Doctrine\ORM\EntityRepository
                 ->where('designers.id = ?')->andWhere('module_question_heading.id = ?')
                 ->setParameter(0, $user_id)->setParameter(1, $heading_id)->execute()->fetchAll();
         } else if (strcmp($user_type, 'professor') == 0) {
-            $results = $queryBuilder->select('module_question_heading.id', 'module_question_heading.name', 'song.id AS song_id')
+            $results = $queryBuilder->select('module_question_heading.id', 'module_question_heading.name', 'module_question_heading.weight', 'song.id AS song_id')
                 ->from('professor_registrations', 'pr')->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
                 ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')
                 ->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')
@@ -110,7 +110,7 @@ class HeaderRepository extends \Doctrine\ORM\EntityRepository
                 ->where('pr.professor_id = ?')->andWhere('pr.date_start < ?')->andWhere('pr.date_end > ?')->andWhere('module_question_heading.id = ?')
                 ->setParameter(0, $user_id)->setParameter(1, time())->setParameter(2, time())->setParameter(3, $heading_id)->execute()->fetchAll();
         } else if (strcmp($user_type, 'student') == 0) {
-            $results = $queryBuilder->select('module_question_heading.id', 'module_question_heading.name', 'song.id AS song_id')
+            $results = $queryBuilder->select('module_question_heading.id', 'module_question_heading.name', 'module_question_heading.weight', 'song.id AS song_id')
                 ->from('app_users', 'students')->innerJoin('students', 'student_registrations', 'sr', 'students.student_registration_id = sr.id')
                 ->innerJoin('sr', 'classes', 'classes', 'sr.class_id = classes.id')
                 ->innerJoin('classes', 'courses', 'courses', 'classes.course_id = courses.id')
@@ -150,11 +150,19 @@ class HeaderRepository extends \Doctrine\ORM\EntityRepository
 
         // get post parameters
         $post_parameters = $request->request->all();
-        if (array_key_exists('name', $post_parameters)) {
+        if (array_key_exists('name', $post_parameters) && array_key_exists('weight', $post_parameters)) {
             $name = $post_parameters['name'];
+            $weight = $post_parameters['weight'];
 
             if (!is_numeric($song_id)) {
                 $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+                $jsr->setStatusCode(400);
+                return $jsr;
+            }
+
+            // make sure weight is numeric
+            if (!is_numeric($weight)) {
+                $jsr = new JsonResponse(array('error' => 'Weight must be numeric.'));
                 $jsr->setStatusCode(400);
                 return $jsr;
             }
@@ -176,10 +184,11 @@ class HeaderRepository extends \Doctrine\ORM\EntityRepository
                 ->values(
                     array(
                         'name' => '?',
-                        $module_id_name => '?'
+                        $module_id_name => '?',
+                        'weight' => '?'
                     )
                 )
-                ->setParameter(0, $name)->setParameter(1, $module_id)->execute();
+                ->setParameter(0, $name)->setParameter(1, $module_id)->setParameter(2, $weight)->execute();
 
             $header_id = $conn->lastInsertId();
             return HeaderRepository::getHeader($request, $user_id, $user_type, $header_id);
@@ -201,11 +210,19 @@ class HeaderRepository extends \Doctrine\ORM\EntityRepository
 
         // get post parameters
         $post_parameters = $request->request->all();
-        if (array_key_exists('name', $post_parameters)) {
+        if (array_key_exists('name', $post_parameters) && array_key_exists('weight', $post_parameters)) {
             $name = $post_parameters['name'];
+            $weight = $post_parameters['weight'];
 
             if (!is_numeric($heading_id)) {
                 $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
+                $jsr->setStatusCode(400);
+                return $jsr;
+            }
+
+            // make sure weight is numeric
+            if (!is_numeric($weight)) {
+                $jsr = new JsonResponse(array('error' => 'Weight must be numeric.'));
                 $jsr->setStatusCode(400);
                 return $jsr;
             }
@@ -221,8 +238,9 @@ class HeaderRepository extends \Doctrine\ORM\EntityRepository
             $queryBuilder = $conn->createQueryBuilder();
             $queryBuilder->update('module_question_heading')
                 ->set('name', '?')
+                ->set('weight', '?')
                 ->where('id = ?')
-                ->setParameter(0, $name)->setParameter(1, $heading_id)->execute();
+                ->setParameter(0, $name)->setParameter(1, $weight)->setParameter(2, $heading_id)->execute();
 
             return HeaderRepository::getHeader($request, $user_id, $user_type, $heading_id);
 

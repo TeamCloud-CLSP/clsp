@@ -70,6 +70,13 @@ class ModuleQuestionHeading
      */
     private $moduleLs;
 
+    /**
+     * @var integer $weight Heading Weight (affects how the headers will be ordered)
+     *
+     * @ORM\Column(type="integer", nullable=true)
+     */
+    private $weight;
+
     public function __construct() {
         $this->questions = new ArrayCollection();
     }
@@ -266,5 +273,29 @@ class ModuleQuestionHeading
     public function getModuleLs()
     {
         return $this->moduleLs;
+    }
+
+    /**
+     * Set weight
+     *
+     * @param integer $weight
+     *
+     * @return ModuleQuestionHeading
+     */
+    public function setWeight($weight)
+    {
+        $this->weight = $weight;
+
+        return $this;
+    }
+
+    /**
+     * Get weight
+     *
+     * @return integer
+     */
+    public function getWeight()
+    {
+        return $this->weight;
     }
 }

@@ -36,7 +36,7 @@ use AppBundle\Repository\KeywordMediaRepository;
  * getModuleXX - /api/professor/song/{id}/module_xx
  * getModules - /api/professor/song/{id}/modules - get ALL modules that a song has
  * 
- * getKeywords - /api/professor/song/{id}/keywords - get keywords that a song has - song must have a CN module for this to work
+ * getKeywords - /api/professor/song/{id}/keywords - get keywords that a song has - can filter by phrase
  * getKeyword - /api/professor/keyword/{id}
  * 
  * getKeywordMedia - /api/professor/keyword/{id}/media - get all media that belongs to a keyword

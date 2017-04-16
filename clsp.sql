@@ -3,10 +3,11 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Mar 22, 2017 at 09:04 PM
--- Server version: 5.7.12-0ubuntu1.1
+-- Generation Time: Apr 13, 2017 at 02:04 AM
+-- Server version: 5.7.17-0ubuntu0.16.04.1
 -- PHP Version: 7.0.8-2+deb.sury.org~xenial+1
 
+SET FOREIGN_KEY_CHECKS=0;
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
 
@@ -86,18 +87,20 @@ INSERT INTO `media` (`id`, `user_id`, `name`, `filename`, `file_type`) VALUES
 (4, 6, 'meumeu', '2ad08ecb1ab85946fcbe589fbf4a0fc5.mp3', 'mp3'),
 (5, 6, 'ckp', 'a09ccdc7b891ff21945fb2d2e4a0badc.mp3', 'mp3'),
 (6, 6, 'chikuwaparfait', '012f7de9069b0d26d6bbe86887b0eb63.jpg', 'jpg'),
-(7, 6, 'chikuwa', '4800929fbe78e52eea895b05ef3c9935.jpg', 'jpg');
+(7, 6, 'chikuwa', '4800929fbe78e52eea895b05ef3c9935.jpg', 'jpg'),
+(8, 6, '君がいる場所へ', '7aa35cf0c643fa69da4159c85a72f911.mp3', 'mp3'),
+(9, 6, 'voltexes ii', 'ba5afe9446e9471a9cf22d93addbca63.ogg', 'ogg'),
+(10, 6, 'voltexes iii', '153d3141e7a157b88b44e70541ff4843.ogg', 'ogg');
 
 --
 -- Dumping data for table `module_cn`
 --
 
-INSERT INTO `module_cn` (`id`, `song_id`, `password`, `name`, `has_password`, `is_enabled`) VALUES
-(1, 1, 'meumeumeu', NULL, 1, 1),
-(2, 2, NULL, NULL, 0, 1),
-(3, 3, NULL, NULL, 0, 1),
-(4, 4, '', NULL, 0, 0),
-(5, 5, '', NULL, 0, 0);
+INSERT INTO `module_cn` (`id`, `song_id`, `password`, `name`, `has_password`, `is_enabled`, `song_enabled`) VALUES
+(1, 1, 'meumeumeu', NULL, 1, 1, 0),
+(2, 2, NULL, NULL, 0, 1, 0),
+(3, 3, NULL, NULL, 0, 1, 0),
+(6, 6, '', NULL, 0, 0, 0);
 
 --
 -- Dumping data for table `module_cn_keyword`
@@ -123,76 +126,78 @@ INSERT INTO `module_cn_keywords_media` (`module_cn_keyword_id`, `media_id`) VALU
 -- Dumping data for table `module_dw`
 --
 
-INSERT INTO `module_dw` (`id`, `song_id`, `password`, `name`, `has_password`, `is_enabled`) VALUES
-(1, 1, 'meumeumeu-dw', NULL, 1, 1),
-(2, 2, 'chikuwaparfait-dw', NULL, 1, 1),
-(3, 3, 'not 4361', NULL, 1, 1),
-(4, 4, '', NULL, 0, 0),
-(5, 5, '', NULL, 0, 0);
+INSERT INTO `module_dw` (`id`, `song_id`, `password`, `name`, `has_password`, `is_enabled`, `song_enabled`) VALUES
+(1, 1, 'meumeumeu-dw', NULL, 1, 1, 0),
+(2, 2, 'chikuwaparfait-dw', NULL, 1, 1, 0),
+(3, 3, 'not 4361', NULL, 1, 1, 0),
+(6, 6, '', NULL, 0, 0, 0);
 
 --
 -- Dumping data for table `module_ge`
 --
 
-INSERT INTO `module_ge` (`id`, `song_id`, `password`, `name`, `has_password`, `is_enabled`) VALUES
-(1, 1, 'meumeumeu-ge', NULL, 1, 1),
-(2, 4, '', NULL, 0, 0),
-(3, 5, '', NULL, 0, 0),
-(4, 2, NULL, NULL, 0, 0),
-(5, 3, NULL, NULL, 0, 0);
+INSERT INTO `module_ge` (`id`, `song_id`, `password`, `name`, `has_password`, `is_enabled`, `song_enabled`) VALUES
+(1, 1, 'meumeumeu-ge', NULL, 1, 1, 0),
+(4, 2, NULL, NULL, 0, 0, 0),
+(5, 3, NULL, NULL, 0, 0, 0),
+(6, 6, '', NULL, 0, 0, 0);
 
 --
 -- Dumping data for table `module_ls`
 --
 
-INSERT INTO `module_ls` (`id`, `song_id`, `password`, `name`, `has_password`, `is_enabled`) VALUES
-(1, 1, 'meumeumeu-ls', 'Listening Suggestions-meu!', 1, 1),
-(2, 4, '', NULL, 0, 0),
-(3, 5, '', NULL, 0, 0),
-(4, 2, NULL, NULL, 0, 0),
-(5, 3, NULL, NULL, 0, 0);
+INSERT INTO `module_ls` (`id`, `song_id`, `password`, `name`, `has_password`, `is_enabled`, `song_enabled`) VALUES
+(1, 1, 'meumeumeu-ls', 'Listening Suggestions-meu!', 1, 1, 0),
+(4, 2, NULL, NULL, 0, 0, 0),
+(5, 3, NULL, NULL, 0, 0, 0),
+(6, 6, '', NULL, 0, 0, 0);
 
 --
 -- Dumping data for table `module_lt`
 --
 
-INSERT INTO `module_lt` (`id`, `song_id`, `password`, `name`, `has_password`, `is_enabled`) VALUES
-(1, 1, 'meumeumeu-lt', NULL, 1, 1),
-(2, 4, '', NULL, 0, 0),
-(3, 5, '', NULL, 0, 0),
-(4, 2, NULL, NULL, 0, 0),
-(5, 3, NULL, NULL, 0, 0);
+INSERT INTO `module_lt` (`id`, `song_id`, `password`, `name`, `has_password`, `is_enabled`, `song_enabled`) VALUES
+(1, 1, 'meumeumeu-lt', NULL, 1, 1, 0),
+(4, 2, NULL, NULL, 0, 0, 0),
+(5, 3, NULL, NULL, 0, 0, 0),
+(6, 6, '', NULL, 0, 0, 0);
 
 --
 -- Dumping data for table `module_qu`
 --
 
-INSERT INTO `module_qu` (`id`, `song_id`, `password`, `name`, `has_password`, `is_enabled`) VALUES
-(1, 1, 'meumeumeu-qu', NULL, 1, 1),
-(2, 3, 'not 4361 - qu', NULL, 1, 1),
-(3, 4, '', NULL, 0, 0),
-(4, 5, '', NULL, 0, 0),
-(6, 2, 'chikupa-qu', NULL, 1, 0);
+INSERT INTO `module_qu` (`id`, `song_id`, `password`, `name`, `has_password`, `is_enabled`, `song_enabled`) VALUES
+(1, 1, 'meumeumeu-qu', NULL, 1, 1, 0),
+(2, 3, 'not 4361 - qu', NULL, 1, 1, 0),
+(6, 2, 'chikupa-qu', NULL, 1, 0, 0),
+(8, 6, 'valleystone', NULL, 1, 1, 1);
 
 --
 -- Dumping data for table `module_question_heading`
 --
 
-INSERT INTO `module_question_heading` (`id`, `qu_id`, `lt_id`, `ge_id`, `dw_id`, `ls_id`, `name`) VALUES
-(1, 1, NULL, NULL, NULL, NULL, 'Intro'),
-(2, 1, NULL, NULL, NULL, NULL, 'Characters'),
-(3, 2, NULL, NULL, NULL, NULL, 'Not 4361'),
-(4, NULL, NULL, NULL, 1, NULL, 'Stuff');
+INSERT INTO `module_question_heading` (`id`, `qu_id`, `lt_id`, `ge_id`, `dw_id`, `ls_id`, `name`, `weight`) VALUES
+(1, 1, NULL, NULL, NULL, NULL, 'Intro', 1),
+(2, 1, NULL, NULL, NULL, NULL, 'Characters', 2),
+(3, 2, NULL, NULL, NULL, NULL, 'Not 4361', 1),
+(4, NULL, NULL, NULL, 1, NULL, 'Stuff', 1),
+(5, 1, NULL, NULL, NULL, NULL, 'Songs', 3),
+(6, NULL, 1, NULL, NULL, NULL, 'asdfasdfs', 1),
+(7, NULL, NULL, NULL, NULL, 1, 'asdfasdfs', 1),
+(8, NULL, NULL, NULL, NULL, 1, 'LSLSLSLS', 1),
+(9, 1, NULL, NULL, NULL, NULL, 'Radio', 4),
+(10, 1, NULL, NULL, NULL, NULL, 'Conclusion', 5);
 
 --
 -- Dumping data for table `module_question_item`
 --
 
 INSERT INTO `module_question_item` (`id`, `heading_id`, `content`, `type`, `weight`, `choices`, `answers`) VALUES
-(1, 1, 'test-meu', 'test', 1, NULL, NULL),
-(2, 1, 'test-meu-2', 'test', 2, NULL, NULL),
+(1, 1, 'Which is a member of Coconatsu?', 'multiple-choice', 1, '[{"choice":"Ibuki"},{"choice":"Meu"},{"choice":"Natsuhi"},{"choice":"Grace"}]', '[{"choice":"Natsuhi"}]'),
+(2, 1, 'Which are members of Coconatsu?', 'multiple-select', 2, '[{"choice":"Ibuki"},{"choice":"Meu"},{"choice":"Natsuhi"},{"choice":"Cocona"}]', '[{"choice":"Natsuhi"},{"choice":"Cocona"}]'),
 (3, 3, 'test-not-meu', 'test', 3, NULL, NULL),
-(4, 2, 'test-meu-3, heading 2', 'test', 1, NULL, 'answer1,answer2');
+(4, 2, 'test-meu-3, heading 2', 'multiple-choice', 1, NULL, ''),
+(5, 1, 'Ibuki Izumi of Hinabita plays the _, while Meu plays the _.', 'fill-blank', 2, '', '[{"choice":"bass"},{"choice":"drums:drum:percussion"}]');
 
 --
 -- Dumping data for table `professor_registrations`
@@ -212,8 +217,7 @@ INSERT INTO `song` (`id`, `unit_id`, `title`, `weight`, `album`, `artist`, `desc
 (1, 3, 'めうめうぺったんたん!!', 1, 'Bitter Sweet Girls', '日向美ビタースイーツ♪', 'meu meu', 'ワールドワイドな荒波ザッバー  商店街はひなびてらぁな 約束手形何万枚だ  ぺったんぺったんぺったんたーん 押して押されて押しも押されぬ  押し問答  こーなりゃ一肌脱いでやらぁにゃ  商店街から萌えおこしーな 可愛いキャララー　ハンコでホワワー  ぺったんぺったんぺったんたーん 押せばお先に推して知るべし　(せーの!!)  押さえどころ  甘くてゆるくてあざとい仕草に  萌えろよ萌えろよ　ハンコをぺったん 赤くてプニくてしっとり濡れてる  やわらかやわらか　朱肉だよ  萌えるハンコは正義のしるし!! ひれつな悪をうちくだくっ!!  めめめめめめめめうめう  めめめめうめう ぺったんぺったんぺったんぺったん  大好き めめめめうめう　めめめめうめう  ハンコで世界中しあわせ!! めめめめうめう　めめめめうめう ぺったんぺったんぺったんぺったん  大好き 合言葉は　萌えおこし　萌えおこし (M・O・K・S!! M・O・K・S!!) ぺたっとぺたっとぺたりこー!!  わふー!!　(わー!!)  ははははは!!　(オイ!!) んんんんん!!　(オイ!!) こここここ!!　(オイ!!)  ハンコ大好きー!!', 'test stuff'),
 (2, 3, 'ちくわパフェだよ☆CKP', 2, 'Bitter Sweet Girls', '日向美ビタースイーツ♪', 'chikuwa parfait', 'ちくパちくパ  ちくわのパフェなんだよ！ ちくパちくパ  おいしいめう  おしゃれめう！ ちくパちくパ  CKPCKP  ちくパちくパ  ちくパ最高ーッ！  わぁー！  生クリーム  バニラのアイスに  イチゴとバナナと メインはもちろん（もちろん）  ちくわめう！（ちくわ！） とろけたチョコをかければ完成  ちくパで大丈夫だよ  絶対  大丈夫だよっ！  ｢んきゅーッ！？悪のスイーツ大魔王が現れためう！｣ ｢落ち着いて！このちくわステッキで魔法ちくわ少女に変身するんだよっ！｣ ｢そそそそんな設定聞いてないめう！｣ ｢大丈夫だよ！絶対、大丈夫だよっ！｣  ちくパちくパ  まりまり  ちくパちくパ  もりもり ちくパちくパ  めうめう  ちくパちくパ  めりめり ちくちわ  ちくちくわ  ちくちくちわ  ちくちくちくわ  ちくちくちくちわ  ｢めうーっ！ちくわが折れたぁ！｣ ｢大丈夫！必殺・ちくわの穴から生クリーム光線だよっ！｣ （ドグシャァ　バリバリドッカー　チチクワァ） ｢こうして町に平和が訪れためう｣ ｢ちくわのおかげだねっ！｣  ちくパの味は似ているね  パパパウーパールーパー（違うめう！） みんな笑顔  やぶれかぶれ  無敵のハーモニー ちくパの歯ごたえ  お手前  パパパグーパーチョキパー（勝負めう！） ちくわの穴のぞけば  ほら  キラキラ光る  未来が見える  おーっ！ ちくパちくパ  CKPCKP  ちくパちくパ  ちくパ最高ーッ！                     ｢せーの！｣                        ｢｢ちくパ！｣｣', NULL),
 (3, 4, 'NOT 4361 UNIT 3', 3, 'NOT 4361 UNIT 3', 'NOT 4361 UNIT 3', 'NOT 4361 UNIT 3', 'NOT 4361 UNIT 3', NULL),
-(4, 3, 'NEW! ちくわパフェだよ☆CKP', 2, 'Bitter Sweet Girls', '日向美ビタースイーツ♪', 'chikuwa parfait', 'ちくパちくパ  ちくわのパフェなんだよ！ ちくパちくパ  おいしいめう  おしゃれめう！ ちくパちくパ  CKPCKP  ちくパちくパ  ちくパ最高ーッ！  わぁー！  生クリーム  バニラのアイスに  イチゴとバナナと メインはもちろん（もちろん）  ちくわめう！（ちくわ！） とろけたチョコをかければ完成  ちくパで大丈夫だよ  絶対  大丈夫だよっ！  ｢んきゅーッ！？悪のスイーツ大魔王が現れためう！｣ ｢落ち着いて！このちくわステッキで魔法ちくわ少女に変身するんだよっ！｣ ｢そそそそんな設定聞いてないめう！｣ ｢大丈夫だよ！絶対、大丈夫だよっ！｣  ちくパちくパ  まりまり  ちくパちくパ  もりもり ちくパちくパ  めうめう  ちくパちくパ  めりめり ちくちわ  ちくちくわ  ちくちくちわ  ちくちくちくわ  ちくちくちくちわ  ｢めうーっ！ちくわが折れたぁ！｣ ｢大丈夫！必殺・ちくわの穴から生クリーム光線だよっ！｣ （ドグシャァ　バリバリドッカー　チチクワァ） ｢こうして町に平和が訪れためう｣ ｢ちくわのおかげだねっ！｣  ちくパの味は似ているね  パパパウーパールーパー（違うめう！） みんな笑顔  やぶれかぶれ  無敵のハーモニー ちくパの歯ごたえ  お手前  パパパグーパーチョキパー（勝負めう！） ちくわの穴のぞけば  ほら  キラキラ光る  未来が見える  おーっ！ ちくパちくパ  CKPCKP  ちくパちくパ  ちくパ最高ーッ！                     ｢せーの！｣                        ｢｢ちくパ！｣｣', NULL),
-(5, 3, 'NEWEST! ちくわパフェだよ☆CKP', 2, 'Bitter Sweet Girls', '日向美ビタースイーツ♪', 'chikuwa parfait', 'ちくパちくパ  ちくわのパフェなんだよ！ ちくパちくパ  おいしいめう  おしゃれめう！ ちくパちくパ  CKPCKP  ちくパちくパ  ちくパ最高ーッ！  わぁー！  生クリーム  バニラのアイスに  イチゴとバナナと メインはもちろん（もちろん）  ちくわめう！（ちくわ！） とろけたチョコをかければ完成  ちくパで大丈夫だよ  絶対  大丈夫だよっ！  ｢んきゅーッ！？悪のスイーツ大魔王が現れためう！｣ ｢落ち着いて！このちくわステッキで魔法ちくわ少女に変身するんだよっ！｣ ｢そそそそんな設定聞いてないめう！｣ ｢大丈夫だよ！絶対、大丈夫だよっ！｣  ちくパちくパ  まりまり  ちくパちくパ  もりもり ちくパちくパ  めうめう  ちくパちくパ  めりめり ちくちわ  ちくちくわ  ちくちくちわ  ちくちくちくわ  ちくちくちくちわ  ｢めうーっ！ちくわが折れたぁ！｣ ｢大丈夫！必殺・ちくわの穴から生クリーム光線だよっ！｣ （ドグシャァ　バリバリドッカー　チチクワァ） ｢こうして町に平和が訪れためう｣ ｢ちくわのおかげだねっ！｣  ちくパの味は似ているね  パパパウーパールーパー（違うめう！） みんな笑顔  やぶれかぶれ  無敵のハーモニー ちくパの歯ごたえ  お手前  パパパグーパーチョキパー（勝負めう！） ちくわの穴のぞけば  ほら  キラキラ光る  未来が見える  おーっ！ ちくパちくパ  CKPCKP  ちくパちくパ  ちくパ最高ーッ！                     ｢せーの！｣                        ｢｢ちくパ！｣｣', NULL);
+(6, 3, '君がいる場所へ', 3, 'Form Ride', 'VALLEYSTONE', 'The last song on VALLEYSTONE\'s first album, Form Ride. Also featured in SOUND VOLTEX III GRAVITY WARS.', '君だけのため　光る世界\r\nここにあるよ――\r\n\r\n幼い手で握りしめてた\r\n失くさないよう　ぎゅっと\r\n真っ白な　願いを\r\n君と追いかけて\r\n\r\nまた迷い込む　寂しげな夜だから\r\nあの日の面影を　見つけて\r\n思い出すよ\r\n\r\n君がいるから　どこでだって\r\n何度、転んでも　笑える\r\n偶然だとか　必然だとか\r\n要らないほど　強く\r\nきっと輝く　思い出なら\r\n君の側にだけ　あるから\r\n繋いだ手は　信じてるよ\r\n\r\nその温かさが　嬉しくて\r\nずっと守れるように\r\n強くなりたかった\r\nほら　君のように\r\n\r\nもっと沢山の歌詞は ※ Mojim.com\r\n一緒に歩き　重ねたこの季節は\r\nどれだけの思いも　願いも\r\n分かっているの\r\n\r\nもう大丈夫　君がいれば\r\n心、それだけで　強くなる\r\n過去と未来　どこでもない\r\n今ここにあるから\r\n届いてるかな　君の元へ\r\n明日　また逢える　奇跡を\r\n忘れないで\r\nいつまでも――\r\n\r\nあの日　君と会った　その引力が\r\nそっと　物語を　溶かしていくの\r\nちっぽけな　私も　小さな芽を\r\n優しく抱いて　誰かにいつか\r\n届けたいよ\r\n\r\n君がいるから　どこでだって\r\n何度、転んでも　笑える\r\n偶然だとか　必然だとか\r\n要らないほど　強く\r\nきっと輝く　思い出なら\r\n君の側にだけ　あるから\r\n大切な世界　離さないよ', NULL);
 
 --
 -- Dumping data for table `songs_media`
@@ -244,6 +248,7 @@ INSERT INTO `unit` (`id`, `course_id`, `name`, `description`, `weight`) VALUES
 (3, 3, 'Unit 2 - 4361', 'Historic Japan', 2),
 (4, 1, 'Unit 1 - CHINESE 3002', 'THIS DOES NOT BELONG TO 4361', 10),
 (6, 3, 'Unit 1 - 4361', 'Introduction to Syllabus', 1);
+SET FOREIGN_KEY_CHECKS=1;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;

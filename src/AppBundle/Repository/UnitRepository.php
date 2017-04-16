@@ -35,7 +35,7 @@ class UnitRepository extends \Doctrine\ORM\EntityRepository
         $results = $queryBuilder->select('unit.name', 'unit.description', 'unit.id', 'unit.weight')
             ->from('courses')
             ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')->where('course_id = ?')
-            ->orderBy('unit.weight', 'ASC')
+            ->orderBy('unit.weight', 'ASC')->addOrderBy('unit.id', 'ASC')
             ->setParameter(0, $course_id)->execute()->fetchAll();
 
         $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));

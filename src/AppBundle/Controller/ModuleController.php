@@ -26,13 +26,13 @@ use AppBundle\Repository\KeywordMediaRepository;
  *
  * --NOTE--: If there is no password, pass in an empty string into the password field - do not leave the field out of the JSON.
  * getModuleXX - /api/designer/song/{id}/module_xx
- * createModuleXX - /api/designer/song/{id}/module_xx/create (POST) - takes password, has_password, is_enabled, name - song_id is given through URL
+ * createModuleXX - /api/designer/song/{id}/module_xx/create (POST) - takes password, has_password, is_enabled, name, song_enabled - song_id is given through URL
  * editModuleXX - /api/designer/song/{id}/module_xx/edit (POST) - takes password, has_password, is_enabled, name
  * deleteModuleXX - /api/designer/song/{id}/module_xx (DELETE)
  *
  * getModules - /api/designer/song/{id}/modules - get ALL modules that a song has
  *
- * getKeywords - /api/designer/song/{id}/keywords - get keywords that a song has - song must have a CN module for this to work
+ * getKeywords - /api/designer/song/{id}/keywords - get keywords that a song has - can filter by phrase
  * getKeyword - /api/designer/keyword/{id}
  * createKeyword - /api/designer/keyword (POST) - takes phrase, song_id | OPTIONAL: description, link
  * editKeyword - /api/designer/keyword/{id} (POST) - takes phrase | OPTIONAL: description, link
@@ -49,7 +49,7 @@ use AppBundle\Repository\KeywordMediaRepository;
  *
  * getModuleXXHeaders - /api/designer/song/{id}/module_xx/structure - get just the headers associated with a specific module
  * getHeading - /api/designer/header/{id}
- * createModuleXXHeaders - /api/designer/song/{id}/module_ge/headers (POST) - takes name; song_id given through URL
+ * createModuleXXHeaders - /api/designer/song/{id}/module_xx/headers (POST) - takes name and weight; song_id given through URL
  * editHeader - /api/designer/header/{id} (POST) - takes name
  * deleteHeading - /api/designer/header/{id} (DELETE)
  *
