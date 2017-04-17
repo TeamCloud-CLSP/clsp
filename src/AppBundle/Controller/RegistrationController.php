@@ -138,12 +138,14 @@ class RegistrationController extends Controller
                 $results = $queryBuilder->select('COUNT(sr.id) AS registrations')->from('student_registrations', 'sr')->
                     innerJoin('sr', 'app_users', 'students', 'students.student_registration_id = sr.id')->where('sr.id = ?')
                     ->groupBy('sr.id')->setParameter(0, $sr_id)->execute()->fetchAll();
-                $students = $results[0]['registrations'];
+                if (count($results) > 0) {
+                    $students = $results[0]['registrations'];
 
-                if ($students >= $max) {
-                    $jsr = new JsonResponse(array('error' => 'The registration limit of this class has been reached.'));
-                    $jsr->setStatusCode(500);
-                    return $jsr;
+                    if ($students >= $max) {
+                        $jsr = new JsonResponse(array('error' => 'The registration limit of this class has been reached.'));
+                        $jsr->setStatusCode(500);
+                        return $jsr;
+                    }
                 }
 
                 // create the professor account
