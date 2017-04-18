@@ -35,20 +35,20 @@ class KeywordRepository extends \Doctrine\ORM\EntityRepository
         $module_password = $result->password;
 
 
-        // if its a student and the module has a password, we need to authenticate
-        if (strcmp($user_type, 'student') == 0 && ($module_password != null || strcmp($module_password, '') != 0)) {
-            $request_parameters = $request->query->all();
-            $password = "";
-            if (array_key_exists('password', $request_parameters)) {
-                $password = $request_parameters['password'];
-            }
-            // check the password
-            if (strcmp($password, $module_password) != 0) {
-                $jsr = new JsonResponse(array('error' => 'Password is incorrect.'));
-                $jsr->setStatusCode(400);
-                return $jsr;
-            }
-        }
+//        // if its a student and the module has a password, we need to authenticate
+//        if (strcmp($user_type, 'student') == 0 && ($module_password != null || strcmp($module_password, '') != 0)) {
+//            $request_parameters = $request->query->all();
+//            $password = "";
+//            if (array_key_exists('password', $request_parameters)) {
+//                $password = $request_parameters['password'];
+//            }
+//            // check the password
+//            if (strcmp($password, $module_password) != 0) {
+//                $jsr = new JsonResponse(array('error' => 'Password is incorrect.'));
+//                $jsr->setStatusCode(400);
+//                return $jsr;
+//            }
+//        }
 
         // get request parameters
         $request_parameters = $request->query->all();
@@ -129,33 +129,33 @@ class KeywordRepository extends \Doctrine\ORM\EntityRepository
             return $jsr;
         }
 
-        // for a student, we need to check that the password given matches
-        if (strcmp($user_type, 'student') == 0) {
-            // get the module_cn information
-            $result = ModuleRepository::getModule($request, $user_id, $user_type, 'module_cn', $results[0]['song_id']);
-            if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
-                return $result;
-            }
-
-            // decode result to get the module id
-            $result = json_decode($result->getContent());
-            $module_password = $result->password;
-
-            // if its a student and the module has a password, we need to authenticate
-            if (strcmp($user_type, 'student') == 0 && ($module_password != null || strcmp($module_password, '') != 0)) {
-                $request_parameters = $request->query->all();
-                $password = "";
-                if (array_key_exists('password', $request_parameters)) {
-                    $password = $request_parameters['password'];
-                }
-                // check the password
-                if (strcmp($password, $module_password) != 0) {
-                    $jsr = new JsonResponse(array('error' => 'Password is incorrect.'));
-                    $jsr->setStatusCode(400);
-                    return $jsr;
-                }
-            }
-        }
+//        // for a student, we need to check that the password given matches
+//        if (strcmp($user_type, 'student') == 0) {
+//            // get the module_cn information
+//            $result = ModuleRepository::getModule($request, $user_id, $user_type, 'module_cn', $results[0]['song_id']);
+//            if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
+//                return $result;
+//            }
+//
+//            // decode result to get the module id
+//            $result = json_decode($result->getContent());
+//            $module_password = $result->password;
+//
+//            // if its a student and the module has a password, we need to authenticate
+//            if (strcmp($user_type, 'student') == 0 && ($module_password != null || strcmp($module_password, '') != 0)) {
+//                $request_parameters = $request->query->all();
+//                $password = "";
+//                if (array_key_exists('password', $request_parameters)) {
+//                    $password = $request_parameters['password'];
+//                }
+//                // check the password
+//                if (strcmp($password, $module_password) != 0) {
+//                    $jsr = new JsonResponse(array('error' => 'Password is incorrect.'));
+//                    $jsr->setStatusCode(400);
+//                    return $jsr;
+//                }
+//            }
+//        }
         $results[0]['module_type'] = 'module_cn';
         return new JsonResponse($results[0]);
     }
