@@ -34,7 +34,14 @@ class SongRepository extends \Doctrine\ORM\EntityRepository
             ->from('unit')->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')->where('unit_id = ?')
             ->orderBy('song.weight', 'ASC')->addOrderBy('song.id', 'ASC')
             ->setParameter(0, $unit_id)->execute()->fetchAll();
+        for ($i = 0; $i < count($results); $i++) {
+            if ($results[$i]['embed'] != null || $results[$i]['embed'] != "") {
+                $results[$i]['embed_display'] = "<iframe width=\"560\" height=\"315\" src=\"" . $results[$i]['embed'] . "\" frameborder=\"0\" allowfullscreen></iframe>";
+            } else {
+                $results[$i]['embed_display'] = null;
+            }
 
+        }
         $jsr = new JsonResponse(array('size' => count($results), 'data' => $results));
         return $jsr;
     }
@@ -91,6 +98,8 @@ class SongRepository extends \Doctrine\ORM\EntityRepository
             return $jsr;
         }
 
+        $results[0]['embed_display'] = "<iframe width=\"560\" height=\"315\" src=\"" . $results[0]['embed'] . "\" frameborder=\"0\" allowfullscreen></iframe>";
+
         return new JsonResponse($results[0]);
     }
 
@@ -120,6 +129,11 @@ class SongRepository extends \Doctrine\ORM\EntityRepository
             // check for optional parameters
             if (array_key_exists('embed', $post_parameters)) {
                 $embed = $post_parameters['embed'];
+                if (strpos($embed, '<') !== false || strpos($embed, '>') !== false) {
+                    $jsr = new JsonResponse(array('error' => 'Invalid embed link supplied.'));
+                    $jsr->setStatusCode(400);
+                    return $jsr;
+                }
             }
 
             if (!is_numeric($unit_id)) {
@@ -223,6 +237,11 @@ class SongRepository extends \Doctrine\ORM\EntityRepository
             // check for optional parameter
             if (array_key_exists('embed', $post_parameters)) {
                 $embed = $post_parameters['embed'];
+                if (strpos($embed, '<') !== false || strpos($embed, '>') !== false) {
+                    $jsr = new JsonResponse(array('error' => 'Invalid embed link supplied.'));
+                    $jsr->setStatusCode(400);
+                    return $jsr;
+                }
             }
 
             if (!is_numeric($weight)) {
