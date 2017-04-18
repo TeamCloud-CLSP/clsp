@@ -35,7 +35,7 @@ class KeywordRepository extends \Doctrine\ORM\EntityRepository
         $module_password = $result->password;
 
 
-//        // if its a student and the module has a password, we need to authenticate
+//        // PASSWORD AUTHENTICATION now being done via front-end only
 //        if (strcmp($user_type, 'student') == 0 && ($module_password != null || strcmp($module_password, '') != 0)) {
 //            $request_parameters = $request->query->all();
 //            $password = "";
