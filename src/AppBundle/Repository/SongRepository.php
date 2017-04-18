@@ -34,6 +34,8 @@ class SongRepository extends \Doctrine\ORM\EntityRepository
             ->from('unit')->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')->where('unit_id = ?')
             ->orderBy('song.weight', 'ASC')->addOrderBy('song.id', 'ASC')
             ->setParameter(0, $unit_id)->execute()->fetchAll();
+
+        // for all results, set embed_display if embed link exists
         for ($i = 0; $i < count($results); $i++) {
             if ($results[$i]['embed'] != null || $results[$i]['embed'] != "") {
                 $results[$i]['embed_display'] = "<iframe width=\"560\" height=\"315\" src=\"" . $results[$i]['embed'] . "\" frameborder=\"0\" allowfullscreen></iframe>";
@@ -98,7 +100,11 @@ class SongRepository extends \Doctrine\ORM\EntityRepository
             return $jsr;
         }
 
-        $results[0]['embed_display'] = "<iframe width=\"560\" height=\"315\" src=\"" . $results[0]['embed'] . "\" frameborder=\"0\" allowfullscreen></iframe>";
+        if ($results[0]['embed'] != null || $results[0]['embed'] != "") {
+            $results[0]['embed_display'] = "<iframe width=\"560\" height=\"315\" src=\"" . $results[0]['embed'] . "\" frameborder=\"0\" allowfullscreen></iframe>";
+        } else {
+            $results[0]['embed_display'] = null;
+        }
 
         return new JsonResponse($results[0]);
     }
