@@ -47,6 +47,7 @@ class ItemRepository extends \Doctrine\ORM\EntityRepository
         $header = json_decode($result->getContent());
         $module_name = $header->module_name;
         $song_id = $header->song_id;
+        $song_enabled = $header->song_enabled;
 
         // determine the id name of the module
         $module_id_list = ['dw_id', 'ge_id', 'ls_id', 'lt_id', 'qu_id'];
@@ -93,7 +94,7 @@ class ItemRepository extends \Doctrine\ORM\EntityRepository
         }
 
 
-        $jsr = new JsonResponse(array('size' => count($results), 'prev_id' => $prev_id, 'next_id' => $next_id, 'data' => $results));
+        $jsr = new JsonResponse(array('size' => count($results), 'prev_id' => $prev_id, 'next_id' => $next_id, 'song_enabled' => $song_enabled, 'song_id' => $song_id, 'data' => $results));
         $jsr->setStatusCode(200);
         return $jsr;
     }

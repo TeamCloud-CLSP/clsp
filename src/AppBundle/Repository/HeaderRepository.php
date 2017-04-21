@@ -92,7 +92,7 @@ class HeaderRepository extends \Doctrine\ORM\EntityRepository
         $queryBuilder = $conn->createQueryBuilder();
         $results = null;
         if (strcmp($user_type, 'designer') == 0) { // if designer, make sure that the designer owns the heading
-            $results = $queryBuilder->select('module_question_heading.id', 'module_question_heading.name', 'module_question_heading.weight', 'song.id AS song_id')
+            $results = $queryBuilder->select('module_question_heading.id', 'module_question_heading.name', 'module_question_heading.weight', 'song.id AS song_id', 'module.song_enabled AS song_enabled')
                 ->from('app_users', 'designers')->innerJoin('designers', 'courses', 'courses', 'designers.id = courses.user_id')
                 ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')
                 ->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')
@@ -101,7 +101,7 @@ class HeaderRepository extends \Doctrine\ORM\EntityRepository
                 ->where('designers.id = ?')->andWhere('module_question_heading.id = ?')
                 ->setParameter(0, $user_id)->setParameter(1, $heading_id)->execute()->fetchAll();
         } else if (strcmp($user_type, 'professor') == 0) {
-            $results = $queryBuilder->select('module_question_heading.id', 'module_question_heading.name', 'module_question_heading.weight', 'song.id AS song_id')
+            $results = $queryBuilder->select('module_question_heading.id', 'module_question_heading.name', 'module_question_heading.weight', 'song.id AS song_id', 'module.song_enabled AS song_enabled')
                 ->from('professor_registrations', 'pr')->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
                 ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')
                 ->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')
@@ -110,7 +110,7 @@ class HeaderRepository extends \Doctrine\ORM\EntityRepository
                 ->where('pr.professor_id = ?')->andWhere('pr.date_start < ?')->andWhere('pr.date_end > ?')->andWhere('module_question_heading.id = ?')
                 ->setParameter(0, $user_id)->setParameter(1, time())->setParameter(2, time())->setParameter(3, $heading_id)->execute()->fetchAll();
         } else if (strcmp($user_type, 'student') == 0) {
-            $results = $queryBuilder->select('module_question_heading.id', 'module_question_heading.name', 'module_question_heading.weight', 'song.id AS song_id')
+            $results = $queryBuilder->select('module_question_heading.id', 'module_question_heading.name', 'module_question_heading.weight', 'song.id AS song_id', 'module.song_enabled AS song_enabled')
                 ->from('app_users', 'students')->innerJoin('students', 'student_registrations', 'sr', 'students.student_registration_id = sr.id')
                 ->innerJoin('sr', 'classes', 'classes', 'sr.class_id = classes.id')
                 ->innerJoin('classes', 'courses', 'courses', 'classes.course_id = courses.id')
