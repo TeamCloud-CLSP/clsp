@@ -21,7 +21,7 @@ class StudentRegistrationRepository extends \Doctrine\ORM\EntityRepository
             $jsr->setStatusCode(503);
             return $jsr;
         }
-        
+
         // make sure professor registration is numeric
         if (!is_numeric($pr_id)) {
             $jsr = new JsonResponse(array('error' => 'Invalid non-numeric ID specified.'));
@@ -34,7 +34,7 @@ class StudentRegistrationRepository extends \Doctrine\ORM\EntityRepository
         if ($result->getStatusCode() < 200 || $result->getStatusCode() > 299) {
             return $result;
         }
-        
+
         // get the student registrations that belong to the professor registration
         $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
@@ -49,7 +49,7 @@ class StudentRegistrationRepository extends \Doctrine\ORM\EntityRepository
         $jsr->setStatusCode(200);
         return $jsr;
     }
-    
+
     public static function getStudentRegistration(Request $request, $user_id, $user_type, $sr_id) {
         // makes sure that the class id is numeric
         if (!is_numeric($sr_id)) {
@@ -109,8 +109,8 @@ class StudentRegistrationRepository extends \Doctrine\ORM\EntityRepository
         $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
         $results = $queryBuilder->select('classes.id AS class_id', 'classes.name AS class_name', 'classes.description AS class_description',
-            'sr.id AS student_registration_id', 'sr.date_start AS student_registration_date_start', 'sr.date_end AS student_registration_date_end', 
-            'sr.max_registrations AS student_registration_max_registrations')
+            'sr.id AS student_registration_id', 'sr.date_start AS student_registration_date_start', 'sr.date_end AS student_registration_date_end',
+            'sr.max_registrations AS student_registration_max_registrations', 'sr.name AS name, sr.signup_code AS signup_code')
             ->from('professor_registrations', 'pr')->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
             ->innerJoin('pr', 'classes', 'classes', 'pr.id = classes.registration_id')
             ->innerJoin('pr', 'app_users', 'professors', 'pr.professor_id = professors.id')
@@ -139,7 +139,7 @@ class StudentRegistrationRepository extends \Doctrine\ORM\EntityRepository
         if (strcmp($user_type, 'professor') == 0) {
             $results = $queryBuilder->select('classes.id AS class_id', 'classes.name AS class_name', 'classes.description AS class_description',
                 'sr.id AS student_registration_id', 'sr.date_start AS student_registration_date_start', 'sr.date_end AS student_registration_date_end',
-                'sr.max_registrations AS student_registration_max_registrations')
+                'sr.max_registrations AS student_registration_max_registrations', 'sr.name AS name, sr.signup_code AS signup_code')
                 ->from('professor_registrations', 'pr')->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
                 ->innerJoin('pr', 'classes', 'classes', 'pr.id = classes.registration_id')
                 ->innerJoin('pr', 'app_users', 'professors', 'pr.professor_id = professors.id')
