@@ -60,7 +60,10 @@ security:
 #                failure_handler:          lexik_jwt_authentication.handler.authentication_failure
 #                require_previous_session: false
 
-
+        register:
+            pattern:  ^/api/register
+            stateless: true
+            anonymous: true
 
         api:
             pattern:   ^/api
@@ -70,17 +73,14 @@ security:
                     - lexik_jwt_authentication.jwt_token_authenticator
 
     access_control:
-        #- { path: ^/api/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
-        #- { path: ^/api/security/loginToken, roles: IS_AUTHENTICATED_ANONYMOUSLY }
-        - { path: ^/api,       roles: IS_AUTHENTICATED_ANONYMOUSLY, methods:[OPTIONS] }
         # require ROLE_STUDENT for /student*
-        #- { path: ^/api/student, roles: ROLE_STUDENT, methods:[GET, POST, PUT, DELETE, HEAD] }
+        - { path: ^/api/student, roles: ROLE_STUDENT, methods:[GET, POST, PUT, DELETE, HEAD] }
 
         # require ROLE_PROFESSOR for /professor*
-        #- { path: ^/api/professor, roles: ROLE_PROFESSOR, methods:[GET, POST, PUT, DELETE, HEAD]}
+        - { path: ^/api/professor, roles: ROLE_PROFESSOR, methods:[GET, POST, PUT, DELETE, HEAD]}
 
         # require ROLE_DESIGNER for /designer*
         - { path: ^/api/designer, roles: ROLE_DESIGNER, methods:[GET, POST, PUT, DELETE, HEAD] }
 
         # require ROLE_ADMIN for /admin*
-        #- { path: ^/api/admin, roles: ROLE_ADMIN, methods:[GET, POST, PUT, DELETE, HEAD] }
+        - { path: ^/api/admin, roles: ROLE_ADMIN, methods:[GET, POST, PUT, DELETE, HEAD] }
