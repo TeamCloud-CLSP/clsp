@@ -40,34 +40,30 @@ class SecurityController extends Controller
     }
 
     /**
-     * @Route("/forgotPassword", name="forgotPassword")
+     * Sends an email to the specified user with a password reset email
+     *
+     * Takes in:
+     *      "email" - email of user trying to reset their password
+     *
+     * @Route("/api/security/forgotPass", name="sendPasswordResetEmail")
+     * @Method({"POST", "OPTIONS"})
      */
-    public function forgotPasswordAction(Request $request)
-    {
-        $forgotPass = array(
-            'username' => null
-        );
-        $form = $this->createFormBuilder($forgotPass)
-            ->add('username', TextType::class, array(
-                'constraints' => array(
-                    new NotBlank(),
-                    new Length(array('min' => 6))
-            )))
-            ->add('save', SubmitType::class, array('label' => 'Send Email'))
-            ->getForm();
+    public function sendPasswordResetEmail(Request $request) {
 
-        $form->handleRequest($request);
+        $post_parameters = $request->request->all();
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $forgotPass = $form->getData();
-            $realUser = $this->getDoctrine()->getRepository('AppBundle:User')->findOneByUsername($forgotPass['username']);
+        if ( array_key_exists('email', $post_parameters) ) {
+            $email = $post_parameters['email'];
+            $realUser = $this->getDoctrine()->getRepository('AppBundle:User')->findOneByEmail($email);
+
             if(is_null($realUser)) {
-                return $this->render('security/forgotPassword.html.twig', array(
-                    'base_dir' => realpath($this->getParameter('kernel.root_dir').'..').DIRECTORY_SEPARATOR,
-                    'status' => $forgotPass['username'] . ' is not a valid user',
-                ));
+                $jsr = new JsonResponse(["error" => "No user with the specified email found"]);
+                $jsr->setStatusCode(400);
+                return $jsr;
             }
+
             $resetCode = $this->generateSignupCode();
+            $resetLink = $this->getParameter('site_domain') . '/forgotPass/' . $resetCode;
             $realUser->setForgotPasswordKey($resetCode);
             $realUser->setForgotPasswordExpiry(time() + 2 * 60 * 60);
             $manager = $this->getDoctrine()->getManager();
@@ -76,89 +72,82 @@ class SecurityController extends Controller
 
             $email = \Swift_Message::newInstance()
                 ->setSubject('Forgotten Password Reset - CLSP')
-                ->setFrom('no-reply@dev.clsp.gatech.edu')
+                ->setFrom($this->getParameter('mailer_from_address'))
                 ->setTo($realUser->getEmail())
                 ->setBody(
                     $this->renderView(
                         'email/forgotPassword.html.twig',
                         array(
                             'base_dir' => realpath($this->getParameter('kernel.root_dir').'..').DIRECTORY_SEPARATOR,
-                            'link_code' => $resetCode
+                            'reset_link' => $resetLink
                         )
                     ),
                     'text/html'
                 );
             $this->get('mailer')->send($email);
-
-            return $this->render('security/forgotPassword.html.twig', array(
-                'base_dir' => realpath($this->getParameter('kernel.root_dir').'..').DIRECTORY_SEPARATOR,
-                'status' => 'Sent Password Reset Email to ' . $forgotPass['username'],
-            ));
+            $jsr = new JsonResponse(['data' => 'Password reset email sent']);
+            $jsr->setStatusCode(400);
+            return $jsr;
+        } else {
+            $jsr = new JsonResponse(['error' => 'Required fields are missing.']);
+            $jsr->setStatusCode(400);
+            return $jsr;
         }
-        return $this->render('security/forgotPassword.html.twig', array(
-            'form' => $form->createView(),
-        ));
     }
 
     /**
-     * @Route("/forgotPassword/{id}", name="forgotPasswordLink")
+     * Resets the user's password if the correct forgot password code is given
+     *
+     * Takes in:
+     *      "forgot_pass_code" - the code emailed to the user
+     *      "new_password" - new password that should be set
+     *
+     * @Route("/api/security/resetPass", name="resetUserPassword")
+     * @Method({"POST", "OPTIONS"})
      */
-    //TODO: edit registration code times also edit user's times
-    //TODO: check expiry date for codes
-    public function forgotPasswordLinkAction(Request $request, $id)
+    public function resetUserPassword(Request $request)
     {
-        $forgottenUser = $this->getDoctrine()->getRepository('AppBundle:User')->findOneByForgotPasswordKey($id);
 
-        if( is_null($forgottenUser) ) {
-            return $this->render('security/forgotPassword.html.twig', array(
-                'base_dir' => realpath($this->getParameter('kernel.root_dir').'..').DIRECTORY_SEPARATOR,
-                'status' => 'Invalid Password Reset Link',
-            ));
-        }
+        $post_parameters = $request->request->all();
 
-        if ( $forgottenUser->getForgotPasswordExpiry() < time() ) {
-            return $this->render('security/forgotPassword.html.twig', array(
-                'base_dir' => realpath($this->getParameter('kernel.root_dir').'..').DIRECTORY_SEPARATOR,
-                'status' => 'Password Reset Link has expired',
-            ));
-        }
+        if ( array_key_exists('forgot_pass_code', $post_parameters) && array_key_exists('new_password', $post_parameters) ) {
+            $forgot_pass_code = $post_parameters['forgot_pass_code'];
+            $new_password = $post_parameters['new_password'];
+            $realUser = $this->getDoctrine()->getRepository('AppBundle:User')->findOneByForgotPasswordKey($forgot_pass_code);
 
-        $forgotPass = array(
-            'password' => null,
-        );
+            if(is_null($realUser) || $realUser->getForgotPasswordExpiry() < time()) {
+                $jsr = new JsonResponse(["error" => "Invalid password reset code"]);
+                $jsr->setStatusCode(400);
+                return $jsr;
+            }
 
+            $resetCode = $this->generateSignupCode();
+            $resetLink = $this->getParameter('site_domain') . '/forgotPass/' . $resetCode;
+            $realUser->setForgotPasswordKey($resetCode);
+            $realUser->setForgotPasswordExpiry(time() + 2 * 60 * 60);
+            $manager = $this->getDoctrine()->getManager();
+            $manager->persist($realUser);
+            $manager->flush();
 
-        $form = $this->createFormBuilder($forgotPass)
-            ->add('password', PasswordType::class, array(
-                'constraints' => array(
-                    new NotBlank(),
-                    new Length(array('min' => 6))
-                )))
-            ->add('save', SubmitType::class, array('label' => 'Reset Password'))
-            ->getForm();
-
-        $form->handleRequest($request);
-        if ($form->isSubmitted() && $form->isValid()) {
-            $forgotPass = $form->getData();
             $password = $this->get('security.password_encoder')
-                ->encodePassword($forgottenUser, $forgotPass['password']);
-            $forgottenUser->setPassword($password);
-            $forgottenUser->setForgotPasswordKey(null);
-            $forgottenUser->setForgotPasswordExpiry(null);
+                ->encodePassword($realUser, $new_password);
+            $realUser->setPassword($password);
+            $realUser->setForgotPasswordKey(null);
+            $realUser->setForgotPasswordExpiry(null);
 
             $em = $this->getDoctrine()->getManager();
 
-            $em->persist($forgottenUser);
+            $em->persist($realUser);
             $em->flush();
 
-
-            return $this->redirectToRoute('homepage');
+            $jsr = new JsonResponse(['msg' => 'Password Reset']);
+            $jsr->setStatusCode(200);
+            return $jsr;
+        } else {
+            $jsr = new JsonResponse(['error' => 'Required fields are missing.']);
+            $jsr->setStatusCode(400);
+            return $jsr;
         }
-
-        return $this->render(
-            'security/forgotPassword.html.twig',
-            array('form' => $form->createView())
-        );
     }
 
     private function generateSignupCode() {
