@@ -361,23 +361,11 @@ class ModuleController extends Controller
      */
     public function getModules(Request $request, $id) {
         $modules = array();
-        $result = $this->getModuleCN($request, $id);
-        if ($result->getStatusCode() > 199 && $result->getStatusCode() < 300) {
-            array_push($modules, json_decode($result->getContent()));
-        }
-        $result = $this->getModuleDW($request, $id);
-        if ($result->getStatusCode() > 199 && $result->getStatusCode() < 300) {
-            array_push($modules, json_decode($result->getContent()));
-        }
-        $result = $this->getModuleGE($request, $id);
-        if ($result->getStatusCode() > 199 && $result->getStatusCode() < 300) {
-            array_push($modules, json_decode($result->getContent()));
-        }
-        $result = $this->getModuleLS($request, $id);
-        if ($result->getStatusCode() > 199 && $result->getStatusCode() < 300) {
-            array_push($modules, json_decode($result->getContent()));
-        }
         $result = $this->getModuleLT($request, $id);
+        if ($result->getStatusCode() > 199 && $result->getStatusCode() < 300) {
+            array_push($modules, json_decode($result->getContent()));
+        }
+        $result = $this->getModuleCN($request, $id);
         if ($result->getStatusCode() > 199 && $result->getStatusCode() < 300) {
             array_push($modules, json_decode($result->getContent()));
         }
@@ -385,7 +373,18 @@ class ModuleController extends Controller
         if ($result->getStatusCode() > 199 && $result->getStatusCode() < 300) {
             array_push($modules, json_decode($result->getContent()));
         }
-
+        $result = $this->getModuleGE($request, $id);
+        if ($result->getStatusCode() > 199 && $result->getStatusCode() < 300) {
+            array_push($modules, json_decode($result->getContent()));
+        }
+        $result = $this->getModuleDW($request, $id);
+        if ($result->getStatusCode() > 199 && $result->getStatusCode() < 300) {
+            array_push($modules, json_decode($result->getContent()));
+        }
+        $result = $this->getModuleLS($request, $id);
+        if ($result->getStatusCode() > 199 && $result->getStatusCode() < 300) {
+            array_push($modules, json_decode($result->getContent()));
+        }
         if (count($modules) < 1) {
             return $result;
         }

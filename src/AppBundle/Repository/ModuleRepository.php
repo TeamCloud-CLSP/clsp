@@ -27,8 +27,12 @@ class ModuleRepository extends \Doctrine\ORM\EntityRepository
         $conn = Database::getInstance();
         $queryBuilder = $conn->createQueryBuilder();
         $results = null;
+        $select_fields = ['module.id', 'module.password', 'module.has_password', 'module.song_id', 'module.name', 'module.is_enabled', 'module.song_enabled', 'song.id AS song_id'];
+        if (strcmp($moduleName, 'module_ls') == 0) {
+            array_push($select_fields, 'module.description');
+        }
         if (strcmp($user_type, 'designer') == 0) { // if designer, make sure that the designer owns the song and module being accessed
-            $results = $queryBuilder->select('module.id', 'module.password', 'module.has_password', 'module.song_id', 'module.name', 'module.is_enabled', 'module.song_enabled', 'song.id AS song_id')
+            $results = $queryBuilder->select($select_fields)
                 ->from('app_users', 'designers')->innerJoin('designers', 'courses', 'courses', 'designers.id = courses.user_id')
                 ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')
                 ->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')
@@ -36,7 +40,7 @@ class ModuleRepository extends \Doctrine\ORM\EntityRepository
                 ->where('designers.id = ?')->andWhere('song.id = ?')
                 ->setParameter(0, $user_id)->setParameter(1, $song_id)->execute()->fetchAll();
         } else if (strcmp($user_type, 'professor') == 0) {
-            $results = $queryBuilder->select('module.id', 'module.password', 'module.has_password', 'module.song_id', 'module.name', 'module.is_enabled', 'module.song_enabled', 'song.id AS song_id')
+            $results = $queryBuilder->select($select_fields)
                 ->from('professor_registrations', 'pr')->innerJoin('pr', 'courses', 'courses', 'pr.course_id = courses.id')
                 ->innerJoin('courses', 'unit', 'unit', 'unit.course_id = courses.id')
                 ->innerJoin('unit', 'song', 'song', 'song.unit_id = unit.id')
@@ -44,7 +48,7 @@ class ModuleRepository extends \Doctrine\ORM\EntityRepository
                 ->where('pr.professor_id = ?')->andWhere('pr.date_start < ?')->andWhere('pr.date_end > ?')->andWhere('song.id = ?')
                 ->setParameter(0, $user_id)->setParameter(1, time())->setParameter(2, time())->setParameter(3, $song_id)->execute()->fetchAll();
         } else if (strcmp($user_type, 'student') == 0) {
-            $results = $queryBuilder->select('module.id', 'module.password', 'module.has_password', 'module.song_id', 'module.name', 'module.is_enabled', 'module.song_enabled', 'song.id AS song_id')
+            $results = $queryBuilder->select($select_fields)
                 ->from('app_users', 'students')->innerJoin('students', 'student_registrations', 'sr', 'students.student_registration_id = sr.id')
                 ->innerJoin('sr', 'classes', 'classes', 'sr.class_id = classes.id')
                 ->innerJoin('classes', 'courses', 'courses', 'classes.course_id = courses.id')
@@ -75,6 +79,7 @@ class ModuleRepository extends \Doctrine\ORM\EntityRepository
         return new JsonResponse($results[0]);
     }
 
+    // method deprecated
     public static function createModule(Request $request, $user_id, $user_type, $moduleName, $song_id) {
         // a user MUST be a designer to create a module
         if (strcmp($user_type, 'designer') != 0) {
@@ -143,25 +148,53 @@ class ModuleRepository extends \Doctrine\ORM\EntityRepository
                 $name = $post_parameters['name'];
             }
 
-            // create the module
-            $conn = Database::getInstance();
-            $queryBuilder = $conn->createQueryBuilder();
-            $queryBuilder->insert($moduleName)
-                ->values(
-                    array(
-                        'song_id' => '?',
-                        'password' => '?',
-                        'has_password' => '?',
-                        'is_enabled' => '?',
-                        'name' => '?',
-                        'song_enabled' => '?'
+            $description = null;
+            if (strcmp($moduleName, 'module_ls') == 0) {
+                if (array_key_exists('description', $post_parameters)) {
+                    $description = $post_parameters['description'];
+                }
+                // create the module
+                $conn = Database::getInstance();
+                $queryBuilder = $conn->createQueryBuilder();
+                $queryBuilder->insert($moduleName)
+                    ->values(
+                        array(
+                            'song_id' => '?',
+                            'password' => '?',
+                            'has_password' => '?',
+                            'is_enabled' => '?',
+                            'name' => '?',
+                            'song_enabled' => '?',
+                            'description' => '?'
+                        )
                     )
-                )
-                ->setParameter(0, $song_id)->setParameter(1, $password)->setParameter(2, $has_password)
-                ->setParameter(3, $is_enabled)->setParameter(4, $name)->setParameter(5, $song_enabled)->execute();
+                    ->setParameter(0, $song_id)->setParameter(1, $password)->setParameter(2, $has_password)
+                    ->setParameter(3, $is_enabled)->setParameter(4, $name)->setParameter(5, $song_enabled)
+                    ->setParameter(6, $description)->execute();
 
-            // return the newly created module
-            return ModuleRepository::getModule($request, $user_id, $user_type, $moduleName, $song_id);
+                // return the newly created module
+                return ModuleRepository::getModule($request, $user_id, $user_type, $moduleName, $song_id);
+            } else {
+                // create the module
+                $conn = Database::getInstance();
+                $queryBuilder = $conn->createQueryBuilder();
+                $queryBuilder->insert($moduleName)
+                    ->values(
+                        array(
+                            'song_id' => '?',
+                            'password' => '?',
+                            'has_password' => '?',
+                            'is_enabled' => '?',
+                            'name' => '?',
+                            'song_enabled' => '?'
+                        )
+                    )
+                    ->setParameter(0, $song_id)->setParameter(1, $password)->setParameter(2, $has_password)
+                    ->setParameter(3, $is_enabled)->setParameter(4, $name)->setParameter(5, $song_enabled)->execute();
+
+                // return the newly created module
+                return ModuleRepository::getModule($request, $user_id, $user_type, $moduleName, $song_id);
+            }
 
         } else {
             $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
@@ -225,22 +258,46 @@ class ModuleRepository extends \Doctrine\ORM\EntityRepository
                 $name = $post_parameters['name'];
             }
 
-            // update the module in the database
-            $conn = Database::getInstance();
-            $queryBuilder = $conn->createQueryBuilder();
-            $queryBuilder->update($moduleName)
-                ->set('password', '?')
-                ->set('has_password', '?')
-                ->set('is_enabled', '?')
-                ->set('name', '?')
-                ->set('song_enabled', '?')
-                ->where('song_id = ?')
-                ->setParameter(5, $song_id)->setParameter(0, $password)->setParameter(1, $has_password)
-                ->setParameter(3, $name)->setParameter(2, $is_enabled)->setParameter(4, $song_enabled)->execute();
+            $description = null;
+            if (strcmp($moduleName, 'module_ls') == 0) {
+                if (array_key_exists('description', $post_parameters)) {
+                    $description = $post_parameters['description'];
+                }
+                // update the module in the database
+                $conn = Database::getInstance();
+                $queryBuilder = $conn->createQueryBuilder();
+                $queryBuilder->update($moduleName)
+                    ->set('password', '?')
+                    ->set('has_password', '?')
+                    ->set('is_enabled', '?')
+                    ->set('name', '?')
+                    ->set('song_enabled', '?')
+                    ->set('description', '?')
+                    ->where('song_id = ?')
+                    ->setParameter(6, $song_id)->setParameter(0, $password)->setParameter(1, $has_password)
+                    ->setParameter(3, $name)->setParameter(2, $is_enabled)->setParameter(4, $song_enabled)
+                    ->setParameter(5, $description)->execute();
 
-            // return the updated module information
-            return ModuleRepository::getModule($request, $user_id, $user_type, $moduleName, $song_id);
+                // return the updated module information
+                return ModuleRepository::getModule($request, $user_id, $user_type, $moduleName, $song_id);
 
+            } else {
+                // update the module in the database
+                $conn = Database::getInstance();
+                $queryBuilder = $conn->createQueryBuilder();
+                $queryBuilder->update($moduleName)
+                    ->set('password', '?')
+                    ->set('has_password', '?')
+                    ->set('is_enabled', '?')
+                    ->set('name', '?')
+                    ->set('song_enabled', '?')
+                    ->where('song_id = ?')
+                    ->setParameter(5, $song_id)->setParameter(0, $password)->setParameter(1, $has_password)
+                    ->setParameter(3, $name)->setParameter(2, $is_enabled)->setParameter(4, $song_enabled)->execute();
+
+                // return the updated module information
+                return ModuleRepository::getModule($request, $user_id, $user_type, $moduleName, $song_id);
+            }
         } else {
             $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
             $jsr->setStatusCode(400);

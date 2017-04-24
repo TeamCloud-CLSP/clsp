@@ -59,6 +59,13 @@ class ModuleLs
     private $songEnabled;
 
     /**
+     * @var string
+     *
+     * @ORM\Column(type="string", length=64, nullable = True)
+     */
+    private $description;
+
+    /**
      * One ModuleLs has One Song
      * @ORM\OneToOne(targetEntity="Song", inversedBy="moduleLs")
      * @ORM\JoinColumn(name="song_id", referencedColumnName="id", onDelete="CASCADE")
@@ -269,5 +276,29 @@ class ModuleLs
     public function getSongEnabled()
     {
         return $this->songEnabled;
+    }
+
+    /**
+     * Set description
+     *
+     * @param string $description
+     *
+     * @return ModuleLs
+     */
+    public function setDescription($description)
+    {
+        $this->description = $description;
+
+        return $this;
+    }
+
+    /**
+     * Get description
+     *
+     * @return string
+     */
+    public function getDescription()
+    {
+        return $this->description;
     }
 }

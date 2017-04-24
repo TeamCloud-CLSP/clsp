@@ -227,11 +227,15 @@ class StudentController extends Controller
      */
     public function getModules(Request $request, $id) {
         $modules = array();
+        $result = $this->getModuleLT($request, $id);
+        if ($result->getStatusCode() > 199 && $result->getStatusCode() < 300) {
+            array_push($modules, json_decode($result->getContent()));
+        }
         $result = $this->getModuleCN($request, $id);
         if ($result->getStatusCode() > 199 && $result->getStatusCode() < 300) {
             array_push($modules, json_decode($result->getContent()));
         }
-        $result = $this->getModuleDW($request, $id);
+        $result = $this->getModuleQU($request, $id);
         if ($result->getStatusCode() > 199 && $result->getStatusCode() < 300) {
             array_push($modules, json_decode($result->getContent()));
         }
@@ -239,15 +243,11 @@ class StudentController extends Controller
         if ($result->getStatusCode() > 199 && $result->getStatusCode() < 300) {
             array_push($modules, json_decode($result->getContent()));
         }
+        $result = $this->getModuleDW($request, $id);
+        if ($result->getStatusCode() > 199 && $result->getStatusCode() < 300) {
+            array_push($modules, json_decode($result->getContent()));
+        }
         $result = $this->getModuleLS($request, $id);
-        if ($result->getStatusCode() > 199 && $result->getStatusCode() < 300) {
-            array_push($modules, json_decode($result->getContent()));
-        }
-        $result = $this->getModuleLT($request, $id);
-        if ($result->getStatusCode() > 199 && $result->getStatusCode() < 300) {
-            array_push($modules, json_decode($result->getContent()));
-        }
-        $result = $this->getModuleQU($request, $id);
         if ($result->getStatusCode() > 199 && $result->getStatusCode() < 300) {
             array_push($modules, json_decode($result->getContent()));
         }
