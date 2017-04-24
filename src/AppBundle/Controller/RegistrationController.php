@@ -2,23 +2,11 @@
 
 namespace AppBundle\Controller;
 
-use AppBundle\Form\UserType;
 use AppBundle\Entity\User;
-use AppBundle\Validator\Constraints\ValidSignupCode;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-use Symfony\Component\Form\Extension\Core\Type\TimezoneType;
-use Symfony\Component\Form\Tests\Extension\Core\Type\TimezoneTypeTest;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Form\Extension\Core\Type\TextType;
-use Symfony\Component\Form\Extension\Core\Type\DateType;
-use Symfony\Component\Form\Extension\Core\Type\SubmitType;
-use Symfony\Component\Form\Extension\Core\Type\IntegerType;
-use Symfony\Component\Form\Extension\Core\Type\PasswordType;
-use Symfony\Component\Validator\Constraints\Email;
-use Symfony\Component\Validator\Constraints\NotBlank;
-use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;

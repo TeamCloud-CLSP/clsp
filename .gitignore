@@ -11,6 +11,9 @@
 !/var/sessions
 /var/sessions/*
 !var/sessions/.gitkeep
+!/var/jwt-keys
+/var/jwt-keys/*
+!var/jwt-keys/.gitkeep
 !var/SymfonyRequirements.php
 /vendor/
 /web/bundles/
@@ -18,3 +21,4 @@
 /web/assets/vendor/*
 src/AppBundle/Database.php
 *.php~
+
