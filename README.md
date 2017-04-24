@@ -4,15 +4,6 @@ The Georgia Tech Critical Language Song Project (CLSP) is a web based learning m
 
 CLSP Rewrite is a rewrite of an older project with the same name, using modern web technologies like Symfony 3.2 and PHP 7.1.
 
-## Intallation
-Ensure that you have PHP 7.1, MySQL, and Composer installed. Also check that PHP has the proper extensions enabled for Symfony 3.2. A list of Symfony 3.2's requirements can be found [here.](http://symfony.com/doc/current/reference/requirements.html)
-
-Download the project and run `composer install` in the project directory.
-
-## Run PHP Server
-
-From the project root, run `php bin/console server:run`
-
 ## Tech
 
 CLSP Rewrite utilizes various open source projects
@@ -20,8 +11,6 @@ CLSP Rewrite utilizes various open source projects
 - [PHP 7.1] - Interpreted server side web programming language
 - [Symfony] - PHP framework
 - [Bootstrap] - Front end framework
-
-
 
 ## Team Members
 
