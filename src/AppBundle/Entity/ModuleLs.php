@@ -61,7 +61,7 @@ class ModuleLs
     /**
      * @var string
      *
-     * @ORM\Column(type="string", length=64, nullable = True)
+     * @ORM\Column(type="string", length=8192, nullable = True)
      */
     private $description;
 
