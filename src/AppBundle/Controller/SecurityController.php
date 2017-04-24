@@ -65,8 +65,8 @@ class SecurityController extends Controller
                     'text/html'
                 );
             $this->get('mailer')->send($email);
-            $jsr = new JsonResponse(['data' => 'Password reset email sent']);
-            $jsr->setStatusCode(400);
+            $jsr = new JsonResponse(['msg' => 'Password reset email sent']);
+            $jsr->setStatusCode(200);
             return $jsr;
         } else {
             $jsr = new JsonResponse(['error' => 'Required fields are missing.']);
