@@ -1,3 +1,5 @@
+# License
+
 Copyright (c) 2016 - 2017 Jinsong Han, Zakir Makda, Yuanhan Pan, David Riazati, Patrick Tam
 
 The software is delivered as-is at the end of the semester.  There is no warranty or guarantee provided.
