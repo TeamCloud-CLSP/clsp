@@ -72,7 +72,7 @@ class StudentRegistration
 
     /**
      * @ORM\ManyToOne(targetEntity = "User", inversedBy = "student_registrations")
-     * @ORM\JoinColumn(name = "designer_id", referencedColumnName = "id")
+     * @ORM\JoinColumn(name = "designer_id", referencedColumnName = "id", onDelete="CASCADE")
      */
     private $designer;
 
@@ -85,13 +85,13 @@ class StudentRegistration
 
     /**
      * @ORM\OneToOne(targetEntity = "CLSPClass", inversedBy = "student_registration")
-     * @ORM\JoinColumn(name = "class_id", referencedColumnName = "id")
+     * @ORM\JoinColumn(name = "class_id", referencedColumnName = "id", onDelete="CASCADE")
      */
     private $registeredClass;
 
     /**
      * @ORM\ManyToOne(targetEntity = "ProfessorRegistration", inversedBy = "student_registrations")
-     * @ORM\JoinColumn(name = "prof_registration_id", referencedColumnName = "id")
+     * @ORM\JoinColumn(name = "prof_registration_id", referencedColumnName = "id", onDelete="CASCADE")
      */
     private $professor_registration;
 

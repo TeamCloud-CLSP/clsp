@@ -59,19 +59,19 @@ class ProfessorRegistration
 
     /**
      * @ORM\ManyToOne(targetEntity="User", inversedBy="owned_registrations")
-     * @ORM\JoinColumn(name="owner_id", referencedColumnName="id", onDelete="set null")
+     * @ORM\JoinColumn(name="owner_id", referencedColumnName="id", onDelete="CASCADE")
      */
     private $owner;
 
     /**
      * @ORM\ManyToOne(targetEntity="User", inversedBy="prof_registrations")
-     * @ORM\JoinColumn(name = "professor_id", referencedColumnName = "id", onDelete = "set null")
+     * @ORM\JoinColumn(name = "professor_id", referencedColumnName = "id", onDelete = "CASCADE")
      */
     private $professor;
 
     /**
      * @ORM\ManyToOne(targetEntity="Course", inversedBy="professorRegistrations")
-     * @ORM\JoinColumn(name = "course_id", referencedColumnName = "id", onDelete="set null")
+     * @ORM\JoinColumn(name = "course_id", referencedColumnName = "id", onDelete="CASCADE")
      */
     private $course;
 

@@ -37,7 +37,7 @@ class Course
      * @var $designer User that owns this course
      *
      * @ORM\ManyToOne(targetEntity = "User", inversedBy = "courses")
-     * @ORM\JoinColumn(name = "user_id", referencedColumnName = "id", onDelete = "set null")
+     * @ORM\JoinColumn(name = "user_id", referencedColumnName = "id", onDelete = "CASCADE")
      */
     private $designer;
 
@@ -58,7 +58,7 @@ class Course
     /**
      * Many Courses have One Language
      * @ORM\ManyToOne(targetEntity="Language", inversedBy="courses")
-     * @ORM\JoinColumn(name="language_id", referencedColumnName="id")
+     * @ORM\JoinColumn(name="language_id", referencedColumnName="id", onDelete="CASCADE")
      */
     private $language;
 

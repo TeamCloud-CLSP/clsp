@@ -59,7 +59,7 @@ class ModuleQuestionItem
     /**
      * Many Questions have One Heading.
      * @ORM\ManyToOne(targetEntity="ModuleQuestionHeading", inversedBy="questions")
-     * @ORM\JoinColumn(name="heading_id", referencedColumnName="id")
+     * @ORM\JoinColumn(name="heading_id", referencedColumnName="id", onDelete="CASCADE")
      */
     private $heading;
 

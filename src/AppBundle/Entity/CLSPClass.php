@@ -38,13 +38,13 @@ class CLSPClass
 
     /**
      * @ORM\ManyToOne(targetEntity = "Course", inversedBy = "classes")
-     * @ORM\JoinColumn(name = "course_id", referencedColumnName = "id")
+     * @ORM\JoinColumn(name = "course_id", referencedColumnName = "id", onDelete="CASCADE")
      */
     private $course;
 
     /**
      * @ORM\ManyToOne(targetEntity = "ProfessorRegistration", inversedBy = "classes")
-     * @ORM\JoinColumn(name = "registration_id", referencedColumnName = "id")
+     * @ORM\JoinColumn(name = "registration_id", referencedColumnName = "id", onDelete="CASCADE")
      */
     private $professor_registration;
 

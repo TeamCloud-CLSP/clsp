@@ -46,7 +46,7 @@ class ModuleCnKeyword
     /**
      * Many ModuleCnKeywords have One ModuleCn.
      * @ORM\ManyToOne(targetEntity="ModuleCn", inversedBy="keywords")
-     * @ORM\JoinColumn(name="cn_id", referencedColumnName="id")
+     * @ORM\JoinColumn(name="cn_id", referencedColumnName="id", onDelete="CASCADE")
      */
     private $moduleCn;
 

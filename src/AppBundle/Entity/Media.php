@@ -46,7 +46,7 @@ class Media
     /**
      * Many Media have One User.
      * @ORM\ManyToOne(targetEntity="User", inversedBy="media")
-     * @ORM\JoinColumn(name="user_id", referencedColumnName="id")
+     * @ORM\JoinColumn(name="user_id", referencedColumnName="id", onDelete="CASCADE")
      */
     private $user;
 

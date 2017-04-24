@@ -74,7 +74,7 @@ class Song
     /**
      * Many Songs have One Unit.
      * @ORM\ManyToOne(targetEntity="Unit", inversedBy="songs")
-     * @ORM\JoinColumn(name="unit_id", referencedColumnName="id")
+     * @ORM\JoinColumn(name="unit_id", referencedColumnName="id", onDelete="CASCADE")
      */
     private $unit;
 

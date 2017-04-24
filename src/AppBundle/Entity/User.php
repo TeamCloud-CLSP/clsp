@@ -140,7 +140,7 @@ class User implements UserInterface, \Serializable
 
     /**
      * @ORM\ManyToOne(targetEntity = "StudentRegistration", inversedBy = "students")
-     * @ORM\JoinColumn(name = "student_registration_id", referencedColumnName = "id")
+     * @ORM\JoinColumn(name = "student_registration_id", referencedColumnName = "id", onDelete="CASCADE")
      */
     private $registered_class;
 

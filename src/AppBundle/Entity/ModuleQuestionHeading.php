@@ -38,35 +38,35 @@ class ModuleQuestionHeading
     /**
      * Many Question Headings have One ModuleQu.
      * @ORM\ManyToOne(targetEntity="ModuleQu", inversedBy="headings")
-     * @ORM\JoinColumn(name="qu_id", referencedColumnName="id")
+     * @ORM\JoinColumn(name="qu_id", referencedColumnName="id", onDelete="CASCADE")
      */
     private $moduleQu;
 
     /**
      * Many Question Headings have One ModuleLt.
      * @ORM\ManyToOne(targetEntity="ModuleLt", inversedBy="headings")
-     * @ORM\JoinColumn(name="lt_id", referencedColumnName="id")
+     * @ORM\JoinColumn(name="lt_id", referencedColumnName="id", onDelete="CASCADE")
      */
     private $moduleLt;
 
     /**
      * Many Question Headings have One ModuleGe.
      * @ORM\ManyToOne(targetEntity="ModuleGe", inversedBy="headings")
-     * @ORM\JoinColumn(name="ge_id", referencedColumnName="id")
+     * @ORM\JoinColumn(name="ge_id", referencedColumnName="id", onDelete="CASCADE")
      */
     private $moduleGe;
 
     /**
      * Many Question Headings have One ModuleDw.
      * @ORM\ManyToOne(targetEntity="ModuleDw", inversedBy="headings")
-     * @ORM\JoinColumn(name="dw_id", referencedColumnName="id")
+     * @ORM\JoinColumn(name="dw_id", referencedColumnName="id", onDelete="CASCADE")
      */
     private $moduleDw;
 
     /**
      * Many Question Headings have One ModuleLs.
      * @ORM\ManyToOne(targetEntity="ModuleLs", inversedBy="headings")
-     * @ORM\JoinColumn(name="ls_id", referencedColumnName="id")
+     * @ORM\JoinColumn(name="ls_id", referencedColumnName="id", onDelete="CASCADE")
      */
     private $moduleLs;
 
