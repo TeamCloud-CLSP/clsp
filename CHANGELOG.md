@@ -1,5 +1,7 @@
 # CLSP 2.0.0 (2017-04-24)
 
+First release of the CLSP rewrite project.
+
 ### New Features
 - All existing features have been rewritten, and we've reached feature parity with the current CLSP site.
 - Added 4 Tier registration system with the 4 different roles (Admin, Designer, Professor, Student). A user from a higher tier can create a registration code that can be used be a user on the next tier down. For example, an Admin can invite a Designer, a Designer can invite a Professor, and a Professor can invite a Student.
