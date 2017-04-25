@@ -4,6 +4,14 @@ The Georgia Tech Critical Language Song Project (CLSP) is a web based learning m
 
 CLSP Rewrite is a rewrite of an older project with the same name, using modern web technologies like Symfony 3.2 and PHP 7.1.
 
+## Documentation
+
+- [LICENSE.md](https://github.com/TeamCloud-CLSP/clsp/blob/master/LICENSE.md)
+- [CHANGELOG.md](https://github.com/TeamCloud-CLSP/clsp/blob/master/CHANGELOG.md)
+- [INSTALLATION.md](https://github.com/TeamCloud-CLSP/clsp/blob/master/INSTALLATION.md)
+- [AUTHORS.md](https://github.com/TeamCloud-CLSP/clsp/blob/master/AUTHORS.md)
+- [DEV.md](https://github.com/TeamCloud-CLSP/clsp/blob/master/DEV.md) - guide for developers
+
 ## Tech
 
 CLSP Rewrite utilizes various open source projects
