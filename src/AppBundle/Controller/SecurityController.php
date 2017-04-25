@@ -159,26 +159,7 @@ class SecurityController extends Controller
 
             if($this->testUserCredentials($username, $password)) {
                 $user = $this->getUserFromUsername($username);
-                return new JsonResponse([
-                    "token" => $this->container->get('lexik_jwt_authentication.jwt_manager')->create($user),
-                    "user_info" => [
-                        "id" => $user->getId(),
-                        "name" => $user->getName(),
-                        "username" => $user->getUsername(),
-                        "email" => $user->getEmail(),
-                        "is_active" => $user->getIsActive(),
-                        "date_created" => $user->getDateCreated(),
-                        "date_deleted" => $user->getDateDeleted(),
-                        "date_start" => $user->getDateStart(),
-                        "date_end" => $user->getDateEnd(),
-                        "timezone" => $user->getTimezone(),
-                        "is_student" => $user->getIsStudent(),
-                        "is_professor" => $user->getIsProfessor(),
-                        "is_designer" => $user->getIsDesigner(),
-                        "is_administrator" => $user->getIsAdministrator(),
-                        "password" => ""
-                    ]
-                ]);
+                return new JsonResponse($this->getUserTokenFromUser($user));
             } else {
                 $jsr = new JsonResponse(["error" => "Could not authenticate with the given credentials"]);
                 $jsr->setStatusCode(400);
@@ -190,6 +171,30 @@ class SecurityController extends Controller
             $jsr->setStatusCode(400);
             return $jsr;
         }
+
+    }
+
+    /**
+     * Refreshes a user's JWT token
+     * Assuming the user is already logged in
+     * returns a valid JWT token on success, error message on failure
+     *
+     * @Route("/api/security/refreshToken", name="refreshLoginToken")
+     * @Method({"GET", "OPTIONS"})
+     */
+    public function refreshLoginToken(Request $request) {
+
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+
+        // this case should never happen - since this endpoint is protected, a user should always
+        // be logged in if they reach this point
+        if($user == null) {
+            $jsr = new JsonResponse(['error' => 'User did not provide a valid token']);
+            $jsr->setStatusCode(400);
+            return $jsr;
+        }
+
+        return new JsonResponse($this->getUserTokenFromUser($user));
 
     }
 
@@ -209,5 +214,28 @@ class SecurityController extends Controller
             array('username' => $username)
         );
         return $user;
+    }
+
+    private function getUserTokenFromUser($user) {
+        return [
+            "token" => $this->container->get('lexik_jwt_authentication.jwt_manager')->create($user),
+            "user_info" => [
+                "id" => $user->getId(),
+                "name" => $user->getName(),
+                "username" => $user->getUsername(),
+                "email" => $user->getEmail(),
+                "is_active" => $user->getIsActive(),
+                "date_created" => $user->getDateCreated(),
+                "date_deleted" => $user->getDateDeleted(),
+                "date_start" => $user->getDateStart(),
+                "date_end" => $user->getDateEnd(),
+                "timezone" => $user->getTimezone(),
+                "is_student" => $user->getIsStudent(),
+                "is_professor" => $user->getIsProfessor(),
+                "is_designer" => $user->getIsDesigner(),
+                "is_administrator" => $user->getIsAdministrator(),
+                "password" => ""
+            ]
+        ];
     }
 }
