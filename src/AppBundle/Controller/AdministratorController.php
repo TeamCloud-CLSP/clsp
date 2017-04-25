@@ -52,7 +52,7 @@ class AdministratorController extends Controller
         $result = $queryBuilder->select('id', 'username', 'name', 'email', 'is_active', 'date_created', 'date_deleted', 'date_start', 'date_end', 'timezone', 'is_student', 'is_professor', 'is_designer', 'is_administrator')
             ->from('app_users', 'users')
             ->where('users.username LIKE ?')->andWhere('users.is_administrator = 0')->andWhere('users.name LIKE ?')
-            ->setParameter(0, $username)->setParmameter(1, $name)->execute()->fetchAll();
+            ->setParameter(0, $username)->setParameter(1, $name)->execute()->fetchAll();
 
         $jsr = new JsonResponse(array('size' => count($result), 'data' => $result));
         return $jsr;
