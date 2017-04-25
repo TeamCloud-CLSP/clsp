@@ -193,7 +193,7 @@ class SecurityController extends Controller
 
     }
 
-    private function testUserCredentials(String $username, String $password): bool {
+    private function testUserCredentials($username, $password) {
         $user = $this->getUserFromUsername($username);
 
         if($user == null) {
@@ -203,7 +203,7 @@ class SecurityController extends Controller
         return $this->container->get('security.password_encoder')->isPasswordValid($user, $password);
     }
 
-    private function getUserFromUsername(String $username) {
+    private function getUserFromUsername($username) {
         $repository = $this->getDoctrine()->getRepository("AppBundle:User");
         $user = $repository->findOneBy(
             array('username' => $username)
