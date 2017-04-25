@@ -11,6 +11,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Doctrine\ORM\EntityManager;
 use Doctrine\DBAL\Connection;
 use AppBundle\Database;
+use AppBundle\Repository\UserRepository;
 
 class AccountController extends Controller
 {
@@ -30,17 +31,24 @@ class AccountController extends Controller
 
         $user = $this->get('security.token_storage')->getToken()->getUser();
         $user_id = $user->getId();
-        $conn = Database::getInstance();
-        $queryBuilder = $conn->createQueryBuilder();
-        $result = $queryBuilder->select('id', 'username', 'name', 'email', 'is_active', 'date_created', 'date_deleted', 'date_start', 'date_end', 'timezone', 'is_student',
-            'is_professor', 'is_designer', 'is_administrator')
-            ->from('app_users')->where('id = ?')->setParameter(0, $user_id)->execute()->fetch();
-        $result['is_student']       = ($result['is_student'] == "0" ? false : true);
-        $result['is_professor']     = ($result['is_professor'] == "0" ? false : true);
-        $result['is_designer']      = ($result['is_designer'] == "0" ? false : true);
-        $result['is_administrator'] = ($result['is_administrator'] == "0" ? false : true);
-        $jsr = new JsonResponse($result);
-        $jsr->setStatusCode(200);
-        return $jsr;
+        return UserRepository::getUser($request, $user_id);
+    }
+
+    /**
+     * Edits account info of logged in user (requires email and name, password optional - if not supplied, it will not be changed
+     * @Route("/api/account", name="editAccountInformation")
+     * @Method({"POST", "Options"})
+     */
+    public function editAccount(Request $request) {
+        // check if valid user is logged in
+        if (!$this->get('security.authorization_checker')->isGranted('IS_AUTHENTICATED_FULLY')) {
+            $jsr = new JsonResponse(array("error" => "User is not authenticated."));
+            $jsr->setStatusCode(503);
+            return $jsr;
+        }
+
+        $user = $this->get('security.token_storage')->getToken()->getUser();
+        $encoder = $this->container->get('security.password_encoder');
+        return UserRepository::editUser($request, $user, $encoder);
     }
 }

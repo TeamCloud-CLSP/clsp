@@ -201,4 +201,64 @@ class UserRepository extends EntityRepository
 
         return new Response();
     }
+
+    public static function editUser(Request $request, $user, $encoder) {
+        // edits the user
+
+        // check required post parameters
+        $post_parameters = $request->request->all();
+        if (array_key_exists('name', $post_parameters) && array_key_exists('email', $post_parameters)) {
+            $name = $post_parameters['name'];
+            $email = $post_parameters['email'];
+            $password = null;
+            $user_id = $user->getId();
+
+            // check for optional parameter
+            if (array_key_exists('password', $post_parameters)) {
+                $password = $post_parameters['password'];
+                $password = $encoder->encodePassword($user, $password);
+
+                // update user in the database
+                $conn = Database::getInstance();
+                $queryBuilder = $conn->createQueryBuilder();
+                $queryBuilder->update('app_users')
+                    ->set('name', '?')
+                    ->set('email', '?')
+                    ->set('password', '?')
+                    ->where('app_users.id = ?')
+                    ->setParameter(0, $name)->setParameter(1, $email)->setParameter(2, $password)->setParameter(3, $user_id)->execute();
+            } else {
+                // update user in the database
+                $conn = Database::getInstance();
+                $queryBuilder = $conn->createQueryBuilder();
+                $queryBuilder->update('app_users')
+                    ->set('name', '?')
+                    ->set('email', '?')
+                    ->where('app_users.id = ?')
+                    ->setParameter(0, $name)->setParameter(1, $email)->setParameter(2, $user_id)->execute();
+            }
+            
+            // return the updated song information
+            return UserRepository::getUser($request, $user_id);
+        } else {
+            $jsr = new JsonResponse(array('error' => 'Required fields are missing.'));
+            $jsr->setStatusCode(400);
+            return $jsr;
+        }
+    }
+    
+    public static function getUser(Request $request, $user_id) {
+        $conn = Database::getInstance();
+        $queryBuilder = $conn->createQueryBuilder();
+        $result = $queryBuilder->select('id', 'username', 'name', 'email', 'is_active', 'date_created', 'date_deleted', 'date_start', 'date_end', 'timezone', 'is_student',
+            'is_professor', 'is_designer', 'is_administrator')
+            ->from('app_users')->where('id = ?')->setParameter(0, $user_id)->execute()->fetch();
+        $result['is_student']       = ($result['is_student'] == "0" ? false : true);
+        $result['is_professor']     = ($result['is_professor'] == "0" ? false : true);
+        $result['is_designer']      = ($result['is_designer'] == "0" ? false : true);
+        $result['is_administrator'] = ($result['is_administrator'] == "0" ? false : true);
+        $jsr = new JsonResponse($result);
+        $jsr->setStatusCode(200);
+        return $jsr;
+    }
 }
