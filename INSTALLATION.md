@@ -80,30 +80,40 @@ These instructions assume you're installing CLSP on an Ubuntu 16.04 x64 server. 
 # Installation (from source)
 
 1. Download the backend source files
+
 ```git clone git@github.com:TeamCloud-CLSP/clsp.git```
 
 2. ```cd``` to the ```clsp``` directory you just cloned
+
 ```cd clsp```
 
 3. Use OpenSSL to generate certificates for signing the JWT tokens
+
 ```openssl genrsa -out var/jwt-keys/private.pem -aes256 4096```
+
 ```openssl rsa -pubout -in var/jwt-keys/private.pem -out var/jwt-keys/public.pem```
+
 Remember the passphrase you used for your private key! That passphrase must be entered when your run ```composer install```
 More resources on how to setup authentication can be found here [LexikJWTAuthenticationBundle](https://github.com/lexik/LexikJWTAuthenticationBundle/blob/master/Resources/doc/index.md#installation)
 
 4. Use ```composer``` to install dependencies and define configuration parameters
+
 ```composer install```
 
 5. Create the database CLSP will use. Skip this step if you've already created your database. Note: this command will only work if the uesr that you entered into your composer configuration has permission to create the database.
+
 ```php bin/console doctrine:database:create```
 
 6. Setup the database schema
+
 ```php bin/console doctrine:schema:update --force```
 
 7. Validate the database schema
+
 ```php bin/console doctrine:schema:validate```
 
 8. Load a default admin user
+
 ```php bin/console doctrine:fixtures:load```
 
 9. Set your webroot for this project to ```./web```
@@ -111,18 +121,23 @@ More resources on how to setup authentication can be found here [LexikJWTAuthent
 10. That's it! Your CLSP backend should now work. 
 
 11. Now let's setup the frontend. ```cd``` to the directory where you originall cloned CLSP
+
 ```cd ..```
 
 12. Download the frontend source files
+
 ```git clone git@github.com:TeamCloud-CLSP/clsp-frontend.git```
 
 13. ```cd``` to the ```clsp-frontend``` directory you just cloned
+
 ```cd clsp-frontend```
 
 14. Use ```npm``` to install frontend dependencies
+
 ```npm install```
 
 15. Build the front end
+
 ```ng build -prod```
 
 16. Copy the contents of the of the ```clsp-frontend/dist``` directory into the ```clsp/dist``` directory
