@@ -116,6 +116,8 @@ More resources on how to setup authentication can be found here [LexikJWTAuthent
 
 ```php bin/console doctrine:fixtures:load```
 
+9. Change database settings in ```src/AppBundle/Database.php``` to match the parameters you entered when running ```composer install```. That database should probably be reconfigured so that you don't need to do this...
+
 9. Set your webroot for this project to ```./web```
 
 10. That's it! Your CLSP backend should now work. 
