@@ -70,11 +70,12 @@ These instructions assume you're installing CLSP on an Ubuntu 16.04 x64 server. 
 - OpenSSL
 ```sudo apt-get install openssl```
 #### frontend
-- NodeJS
-```sudo apt-get install nodejs```
-- npm
-```sudo apt-get install npm```
+- NodeJS 6.x and npm 4.x
+
+You probably shouldn't use ```apt-get``` to install nodejs and npm, because you will get an out of date version of both. Check out the node site for more [installation instructions](https://nodejs.org/en/download/)
+
 - Angular CLI 1.0.0
+
 ```npm install -g @angular/cli```
 
 # Installation (from source)
@@ -142,10 +143,17 @@ More resources on how to setup authentication can be found here [LexikJWTAuthent
 
 ```ng build -prod```
 
-16. Copy the contents of the of the ```clsp-frontend/dist``` directory into the ```clsp/dist``` directory
-TODO: actually add the command here
+16. Copy the contents of the of the ```clsp-frontend/dist``` directory into the ```clsp/web``` directory
+
+```cp -r dist/* ../clsp/web/```
 
 17. You're done! Use ```admin/admin``` to login to CLSP
+
+Note: You may have an issue where trying to go to an angular url (like /login) will trigger a 404. This occurs because the ```.htaccess``` file isn't properly redirecting requests to the `index.html`, instead redirecting all requests to `app.php`.
+
+You can fix this by changing the `.htaccess` file 
+
+You might also encounter issues where none of the endpoints properly authenticate (giving a 401 JWT not found) message. This issue can be fixed by configuring the server to not discard the Authorization header
 
 
 
