@@ -143,6 +143,8 @@ More resources on how to setup authentication can be found here [LexikJWTAuthent
 
 ```ng build -prod```
 
+Note that using this command will use the `enviroment.prod.ts` file instead of the default `enviroment.ts` file. The prod enviroment has a slightly different API url. You may change it if required.
+
 16. Copy the contents of the of the ```clsp-frontend/dist``` directory into the ```clsp/web``` directory
 
 ```cp -r dist/* ../clsp/web/```
@@ -153,8 +155,14 @@ Note: You may have an issue where trying to go to an angular url (like /login) w
 
 You can fix this by changing the `.htaccess` file 
 
-You might also encounter issues where none of the endpoints properly authenticate (giving a 401 JWT not found) message. This issue can be fixed by configuring the server to not discard the Authorization header
+You might also encounter issues where none of the endpoints properly authenticate (giving a 401 JWT not found) message. This issue can be fixed by configuring the server to not discard the Authorization header.
 
+More information on properly configuring symfony to work with your webserver can be found here
+
+- [Apache](http://symfony.com/doc/current/setup/web_server_configuration.html)
+- [Nginx](https://www.nginx.com/resources/wiki/start/topics/recipes/symfony/)
+
+You could also use the default symfony configuratin, and change angular to use hash marks instead of clean urls, and avoid having to change the `.htaccess` at all. In the frontend directory, you can uncomment lines `138` in `app-routing.module.ts`
 
 
 
