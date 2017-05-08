@@ -62,10 +62,10 @@ CLSP Frontend probably runs on most modern web browsers (Internet Explorer, Micr
 # Installation Dependencies
 
 These instructions assume you're installing CLSP on an Ubuntu 16.04 x64 server. Chance these instructions accordingly depending on your host operating system.
- - git
+ - git 2.12.2+
 ```sudo apt-get install git```
 #### backend
-- Composer 
+- Composer 1.4.1+
 ```sudo apt-get install composer```
 - OpenSSL
 ```sudo apt-get install openssl```
