@@ -54,7 +54,10 @@ DirectoryIndex app.php
     RewriteRule ^ - [L]
 
     # Rewrite all other queries to the front controller.
+    RewriteCond %{REQUEST_URI} /api/
     RewriteRule ^ %{ENV:BASE}/app.php [L]
+
+    RewriteRule ^ %{ENV:BASE}/index.html [L]
 </IfModule>
 
 <IfModule !mod_rewrite.c>
