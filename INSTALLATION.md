@@ -3,6 +3,8 @@ CLSP runs onthe LAMP stack. Below are some recommended configurations. Note that
 
 Our backend is in Symfony 3.2, and our frontend is in Angular 4. If you have problems using this guide, please consult the following pages.
 
+And by consult, I mean, just do what those pages say. If you're having problems while setting up the backend, there's a decently high chance that it's beause you're missing one of Symfony's requirements. Same for the frontend.
+
 ### Outside Resources
 
 - [Symfony 3.2 Installation](http://symfony.com/doc/3.2/setup.html)
