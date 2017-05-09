@@ -39,12 +39,14 @@ character-set-server = utf8
 Recommended! This was the configuration 
 
 - Apache 2.4 
-    - ```.htaccess``` files must be enabled. We use Apache's ```mod_rewrite``` to process URLs, without which the backend API will not function properly. 
+    - ```.htaccess``` files must be enabled. We use Apache's ```mod_rewrite``` to process URLs, without which the backend API will not function properly.
+    - `mod_rewrite` must also be enabled. Otherwise, none of the urls will resolve correctly
 - PHP 7.1
     - ```post_max_size = 64M``` and ```upload_max_filesize = 64M``` - These option constrains file upload size over ```POST```. Increase them so you can upload larger media files. I'd recommend increasing it to at least ```64M```.
     - ```default_charset = "UTF-8"``` - Make sure that PHP uses ```UTF-8``` so that non ```ASCII``` characters display correctly.
     - ```extension=php_openssl.dll``` - OpenSSL extension must be installed and enabled
     - ```extension=php_pdo_mysql.dll``` - PDO MySQL driver must be installed and enabled
+    - `extension=php_xml.dll` - PHP XML extension must be installed and enabled
 - MySQL 5.7
     - You must edit/add the following lines to the relavent section of your ```my.cnf``` or ```my.ini``` (MySQL configuration file) to ensure that non ```ASCII``` characters are displayed properly
 ```
@@ -66,7 +68,15 @@ These instructions assume you're installing CLSP on an Ubuntu 16.04 x64 server. 
 ```sudo apt-get install git```
 #### backend
 - Composer 1.4.1+
+
+If you're on Ubuntu 17.x
+
 ```sudo apt-get install composer```
+
+If you're on Ubuntu 16.x and lower, follow [this tutorial](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-composer-on-ubuntu-16-04) to get the latest `composer`
+
+
+
 - OpenSSL
 ```sudo apt-get install openssl```
 #### frontend
